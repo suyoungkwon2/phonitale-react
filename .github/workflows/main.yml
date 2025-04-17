@@ -65,4 +65,4 @@ jobs:
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-2
       run: |
-        aws lambda update-function-code --function-name your-lambda-function-name --zip-file fileb://backend.zip --region us-east-2 
+        aws lambda update-function-code --function-name phonitale-evaluation-lambda --zip-file fileb://backend.zip --region us-east-2 
