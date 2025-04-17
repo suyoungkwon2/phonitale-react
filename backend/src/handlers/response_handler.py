@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('UserResponses')
+table = dynamodb.Table('Phonitale-UserResponses')
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
