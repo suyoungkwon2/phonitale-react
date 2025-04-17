@@ -53,6 +53,11 @@ jobs:
         cd backend
         pip install -r requirements.txt
         
+    - name: Create deployment package
+      run: |
+        cd backend
+        zip -r ../backend.zip .
+        
     - name: Deploy to AWS Lambda
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
