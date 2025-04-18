@@ -39,30 +39,36 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Prepare update expression and attribute values
         update_expression = []
         expression_attribute_values = {}
+        expression_attribute_names = {}
         
         # Add round number if it's the first time for this word
-        update_expression.append("round_number = if_not_exists(round_number, :round_number)")
+        update_expression.append("#rn = if_not_exists(#rn, :round_number)")
+        expression_attribute_names["#rn"] = "round_number"
         expression_attribute_values[":round_number"] = round_number
         
         # Add timestamp for the specific page type
-        timestamp_key = f"timestamp-{page_type}"
-        update_expression.append(f"{timestamp_key} = :{timestamp_key}")
-        expression_attribute_values[f":{timestamp_key}"] = current_timestamp
+        timestamp_attr = f"timestamp_{page_type}"
+        update_expression.append(f"#{timestamp_attr} = :timestamp")
+        expression_attribute_names[f"#{timestamp_attr}"] = timestamp_attr
+        expression_attribute_values[":timestamp"] = current_timestamp
         
         # Add duration for the specific page type
-        duration_key = f"duration-{page_type}"
-        update_expression.append(f"{duration_key} = :{duration_key}")
-        expression_attribute_values[f":{duration_key}"] = duration
+        duration_attr = f"duration_{page_type}"
+        update_expression.append(f"#{duration_attr} = :duration")
+        expression_attribute_names[f"#{duration_attr}"] = duration_attr
+        expression_attribute_values[":duration"] = duration
         
         # Add response if it's recognition or generation
         if page_type in ['recognition', 'generation']:
-            response_key = f"response-{page_type}"
-            update_expression.append(f"{response_key} = :{response_key}")
-            expression_attribute_values[f":{response_key}"] = response
+            response_attr = f"response_{page_type}"
+            update_expression.append(f"#{response_attr} = :response")
+            expression_attribute_names[f"#{response_attr}"] = response_attr
+            expression_attribute_values[":response"] = response
         
         # Add survey response if it's survey
         if page_type == 'survey':
-            update_expression.append("survey = :survey")
+            update_expression.append("#survey = :survey")
+            expression_attribute_names["#survey"] = "survey"
             expression_attribute_values[":survey"] = response
         
         # Update or create item in DynamoDB
@@ -72,7 +78,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
                 'english_word': english_word
             },
             UpdateExpression="SET " + ", ".join(update_expression),
-            ExpressionAttributeValues=expression_attribute_values
+            ExpressionAttributeValues=expression_attribute_values,
+            ExpressionAttributeNames=expression_attribute_names
         )
         
         return {
