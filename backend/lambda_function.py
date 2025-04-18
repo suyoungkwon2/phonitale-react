@@ -9,13 +9,14 @@ table = dynamodb.Table('phonitale-user-responses')
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
         # Parse the event data
-        user_name = event['user_name']
-        phone_number = event['phone_number']
-        english_word = event['english_word']
-        round_number = event['round_number']
-        page_type = event['page_type']
-        duration = event['duration']
-        response = event.get('response', 'N/A')
+        body = json.loads(event['body'])
+        user_name = body['user_name']
+        phone_number = body['phone_number']
+        english_word = body['english_word']
+        round_number = body['round_number']
+        page_type = body['page_type']
+        duration = body['duration']
+        response = body.get('response', 'N/A')
         
         # Create keys
         user = f"{user_name}#{phone_number}"
