@@ -5,7 +5,7 @@ Resources:
   UserResponsesTable:
     Type: AWS::DynamoDB::Table
     Properties:
-      TableName: Phonitale-UserResponses
+      TableName: phonitale-user-responses
       AttributeDefinitions:
         - AttributeName: PK
           AttributeType: S
