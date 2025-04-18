@@ -4,7 +4,7 @@ from datetime import datetime
 from typing import Dict, Any
 
 dynamodb = boto3.resource('dynamodb')
-table = dynamodb.Table('Phonitale-UserResponses')
+table = dynamodb.Table('phonitale-user-responses')
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
@@ -18,8 +18,7 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         response = event.get('response', 'N/A')
         
         # Create keys
-        partition_key = f"{user_name}#{phone_number}"
-        sort_key = english_word
+        user = f"{user_name}#{phone_number}"
         
         # Get current timestamp
         current_timestamp = datetime.now().isoformat()
@@ -27,6 +26,10 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Prepare update expression and attribute values
         update_expression = []
         expression_attribute_values = {}
+        
+        # Add round number if it's the first time for this word
+        update_expression.append("round_number = if_not_exists(round_number, :round_number)")
+        expression_attribute_values[":round_number"] = round_number
         
         # Add timestamp for the specific page type
         timestamp_key = f"timestamp-{page_type}"
@@ -52,8 +55,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         # Update or create item in DynamoDB
         table.update_item(
             Key={
-                'PK': partition_key,
-                'SK': sort_key
+                'user': user,
+                'english_word': english_word
             },
             UpdateExpression="SET " + ", ".join(update_expression),
             ExpressionAttributeValues=expression_attribute_values
