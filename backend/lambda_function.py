@@ -8,8 +8,20 @@ table = dynamodb.Table('phonitale-user-responses')
 
 def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
     try:
+        # Print event for debugging
+        print("Received event:", json.dumps(event))
+        
         # Parse the event data
-        body = json.loads(event['body'])
+        if isinstance(event, str):
+            body = json.loads(event)
+        elif isinstance(event.get('body'), str):
+            body = json.loads(event['body'])
+        else:
+            body = event.get('body', event)
+            
+        print("Parsed body:", json.dumps(body))
+        
+        # Extract data from body
         user_name = body['user_name']
         phone_number = body['phone_number']
         english_word = body['english_word']
@@ -84,6 +96,8 @@ def lambda_handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         }
         
     except Exception as e:
+        print("Error occurred:", str(e))
+        print("Event that caused error:", json.dumps(event))
         return {
             'statusCode': 500,
             'headers': {
