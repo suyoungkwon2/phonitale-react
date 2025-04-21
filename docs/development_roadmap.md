@@ -15,13 +15,27 @@
     project_description.ini에 명시된 각 페이지(Consent, Instruction, Round 시작 안내 등)에 대한 기본 HTML 템플릿을 생성합니다.
 3. **Ant Design 통합 (Done)**: Ant Design Library (v4.23.3)를 프로젝트에 통합하고 기본 레이아웃을 설정합니다.
 4. **라우팅 설정 (Done)**: 웹 프레임워크 내에서 각 페이지 URL에 맞는 라우팅 규칙을 설정하여 생성된 템플릿을 렌더링합니다.
+    http://127.0.0.1:8000
+    - `/`: 메인 페이지
+    - `/consent`: Consent 페이지
+    - `/instruction`: Instruction 페이지
+    - `/round/{round_number}/start`: 라운드 시작 안내
+    - `/round/{round_number}/learning/start`: Learning 시작 안내
+    - `/round/{round_number}/learning`: Learning 페이지
+    - `/round/{round_number}/recognition/start`: Recognition 시작 안내
+    - `/round/{round_number}/recognition`: Recognition Test 페이지
+    - `/round/{round_number}/generation/start`: Generation 시작 안내
+    - `/round/{round_number}/generation`: Generation Test 페이지
+    - `/survey/start`: 설문 조사 시작 안내
+    - `/survey`: 설문 조사 페이지
+    - `/end`: 실험 종료 페이지
 
 ### **Phase 3: 핵심 실험 로직 구현 (Round 1)**
 
 1. **Consent 페이지**
-    - Notion 페이지 임베딩.
-    - 사용자 정보 입력 폼 구현.
-    - Submit 시 백엔드 API(Lambda)를 호출하여 정보 저장 및 타임스탬프 기록.
+    - Notion 페이지 임베딩. (Done)
+    - 사용자 정보 입력 폼 구현. (Done)
+    - Submit 시 백엔드 API(Lambda)를 호출하여 정보 저장 및 타임스탬프 기록. (Frontend Logic Done, Backend API Endpoint Added - Lambda Integration Pending)
 2. **Instruction 페이지**:
     - 제공될 JPG 이미지들을 표시하고 넘길 수 있는 캐러셀 또는 유사 컴포넌트 구현.
 3. **Round 1 시작 안내 페이지**: 간단한 안내 문구 및 Start 버튼 구현.

@@ -1,8 +1,10 @@
 from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 import os
+from pydantic import BaseModel
+import datetime
 
 app = FastAPI()
 
@@ -21,6 +23,12 @@ app.mount("/static", StaticFiles(directory=static_dir), name="static")
 # Setup templates directory
 templates = Jinja2Templates(directory=templates_dir)
 
+# Define a Pydantic model for the request body
+class ConsentData(BaseModel):
+    name: str
+    phone: str
+    email: str
+
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     # Render the index.html template
@@ -29,6 +37,21 @@ async def read_root(request: Request):
 @app.get("/consent", response_class=HTMLResponse)
 async def get_consent_page(request: Request):
     return templates.TemplateResponse("consent.html", {"request": request})
+
+@app.post("/api/consent")
+async def submit_consent(consent_data: ConsentData):
+    # Here you would typically call your Lambda function via API Gateway
+    # to save the data to DynamoDB and record the timestamp.
+    # For now, we'll just print the received data and a conceptual timestamp.
+    timestamp = datetime.datetime.now().isoformat()
+    print(f"Received consent data at {timestamp}:")
+    print(f"  Name: {consent_data.name}")
+    print(f"  Phone: {consent_data.phone}")
+    print(f"  Email: {consent_data.email}")
+    
+    # Simulate a successful submission
+    # In a real scenario, check the response from the Lambda call
+    return JSONResponse(content={"message": "Consent submitted successfully"}, status_code=200)
 
 @app.get("/instruction", response_class=HTMLResponse)
 async def get_instruction_page(request: Request):

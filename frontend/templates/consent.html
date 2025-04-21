@@ -19,31 +19,173 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    <!-- Add Ant Design Icons CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@ant-design/icons@4.x/dist/index.umd.min.js"></script>
 
     {% raw %}
     <script type="text/babel">
-      const { Layout, Menu } = antd;
+      const { Layout, Menu, Form, Input, Button, Checkbox, Row, Col, Typography } = antd;
       const { Header, Content, Footer } = Layout;
+      const { Title, Paragraph } = Typography;
 
       function ConsentPage() {
+        const [form] = Form.useForm();
+        const [isSubmittable, setIsSubmittable] = React.useState(false);
+
+        // Watch form values to enable/disable submit button
+        const values = Form.useWatch([], form);
+        React.useEffect(() => {
+          // Call validateFields without arguments to validate all fields
+          form.validateFields().then(
+            () => {
+              // Checkbox value is also needed
+              if (values && values.agree) {
+                 setIsSubmittable(true);
+              } else {
+                 setIsSubmittable(false);
+              }
+            },
+            () => {
+              setIsSubmittable(false);
+            },
+          );
+        }, [values]);
+
+        const onFinish = async (values) => {
+          console.log('Received values of form: ', values);
+          try {
+            const response = await fetch('/api/consent', { // API endpoint
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                  name: values.name,
+                  phone: values.phone,
+                  email: values.email,
+              }),
+            });
+
+            if (response.ok) {
+              console.log('Consent submitted successfully');
+              // Redirect to the instruction page
+              window.location.href = '/instruction';
+            } else {
+              console.error('Failed to submit consent');
+              // Handle error (e.g., show a message to the user)
+              alert('제출에 실패했습니다. 다시 시도해주세요.');
+            }
+          } catch (error) {
+            console.error('Error submitting consent:', error);
+            alert('오류가 발생했습니다. 다시 시도해주세요.');
+          }
+        };
+
         return (
-          <Layout className="layout" style={{ minHeight: '100vh' }}>
-            <Header>
-              <Menu theme="dark" mode="horizontal">
-                <Menu.Item key="consent">Consent</Menu.Item>
-              </Menu>
+          <Layout className="layout" style={{ minHeight: '100vh', backgroundColor: '#f0f2f5' }}>
+            {/* Header can be kept or modified as needed */}
+            <Header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+               <div style={{ color: 'white', fontSize: '20px', fontWeight: 'bold' }}>PHONITAIL</div>
+               <div style={{ color: 'rgba(255, 255, 255, 0.65)'}}>User Name</div> {/* Placeholder */}
             </Header>
-            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
-              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280 }}>
-                <h1>Consent Page</h1>
-                <p>Details about the experiment and consent form will go here.</p>
-                {/* Notion Embed and Form will be added later */}
+            <Content style={{ padding: '50px', display: 'flex', justifyContent: 'center', alignItems: 'flex-start' }}>
+              {/* Sidebar Placeholder - Assuming this will be a separate component later */}
+              <div style={{ width: '200px', marginRight: '24px', backgroundColor: '#fff', padding: '24px', borderRadius: '8px' }}>
+                <Menu
+                    mode="inline"
+                    defaultSelectedKeys={['1']}
+                    items={[
+                        { key: '1', label: 'Consent', icon: <CheckCircleOutlined /> }, // Example with Ant icons
+                        { key: '2', label: 'Instruction'},
+                        { key: '3', label: 'Round 1'},
+                        { key: '4', label: 'Round 2'},
+                        { key: '5', label: 'Round 3'},
+                        { key: '6', label: 'Survey'},
+                    ]}
+                />
+               </div>
+              {/* Main Content Area */}
+              <div className="site-layout-content" style={{ background: '#fff', padding: '40px', borderRadius: '8px', width: '800px' }}>
+                <Row justify="center" style={{ marginBottom: '24px' }}>
+                   <Col>
+                      <div style={{ backgroundColor: '#1890ff', color: 'white', padding: '10px 20px', borderRadius: '4px', textAlign: 'center' }}>
+                         <Title level={3} style={{ color: 'white', margin: 0 }}>실험 참가 동의서</Title>
+                      </div>
+                   </Col>
+                </Row>
+
+                <Paragraph>실험에 참여해 주셔서 감사합니다. 아래 링크에서 참가 동의서를 읽고 서명해 주세요.</Paragraph>
+                <Paragraph>※ 동의하지 않으면 실험에 참여하실 수 없습니다.</Paragraph>
+
+                {/* Notion Embed */}
+                <div style={{ border: '1px solid #d9d9d9', borderRadius: '2px', padding: '20px', marginBottom: '24px', backgroundColor: '#fafafa' }}>
+                   {/* Centering the iframe might need more specific CSS depending on parent */}
+                   <iframe src="https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1" width="100%" height="400px" frameBorder="0" allowFullScreen style={{display: 'block', margin: 'auto'}}></iframe>
+                   {/* Placeholder text as in screenshot */}
+                   {/* <div style={{ textAlign: 'center', padding: '50px', color: '#bfbfbf' }}>노션 임베딩</div> */}
+                </div>
+
+
+                {/* User Info Form */}
+                <Form
+                  form={form}
+                  layout="horizontal"
+                  onFinish={onFinish}
+                  labelCol={{ span: 4 }}
+                  wrapperCol={{ span: 18 }}
+                  style={{ maxWidth: 600, margin: 'auto' }} // Center the form items a bit
+                  autoComplete="off"
+                >
+                  <Form.Item
+                    name="name"
+                    label="이름"
+                    rules={[{ required: true, message: '이름을 입력해주세요!' }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="phone"
+                    label="핸드폰 번호"
+                    rules={[{ required: true, message: '핸드폰 번호를 입력해주세요!' }]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="email"
+                    label="이메일 주소"
+                    rules={[
+                        { required: true, message: '이메일 주소를 입력해주세요!' },
+                        { type: 'email', message: '유효한 이메일 주소를 입력해주세요!'}
+                    ]}
+                  >
+                    <Input />
+                  </Form.Item>
+                  <Form.Item
+                    name="agree"
+                    valuePropName="checked"
+                    wrapperCol={{ offset: 4, span: 18 }} // Adjust alignment
+                    rules={[{
+                        validator: (_, value) =>
+                        value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.')),
+                    }]}
+                  >
+                    <Checkbox>동의합니다.</Checkbox>
+                  </Form.Item>
+                  <Form.Item wrapperCol={{ offset: 4, span: 18 }}>
+                    <Button type="primary" htmlType="submit" disabled={!isSubmittable}>
+                      Submit
+                    </Button>
+                  </Form.Item>
+                </Form>
               </div>
             </Content>
             <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
           </Layout>
         );
       }
+
+      // Icons are available globally via the 'icons' object from the CDN script
+      const { CheckCircleOutlined } = icons;
 
       ReactDOM.render(<ConsentPage />, document.getElementById('root'));
     </script>
