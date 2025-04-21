@@ -17,31 +17,28 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
-    - name: Setup Node.js
-      uses: actions/setup-node@v3
+    - name: Setup Python
+      uses: actions/setup-python@v4
       with:
-        node-version: '18'
+        python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Install Python dependencies
       run: |
         cd frontend
-        npm install
-
-    - name: Build
-      run: |
-        cd frontend
-        npm run build
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
 
     # 참고: 현재 frontend 잡은 frontend 브랜치에서 빌드 후 S3에 배포합니다.
     # 만약 main 브랜치에서만 배포하고 frontend 브랜치에서는 빌드/테스트만 하려면
     # 구조를 다르게 설계해야 할 수 있습니다. (예: main 브랜치용 별도 deploy 잡)
-    - name: Deploy to AWS S3
+    - name: Deploy static assets to AWS S3 (Example - Adjust path/strategy as needed)
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-2
       run: |
-        aws s3 sync frontend/build s3://your-s3-bucket-name --delete
+        # Example: Sync only static files. Adjust if deploying the whole app.
+        aws s3 sync frontend/static s3://your-s3-bucket-name/static --delete
 
   backend:
     runs-on: ubuntu-latest
