@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phonitale Experiment</title>
+    <!-- Ant Design CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
+    <!-- Your custom styles -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React and ReactDOM (Ant Design dependencies) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <!-- Ant Design JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
+    <!-- Dayjs for date/time components (Ant Design dependency) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <!-- Moment.js is often needed too, let's include it proactively -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    {% raw %}
+    <script type="text/babel">
+      const { Layout, Menu } = antd;
+      const { Header, Content, Footer } = Layout;
+
+      function App() {
+        return (
+          <Layout className="layout" style={{ minHeight: '100vh' }}>
+            <Header>
+              <div className="logo" /> {/* You can add a logo here */}
+              <Menu theme="dark" mode="horizontal" defaultSelectedKeys={['1']}>
+                <Menu.Item key="1">Phonitale Experiment</Menu.Item>
+                {/* Add other menu items if needed */}
+              </Menu>
+            </Header>
+            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
+              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280 }}>
+                <h1>Welcome to the Phonitale Experiment!</h1>
+                <p>FastAPI setup with Ant Design (via CDN) is working.</p>
+                {/* Main content for each page will go here */}
+              </div>
+            </Content>
+            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
+          </Layout>
+        );
+      }
+
+      ReactDOM.render(<App />, document.getElementById('root'));
+    </script>
+    {% endraw %}
+    <!-- Babel to transpile JSX -->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</body>
+</html> 

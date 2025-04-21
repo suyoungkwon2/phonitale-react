@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Round {{ round_number }} Learning - Phonitale Experiment</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-round-number="{{ round_number }}">
+    <div id="root"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    {% raw %}
+    <script type="text/babel">
+      const { Layout, Menu, Button, Progress } = antd; // Added Progress
+      const { Header, Content, Footer } = Layout;
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
+
+      function LearningPage() {
+        // Placeholder state for timer and progress
+        const [timeLeft, setTimeLeft] = React.useState(30);
+        const [progressPercent, setProgressPercent] = React.useState(0);
+        const [word, setWord] = React.useState("Placeholder Word");
+
+        // TODO: Add timer logic, word loading, progress updates later
+
+        return (
+          <Layout className="layout" style={{ minHeight: '100vh' }}>
+            <Header>
+              <Menu theme="dark" mode="horizontal">
+                <Menu.Item key={`learning-${roundNumber}`}>{`Round ${roundNumber} Learning`}</Menu.Item>
+              </Menu>
+            </Header>
+            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
+              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
+                <Progress percent={progressPercent} style={{ marginBottom: '20px' }} />
+                <h1>{word}</h1>
+                {/* TODO: Add audio player later */}
+                <p>Time Left: {timeLeft}s</p>
+                <Button type="primary" disabled={timeLeft > 15}>Next</Button>
+              </div>
+            </Content>
+            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
+          </Layout>
+        );
+      }
+      ReactDOM.render(<LearningPage />, document.getElementById('root'));
+    </script>
+    {% endraw %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</body>
+</html> 

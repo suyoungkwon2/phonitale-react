@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Round {{ round_number }} Learning Start - Phonitale Experiment</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-round-number="{{ round_number }}">
+    <div id="root"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    {% raw %}
+    <script type="text/babel">
+      const { Layout, Menu, Button } = antd;
+      const { Header, Content, Footer } = Layout;
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
+
+      function LearningStartPage() {
+        return (
+          <Layout className="layout" style={{ minHeight: '100vh' }}>
+            <Header>
+              <Menu theme="dark" mode="horizontal">
+                <Menu.Item key={`learning-${roundNumber}-start`}>{`Round ${roundNumber} Learning Start`}</Menu.Item>
+              </Menu>
+            </Header>
+            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
+              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
+                <h1>{`Round ${roundNumber} - Learning Phase Start`}</h1>
+                <p>Instructions for the Learning phase of Round {roundNumber}.</p>
+                <Button type="primary">Next</Button>
+              </div>
+            </Content>
+            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
+          </Layout>
+        );
+      }
+      ReactDOM.render(<LearningStartPage />, document.getElementById('root'));
+    </script>
+    {% endraw %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</body>
+</html> 

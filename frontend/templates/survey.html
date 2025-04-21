@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Survey - Phonitale Experiment</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div id="root"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    {% raw %}
+    <script type="text/babel">
+      const { Layout, Menu, Button, Progress, Rate } = antd; // Added Rate
+      const { Header, Content, Footer } = Layout;
+
+      function SurveyPage() {
+        const [progressPercent, setProgressPercent] = React.useState(0);
+        const [word, setWord] = React.useState("Placeholder Survey Word");
+        const [rating, setRating] = React.useState(0);
+
+        // TODO: Add word loading, progress, rating handling later
+
+        return (
+          <Layout className="layout" style={{ minHeight: '100vh' }}>
+            <Header>
+              <Menu theme="dark" mode="horizontal">
+                <Menu.Item key="survey">Survey</Menu.Item>
+              </Menu>
+            </Header>
+            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
+              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
+                <Progress percent={progressPercent} style={{ marginBottom: '20px' }} />
+                <h1>{word}</h1>
+                <p>Rate the helpfulness:</p>
+                <Rate onChange={setRating} value={rating} style={{ marginBottom: '20px' }}/>
+                <br />
+                <Button type="primary">Next Word / Finish</Button>
+              </div>
+            </Content>
+            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
+          </Layout>
+        );
+      }
+      ReactDOM.render(<SurveyPage />, document.getElementById('root'));
+    </script>
+    {% endraw %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</body>
+</html> 

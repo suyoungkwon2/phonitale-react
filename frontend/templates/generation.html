@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Round {{ round_number }} Generation - Phonitale Experiment</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body data-round-number="{{ round_number }}">
+    <div id="root"></div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+    {% raw %}
+    <script type="text/babel">
+      const { Layout, Menu, Button, Progress, Input } = antd; // Added Input
+      const { Header, Content, Footer } = Layout;
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
+
+      function GenerationPage() {
+        const [timeLeft, setTimeLeft] = React.useState(30);
+        const [progressPercent, setProgressPercent] = React.useState(0);
+        const [meaning, setMeaning] = React.useState("Placeholder Korean Meaning"); // Changed from word
+        const [userAnswer, setUserAnswer] = React.useState("");
+
+        // TODO: Add timer, meaning loading, progress, answer handling later
+
+        return (
+          <Layout className="layout" style={{ minHeight: '100vh' }}>
+            <Header>
+              <Menu theme="dark" mode="horizontal">
+                <Menu.Item key={`generation-${roundNumber}`}>{`Round ${roundNumber} Generation Test`}</Menu.Item>
+              </Menu>
+            </Header>
+            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
+              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
+                <Progress percent={progressPercent} style={{ marginBottom: '20px' }} />
+                <h1>{meaning}</h1>
+                <Input
+                    placeholder="Enter English word"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
+                    style={{ margin: '20px 0', maxWidth: '300px' }}
+                 />
+                <p>Time Left: {timeLeft}s</p>
+                <Button type="primary">Next</Button> {/* Always enabled */}
+              </div>
+            </Content>
+            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
+          </Layout>
+        );
+      }
+      ReactDOM.render(<GenerationPage />, document.getElementById('root'));
+    </script>
+    {% endraw %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+</body>
+</html> 
