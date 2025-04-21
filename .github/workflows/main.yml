@@ -2,33 +2,39 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main, backend ]
+    # frontend 브랜치 push 시에도 워크플로우가 트리거되도록 추가
+    branches: [ main, backend, frontend ]
   pull_request:
+    # 필요하다면 pull_request 트리거에도 frontend 추가 가능
     branches: [ main, backend ]
 
 jobs:
   frontend:
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    
+    # frontend 브랜치 push 시 frontend 잡이 실행되도록 조건 변경
+    if: github.ref == 'refs/heads/frontend'
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Setup Node.js
       uses: actions/setup-node@v3
       with:
         node-version: '18'
-        
+
     - name: Install dependencies
       run: |
         cd frontend
         npm install
-        
+
     - name: Build
       run: |
         cd frontend
         npm run build
-        
+
+    # 참고: 현재 frontend 잡은 frontend 브랜치에서 빌드 후 S3에 배포합니다.
+    # 만약 main 브랜치에서만 배포하고 frontend 브랜치에서는 빌드/테스트만 하려면
+    # 구조를 다르게 설계해야 할 수 있습니다. (예: main 브랜치용 별도 deploy 잡)
     - name: Deploy to AWS S3
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -39,30 +45,31 @@ jobs:
 
   backend:
     runs-on: ubuntu-latest
+    # backend 잡은 backend 브랜치 push 시 실행 (기존과 동일)
     if: github.ref == 'refs/heads/backend'
-    
+
     steps:
     - uses: actions/checkout@v3
-    
+
     - name: Setup Python
       uses: actions/setup-python@v4
       with:
         python-version: '3.9'
-        
+
     - name: Install dependencies
       run: |
         cd backend
         pip install -r requirements.txt
-        
+
     - name: Create deployment package
       run: |
         cd backend
         zip -r ../backend.zip .
-        
+
     - name: Deploy to AWS Lambda
       env:
         AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
         AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         AWS_DEFAULT_REGION: us-east-2
       run: |
-        aws lambda update-function-code --function-name phonitale-evaluation-lambda --zip-file fileb://backend.zip --region us-east-2 
+        aws lambda update-function-code --function-name phonitale-evaluation-lambda --zip-file fileb://backend.zip --region us-east-2

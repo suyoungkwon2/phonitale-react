@@ -1,20 +1,20 @@
 ### **Phase 1: 백엔드 기초 구축 (Python, DynamoDB, Lambda)**
 
-1. **DynamoDB 테이블 설계 및 생성**: 
+1. **DynamoDB 테이블 설계 및 생성 (Done)**: 
     - project_description.ini에 명시된 데이터 요구사항(사용자 정보, 타임스탬프, 라운드/단계별 응답, 설문 결과 등)을 충족하는 DynamoDB 테이블 스키마를 정의하고 생성합니다. 
     (예: 사용자 테이블, 응답 로그 테이블)
-2. **Lambda 함수 개발**:
+2. **Lambda 함수 개발(Done)**:
     - Consent 페이지에서 사용자 정보(이름, 연락처, 이메일)를 받아 DynamoDB에 저장하는 Lambda 함수를 개발합니다.
     - 각 실험 단계(Learning, Recognition, Generation, Survey)의 사용자 응답과 타임스탬프를 DynamoDB에 저장하는 Lambda 함수를 개발합니다.
-3. **API Gateway 설정**: 개발된 Lambda 함수들을 트리거할 수 있도록 API Gateway 엔드포인트를 설정합니다.
+3. **API Gateway 설정(Done)**: 개발된 Lambda 함수들을 트리거할 수 있도록 API Gateway 엔드포인트를 설정합니다.
 
-### **Phase 2: 프론트엔드 기본 구조 및 페이지 구현 (Python 웹 프레임워크, Ant Design)**
+### **Phase 2: 프론트엔드 기본 구조 및 페이지 구현 (Python 웹 프레임워크, Ant Design) (Done)**
 
-1. **Python 웹 프레임워크 설정**: Flask 또는 FastAPI와 같은 Python 웹 프레임워크를 사용하여 프로젝트를 설정합니다. -> FastAPI
-2. **기본 페이지 템플릿 생성**: 
+1. **Python 웹 프레임워크 설정 (Done)**: Flask 또는 FastAPI와 같은 Python 웹 프레임워크를 사용하여 프로젝트를 설정합니다. -> FastAPI
+2. **기본 페이지 템플릿 생성 (Done)**: 
     project_description.ini에 명시된 각 페이지(Consent, Instruction, Round 시작 안내 등)에 대한 기본 HTML 템플릿을 생성합니다.
-3. **Ant Design 통합**: Ant Design Library (v4.23.3)를 프로젝트에 통합하고 기본 레이아웃을 설정합니다.
-4. **라우팅 설정**: 웹 프레임워크 내에서 각 페이지 URL에 맞는 라우팅 규칙을 설정하여 생성된 템플릿을 렌더링합니다.
+3. **Ant Design 통합 (Done)**: Ant Design Library (v4.23.3)를 프로젝트에 통합하고 기본 레이아웃을 설정합니다.
+4. **라우팅 설정 (Done)**: 웹 프레임워크 내에서 각 페이지 URL에 맞는 라우팅 규칙을 설정하여 생성된 템플릿을 렌더링합니다.
 
 ### **Phase 3: 핵심 실험 로직 구현 (Round 1)**
 
