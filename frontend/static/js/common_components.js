@@ -15,9 +15,9 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
 } else {
   console.log('Required libraries seem available. Proceeding...');
 
-  const { Layout, Menu, Button, Carousel, Row, Col, Typography } = antd;
+  const { Layout, Menu, Button, Carousel, Row, Col, Typography, Steps } = antd;
   const { Header, Content, Footer, Sider } = Layout;
-  const { useState, useRef } = React;
+  const { useState, useRef, useEffect } = React;
   const { CheckCircleOutlined, ReadOutlined, ExperimentOutlined, FileTextOutlined } = icons;
   const { Text } = Typography;
 
@@ -30,67 +30,103 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
 
   // --- Header 컴포넌트 ---
   window.AppHeader = function AppHeader() { // 함수를 전역 스코프에 명시적으로 할당
+    const [userName, setUserName] = useState(null); // 사용자 이름 상태 추가
+
+    useEffect(() => {
+      // 컴포넌트 마운트 시 sessionStorage에서 사용자 이름 가져오기
+      const storedName = sessionStorage.getItem('userName');
+      if (storedName) {
+        setUserName(storedName);
+      } else {
+        // 저장된 이름이 없으면 기본값 또는 다른 로직 처리 가능
+        console.log('User name not found in sessionStorage.');
+      }
+    }, []); // 빈 배열을 전달하여 마운트 시 한 번만 실행
+
     return (
-      <Header>
-         <div className="logo">PHONITAIL</div>
-         <div className="user-name">User Name</div> {/* TODO: Replace with dynamic user name */}
+      <Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+         {/* 로고 스타일은 CSS에서 관리하거나 필요시 여기에 인라인 스타일 추가 */}
+         <div className="logo" style={{ color: '#000', fontWeight: 'bold', fontSize: '20px' }}>PHONITALE</div>
+         <div className="user-name">{userName || 'User Name'}</div> {/* 상태값을 사용, 없으면 'User Name' 표시 */}
       </Header>
     );
   }
 
   // --- Sidebar 컴포넌트 ---
   window.AppSidebar = function AppSidebar() { // 함수를 전역 스코프에 명시적으로 할당
+    console.log("AppSidebar component rendering..."); // Sidebar 렌더링 시작 로그
+
+    // --- 기존 동적 로직 복원 ---
     const currentPath = window.location.pathname;
-    let currentStep = 'instruction'; // Default or derive dynamically
+    let currentStepKey = 'consent'; // 경로 기반으로 현재 단계 key 결정 (기본값 consent)
 
-    // Determine current step based on path
-    if (currentPath === '/consent') currentStep = 'consent';
-    else if (currentPath === '/instruction') currentStep = 'instruction';
-    else if (currentPath.startsWith('/round/1')) currentStep = 'round1';
-    else if (currentPath.startsWith('/round/2')) currentStep = 'round2';
-    else if (currentPath.startsWith('/round/3')) currentStep = 'round3';
-    else if (currentPath.startsWith('/survey')) currentStep = 'survey';
+    // Determine current step key based on path
+    if (currentPath === '/instruction') currentStepKey = 'instruction';
+    else if (currentPath.startsWith('/round/1')) currentStepKey = 'round1';
+    else if (currentPath.startsWith('/round/2')) currentStepKey = 'round2';
+    else if (currentPath.startsWith('/round/3')) currentStepKey = 'round3';
+    else if (currentPath.startsWith('/survey')) currentStepKey = 'survey';
+    else if (currentPath === '/end') currentStepKey = 'end'; // 종료 페이지 추가 고려
+    // 기본값은 'consent' 유지
+    console.log(`Current path: ${currentPath}, Determined step key: ${currentStepKey}`); // 경로 및 결정된 키 로그
 
-    const steps = [
-      { key: 'consent', icon: <CheckCircleOutlined />, label: 'Consent', path: '/consent' },
-      { key: 'instruction', icon: <ReadOutlined />, label: 'Instruction', path: '/instruction' },
-      { key: 'round1', icon: <ExperimentOutlined />, label: 'Round 1', path: '/round/1/start' },
-      { key: 'round2', icon: <ExperimentOutlined />, label: 'Round 2', path: '/round/2/start' },
-      { key: 'round3', icon: <ExperimentOutlined />, label: 'Round 3', path: '/round/3/start' },
-      { key: 'survey', icon: <FileTextOutlined />, label: 'Survey', path: '/survey/start' },
+    const stepsData = [
+      { key: 'consent', icon: <CheckCircleOutlined />, title: 'Consent' }, // path 제거 (불필요)
+      { key: 'instruction', icon: <ReadOutlined />, title: 'Instruction' },
+      { key: 'round1', icon: <ExperimentOutlined />, title: 'Round 1' },
+      { key: 'round2', icon: <ExperimentOutlined />, title: 'Round 2' },
+      { key: 'round3', icon: <ExperimentOutlined />, title: 'Round 3' },
+      { key: 'survey', icon: <FileTextOutlined />, title: 'Survey' },
+      // { key: 'end', icon: <CheckCircleOutlined />, title: 'End' } // 종료 단계 예시
     ];
 
-    const handleMenuClick = (path) => {
-        console.log(`Navigating to: ${path}`);
-        window.location.href = path;
+    const currentStepIndex = stepsData.findIndex(step => step.key === currentStepKey);
+    console.log(`Current step index: ${currentStepIndex}`); // 계산된 인덱스 로그
+
+    // status 계산 함수
+    const determineStatus = (index, currentIndex) => {
+      if (index < currentIndex) return 'finish';
+      if (index === currentIndex) return 'process';
+      return 'wait';
     };
 
-    const currentStepIndex = steps.findIndex(step => step.key === currentStep);
-    const updatedSteps = steps.map((step, index) => ({
-        ...step,
-        completed: index < currentStepIndex,
-        disabled: index > currentStepIndex
-    }));
+    // --- items 배열 생성 로직 제거 ---
+    /*
+    const items = stepsData.map((step, index) => {
+        let status = 'wait';
+        if (index < currentStepIndex) {
+            status = 'finish';
+        } else if (index === currentStepIndex) {
+            status = 'process';
+        }
+        return {
+            key: step.key,
+            title: step.title,
+            icon: step.icon,
+            status: status,
+        };
+    });
+    console.log('Generated Steps items:', items);
+    */
 
     return (
-      <Sider width={200} theme="light">
-        <Menu
-          mode="inline"
-          selectedKeys={[currentStep]}
-          style={{ height: '100%', borderRight: 0, paddingTop: '20px' }}
+      <Sider width={200} theme="light" style={{ background: '#fff' }}>
+        {/* Steps 컴포넌트 사용, current prop은 여전히 유효 */}
+        <Steps
+          direction="vertical"
+          current={currentStepIndex} // 동적 인덱스 사용
+          // items prop 제거
         >
-          {updatedSteps.map(step => (
-            <Menu.Item
-                key={step.key}
-                icon={step.icon}
-                disabled={step.disabled}
-                onClick={() => !step.disabled && handleMenuClick(step.path)}
-                style={step.completed ? { color: 'rgba(0, 0, 0, 0.45)', cursor: 'pointer' } : step.disabled ? {} : { cursor: 'pointer' }}
-            >
-              {step.label}
-            </Menu.Item>
+          {/* items prop 대신 Steps.Step 자식 컴포넌트로 직접 렌더링 */}
+          {stepsData.map((step, index) => (
+            <Steps.Step
+              key={step.key}
+              title={step.title}
+              icon={step.icon}
+              status={determineStatus(index, currentStepIndex)} // 상태 계산 함수 사용
+            />
           ))}
-        </Menu>
+        </Steps>
       </Sider>
     );
   }

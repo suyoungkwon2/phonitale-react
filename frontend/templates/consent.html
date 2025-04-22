@@ -72,6 +72,8 @@
 
             if (response.ok) {
               console.log('Consent submitted successfully');
+              // 사용자 이름을 sessionStorage에 저장
+              sessionStorage.setItem('userName', values.name);
               window.location.href = '/instruction';
             } else {
               console.error('Failed to submit consent');

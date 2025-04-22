@@ -5,6 +5,14 @@
     <!-- Basic Meta Tags -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- Preload Instruction Images -->
+    <link rel="preload" href="/static/images/실험 안내 - 1.jpg" as="image">
+    <link rel="preload" href="/static/images/실험 안내 - 2.jpg" as="image">
+    <link rel="preload" href="/static/images/실험 안내 - 3.jpg" as="image">
+    <link rel="preload" href="/static/images/실험 안내 - 4.jpg" as="image">
+    <link rel="preload" href="/static/images/실험 안내 - 5.jpg" as="image">
+
     <!-- Ant Design CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <!-- Your custom styles -->
@@ -42,6 +50,8 @@
           display: flex !important; /* 이미지 중앙 정렬 위해 추가 */
           justify-content: center; /* 이미지 중앙 정렬 위해 추가 */
           align-items: center; /* 이미지 중앙 정렬 위해 추가 */
+          /* min-height: 400px; */ /* 임시 스타일 제거 */
+          /* background: #f7f7f7; */ /* 임시 스타일 제거 */
         }
         .ant-carousel .slick-slide img {
             max-width: 100%;
@@ -78,13 +88,14 @@
       // 필요한 변수들은 해당 파일 내에서 이미 가져왔거나, 전역 스코프에 있어야 합니다.
       const { Layout, Menu, Button, Carousel, Row, Col } = antd; // antd 변수는 여전히 필요할 수 있음 (InstructionPageContent 에서 사용)
       const { Header, Content, Footer, Sider } = Layout;
-      const { useState, useRef } = React; // React 변수는 여전히 필요
+      const { useState, useRef, useEffect } = React; // React 변수는 여전히 필요
       // const { CheckCircleOutlined, ReadOutlined, ExperimentOutlined, FileTextOutlined } = icons; // icons 변수는 common_components.js 에서 사용
 
       // --- Instruction 페이지의 고유 콘텐츠 ---
       function InstructionPageContent() {
         const [currentSlide, setCurrentSlide] = useState(0);
         const [canProceed, setCanProceed] = useState(false);
+        const [isCarouselReady, setIsCarouselReady] = useState(false); // 캐러셀 준비 상태 추가
         const carouselRef = useRef();
         const totalSlides = 5;
 
@@ -96,6 +107,16 @@
             '/static/images/실험 안내 - 4.jpg',
             '/static/images/실험 안내 - 5.jpg',
         ];
+
+        // 컴포넌트 마운트 후 짧은 지연 뒤 캐러셀 준비 상태를 true로 변경
+        useEffect(() => {
+          const timer = setTimeout(() => {
+            setIsCarouselReady(true);
+          }, 100); // 100ms 지연 (필요에 따라 조정)
+
+          // 컴포넌트 언마운트 시 타이머 클리어
+          return () => clearTimeout(timer);
+        }, []); // 마운트 시 한 번만 실행
 
         const handleAfterChange = (current) => {
           console.log('Current slide:', current);
@@ -120,20 +141,28 @@
                 실험 안내
             </div>
             <div className="instruction-content-card">
-               <Carousel
-                 ref={carouselRef}
-                 afterChange={handleAfterChange}
-                 dots={true}
-                 arrows={true}
-                 infinite={false}
-                 style={{ width: '100%', maxWidth: '700px' }}
-               >
-                {instructionImages.map((imgSrc, index) => (
-                  <div key={index}>
-                    <img src={imgSrc} alt={`Instruction ${index + 1}`} />
-                  </div>
-                ))}
-              </Carousel>
+                 {/* Carousel 코드 복원 및 조건부 렌더링 */}
+                 {isCarouselReady ? (
+                   <Carousel
+                     ref={carouselRef}
+                     afterChange={handleAfterChange}
+                     dots={true}
+                     arrows={true}
+                     infinite={false}
+                     style={{ width: '100%', maxWidth: '700px' }}
+                   >
+                    {instructionImages.map((imgSrc, index) => (
+                      <div key={index}>
+                        <img src={imgSrc} alt={`Instruction ${index + 1}`} />
+                      </div>
+                    ))}
+                  </Carousel>
+                 ) : (
+                    // 캐러셀 준비 전 로딩 표시 또는 빈 공간 (선택적)
+                    <div style={{ minHeight: '400px', display:'flex', alignItems:'center', justifyContent:'center' }}>
+                        {/* <antd.Spin size="large" /> */} {/* 로딩 스피너 예시 */}
+                    </div>
+                 )}
             </div>
             <div className="navigation-footer">
                 <window.BlueButton

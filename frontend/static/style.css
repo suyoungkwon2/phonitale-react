@@ -1,3 +1,94 @@
+/* Add this rule to override font-size: 0 for Ant Design Steps */
+.ant-steps {
+    font-size: 14px; /* Or your desired default font size */
+}
+
+/* Align vertical steps items */
+.ant-steps-vertical .ant-steps-item {
+    display: flex; /* Use flexbox for alignment */
+    align-items: flex-start; /* Align items to the top */
+}
+
+.ant-steps-vertical > .ant-steps-item > .ant-steps-item-container {
+    /* display: block; */ /* Let flex control the layout */
+    padding-bottom: 12px; /* Add some spacing between steps */
+}
+
+.ant-steps-vertical > .ant-steps-item > .ant-steps-item-container > .ant-steps-item-tail {
+    /* Adjust tail position if needed */
+    left: 11px; /* Align with default icon size/padding */
+    padding: 30px 0 6px; /* Adjust padding for vertical spacing */
+    margin-top: 0; /* Reset margin */
+}
+
+.ant-steps-vertical > .ant-steps-item > .ant-steps-item-container > .ant-steps-item-content {
+    /* Ensure content aligns properly next to the icon/tail */
+    /* margin-left: 28px; */ /* Remove fixed margin, let flex gap handle */
+    /* display: block; */
+    padding-top: 0; /* Reset padding */
+    min-height: 28px; /* Ensure minimum height for alignment */
+    line-height: 28px; /* Align title vertically */
+    margin-left: 8px; /* Add a small gap after the icon */
+}
+
+.ant-steps-item-icon {
+    /* Ensure consistent icon alignment */
+    margin-left: 0 !important; /* Override potential Sider/Menu styles */
+    margin-right: 8px; /* Add space between icon and title */
+    display: inline-block; /* Ensure proper spacing */
+    vertical-align: top; /* Align icon to the top */
+    line-height: 28px; /* Match content line-height */
+}
+
+/* Adjust title alignment if needed */
+.ant-steps-item-title {
+    line-height: 28px !important; /* Force line-height for vertical centering */
+}
+
+/* Change Carousel Arrow Color - Targeting ::before again */
+/* Remove anticon rule as it didn't work */
+/*
+.ant-carousel .slick-prev .anticon, 
+.ant-carousel .slick-next .anticon { 
+    color: black !important; 
+    vertical-align: middle; 
+}
+*/
+
+/* Keep background styles for the buttons */
+.ant-carousel .slick-prev,
+.ant-carousel .slick-next {
+    /* color: black !important; */ /* Remove color from button itself */
+    background-color: rgba(255, 255, 255, 0.5) !important;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    z-index: 1;
+    display: flex !important; 
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.ant-carousel .slick-prev:hover,
+.ant-carousel .slick-next:hover,
+.ant-carousel .slick-prev:focus,
+.ant-carousel .slick-next:focus {
+    /* color: black !important; */ /* Remove color from button itself */
+    background-color: rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Restore and refine ::before rule */
+.ant-carousel .slick-prev::before,
+.ant-carousel .slick-next::before {
+    /* Assuming the icon is set via content property and font */
+    color: black !important; /* Force color for the pseudo-element */
+    /* Reset potential inherited styles */
+    background: none !important;
+    opacity: 1 !important; /* Ensure full opacity */
+    /* Font size might need adjustment if using icon font */
+    /* font-size: 16px !important; */ 
+}
+
 /* Basic styles can be added here later */
 
 /* Common Layout Styles */
