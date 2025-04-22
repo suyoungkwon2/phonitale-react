@@ -6,51 +6,353 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Learning 페이지 전용 스타일 */
+        .learning-content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center; /* 전체 컨텐츠 중앙 정렬 */
+            width: 100%;
+        }
+        .progress-section {
+            width: 100%;
+            max-width: 550px; /* Figma 기준 너비 */
+            margin-bottom: 24px;
+        }
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            padding: 0 5px; /* 약간의 좌우 패딩 */
+        }
+        .progress-header span {
+            font-family: 'Rubik', sans-serif;
+            font-size: 16px;
+            color: #868686;
+        }
+        .instruction-text {
+            font-family: 'BBTreeGo_R', sans-serif;
+            font-size: 20px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 32px;
+            white-space: pre-line; /* 줄바꿈 적용 */
+        }
+        .word-display-section {
+            width: 100%;
+            max-width: 550px; /* Figma 기준 너비 */
+            display: flex;
+            flex-direction: column;
+            gap: 16px; /* 카드 사이 간격 */
+            margin-bottom: 32px;
+        }
+        .word-card {
+            background: #fff;
+            border-radius: 20px;
+            padding: 20px 32px; /* 내부 패딩 조정 */
+            box-shadow: 0px 2px 4px 0px rgba(0, 0, 0, 0.25);
+            position: relative; /* For label */
+            text-align: center; /* 기본 텍스트 중앙 정렬 */
+            min-height: 80px; /* 최소 높이 확보 */
+            display: flex;
+            flex-direction: column; /* 라벨과 내용 수직 배치 */
+            justify-content: center;
+        }
+        .word-card-label {
+            position: absolute;
+            top: 50%;
+            left: -100px; /* 라벨 위치 조정 */
+            transform: translateY(-50%);
+            font-family: 'Rubik', sans-serif;
+            font-size: 16px;
+            color: #C7C7C7;
+            width: 90px; /* 라벨 너비 고정 */
+            text-align: right;
+        }
+         /* 스페셜 카드 스타일 */
+        .key-words-card {
+            border-radius: 20px 20px 0 0;
+            padding-top: 25px; /* 키워드 카드 상단 패딩 증가 */
+            padding-bottom: 10px; /* 키워드 카드 하단 패딩 감소 */
+        }
+        .verbal-cue-card {
+            border: 1px dashed #C7C7C7; /* 점선 테두리 */
+            border-radius: 0; /* 중간 카드는 둥글림 없음 */
+            padding: 15px 32px;
+            text-align: left; /* 언어 큐는 왼쪽 정렬 */
+            box-shadow: none; /* 중간 카드 그림자 제거 */
+            border-top: none;
+            border-bottom: none;
+            line-height: 1.6; /* 줄 간격 */
+        }
+        .korean-meaning-card {
+            border-radius: 0 0 20px 20px;
+            padding-top: 10px; /* 의미 카드 상단 패딩 감소 */
+            padding-bottom: 25px; /* 의미 카드 하단 패딩 증가 */
+        }
+        .english-word-text {
+            font-family: 'Rubik', sans-serif;
+            font-size: 36px;
+            font-weight: 500;
+            color: #000;
+        }
+        .key-words-text {
+            font-family: 'BBTreeGo_R', sans-serif;
+            font-size: 20px;
+            color: #000;
+            display: inline-flex; /* 쉼표 포함 가로 배치 */
+            align-items: center;
+            gap: 8px;
+        }
+        .korean-meaning-text {
+             font-family: 'BBTreeG_B', sans-serif;
+             font-size: 30px;
+             color: #000;
+        }
+        .verbal-cue-text {
+             font-family: 'BBTreeGo_R', sans-serif;
+             font-size: 20px;
+             color: #000;
+        }
+        .footer-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .timer-text {
+            font-family: 'Rubik', sans-serif;
+            font-size: 16px;
+            color: #868686;
+        }
+         /* 임시 빈 화면 스타일 */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #fff; /* 흰색 배경 */
+            z-index: 9999; /* 다른 요소 위에 표시 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+    </style>
 </head>
 <body data-round-number="{{ round_number }}">
     <div id="root"></div>
+
+    <!-- React, ReactDOM, Ant Design, Icons, Moment -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@4.7.0/dist/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <!-- Common Components -->
+    <script src="/static/js/common_components.js" type="text/babel"></script>
+
+    <!-- Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+
     {% raw %}
     <script type="text/babel">
-      const { Layout, Menu, Button, Progress } = antd; // Added Progress
-      const { Header, Content, Footer } = Layout;
-      const roundNumber = document.body.getAttribute('data-round-number') || '1';
+        if (typeof window.MainLayout === 'undefined' || typeof window.BlueButton === 'undefined' ) {
+            console.error('Core components not loaded!');
+            ReactDOM.render(<div>Error: Core components failed to load.</div>, document.getElementById('root'));
+        } else {
+            const { Progress } = antd; // Import Progress
+            const { useState, useEffect, useRef } = React;
 
-      function LearningPage() {
-        // Placeholder state for timer and progress
-        const [timeLeft, setTimeLeft] = React.useState(30);
-        const [progressPercent, setProgressPercent] = React.useState(0);
-        const [word, setWord] = React.useState("Placeholder Word");
+            const roundNumber = document.body.getAttribute('data-round-number') || '1';
 
-        // TODO: Add timer logic, word loading, progress updates later
+            // --- 임시 단어 데이터 ---
+            const TEMP_WORDS_DATA = [
+                { englishWord: "upheaval", keyWords: "위로, 힙을", verbalCue: "강아지 꼬리가 접히지 않고 뻣뻣하여 수의사에게 데려갔지만 꼬리를 접을 수 in(없는). 즉 교정할 수 없는, 고질적인", koreanMeaning: "대변동, 격변" },
+                { englishWord: "ephemeral", keyWords: "이, 피머를", verbalCue: "이 피머를(femur, 넓적다리뼈) 잠시만 빌려줄 수 있나요? 금방 돌려드릴게요.", koreanMeaning: "수명이 짧은, 단명하는" },
+                { englishWord: "ubiquitous", keyWords: "유비, 쿼터스", verbalCue: "유비 형은 스마트폰을 네(쿼터, quarter) 개나 가지고 있어서 어디에나 있는 것처럼 연락이 잘된다.", koreanMeaning: "어디에나 있는" },
+                { englishWord: "conventional", keyWords: "큰 벤", verbalCue: "큰 벤(van)은 전통적이고 관습적인 디자인의 자동차이다.", koreanMeaning: "관습적인, 전통적인" },
+                { englishWord: "provocative", keyWords: "풀어, 보크", verbalCue: "야구에서 투수가 보크(balk)를 풀어서(일부러 저질러서) 타자를 도발하는", koreanMeaning: "도발적인" },
+                { englishWord: "reciprocal", keyWords: "니, 씨 뿌릴걸", verbalCue: "네(니) 씨(seed) 뿌릴 걸 후회한다. -> 상호간에 서로 주고 받는 관계였는데...", koreanMeaning: "상호간의" },
+                { englishWord: "discrepancy", keyWords: "디스, 그래 판씨", verbalCue: "너는 나를 디스(disrespect)하지만 그래 판씨(판단)는 내가 한다. -> 서로 의견 차이가 나는 상황.", koreanMeaning: "차이, 불일치" },
+                { englishWord: "precarious", keyWords: "풀에, 카 레이스", verbalCue: "풀밭에서 카 레이스를 하면 불안정하고 위태롭다.", koreanMeaning: "불안정한, 위태로운" },
+                { englishWord: "substantial", keyWords: "써브, 스텐", verbalCue: "테니스 서브(serve) 연습을 위해 세워놓은 스테인리스 판이 상당히 크고 튼튼하다.", koreanMeaning: "상당한, 실질적인" },
+                { englishWord: "corroborate", keyWords: "코로, 보 레이트", verbalCue: "코로 보(bow)를 밀어서(rate) 약속을 확증하다.", koreanMeaning: "확증하다" },
+                { englishWord: "inevitable", keyWords: "인애, 비터블", verbalCue: "인애(人愛)는 피할 수 없는 숙명이다.", koreanMeaning: "피할 수 없는" },
+                { englishWord: "ameliorate", keyWords: "아멜리, 오래", verbalCue: "영화 '아멜리에'는 오래된 문제를 개선하고 더 좋게 만들려는 주인공의 이야기다.", koreanMeaning: "개선하다, 더 좋게 하다" },
+            ];
 
-        return (
-          <Layout className="layout" style={{ minHeight: '100vh' }}>
-            <Header>
-              <Menu theme="dark" mode="horizontal">
-                <Menu.Item key={`learning-${roundNumber}`}>{`Round ${roundNumber} Learning`}</Menu.Item>
-              </Menu>
-            </Header>
-            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
-              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
-                <Progress percent={progressPercent} style={{ marginBottom: '20px' }} />
-                <h1>{word}</h1>
-                {/* TODO: Add audio player later */}
-                <p>Time Left: {timeLeft}s</p>
-                <Button type="primary" disabled={timeLeft > 15}>Next</Button>
-              </div>
-            </Content>
-            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
-          </Layout>
-        );
-      }
-      ReactDOM.render(<LearningPage />, document.getElementById('root'));
+            // --- Fisher-Yates Shuffle 함수 ---
+            function shuffleArray(array) {
+                let currentIndex = array.length, randomIndex;
+                while (currentIndex !== 0) {
+                    randomIndex = Math.floor(Math.random() * currentIndex);
+                    currentIndex--;
+                    [array[currentIndex], array[randomIndex]] = [
+                        array[randomIndex], array[currentIndex]];
+                }
+                return array;
+            }
+
+            function LearningPageContent() {
+                const [shuffledWords, setShuffledWords] = useState([]);
+                const [currentWordIndex, setCurrentWordIndex] = useState(0);
+                const [timeLeft, setTimeLeft] = useState(30);
+                const [isNextButtonEnabled, setIsNextButtonEnabled] = useState(false);
+                const [startTime, setStartTime] = useState(null);
+                const [isTransitioning, setIsTransitioning] = useState(false);
+                const [responses, setResponses] = useState([]); // { word: string, duration: number }[]
+                const timerRef = useRef(null); // 타이머 interval 참조
+
+                // --- 초기화 Effect ---
+                useEffect(() => {
+                    const shuffled = shuffleArray([...TEMP_WORDS_DATA]);
+                    setShuffledWords(shuffled);
+                    setCurrentWordIndex(0);
+                    setResponses([]); // 라운드 시작 시 응답 초기화
+                }, []);
+
+                // --- 타이머 및 단어 변경 Effect ---
+                 useEffect(() => {
+                    if (shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+                         // 단어가 없거나 모든 단어를 완료한 경우 타이머 중지
+                         if(timerRef.current) clearInterval(timerRef.current);
+                         return;
+                     }
+
+                    // 새로운 단어 시작 시 타이머 및 상태 초기화
+                    setTimeLeft(30);
+                    setIsNextButtonEnabled(false);
+                    setStartTime(Date.now()); // 단어 표시 시작 시간 기록
+
+                    // 이전 타이머 정리
+                    if (timerRef.current) {
+                      clearInterval(timerRef.current);
+                    }
+
+                    // 새 타이머 시작
+                    timerRef.current = setInterval(() => {
+                      setTimeLeft(prevTime => {
+                        if (prevTime <= 1) {
+                          clearInterval(timerRef.current);
+                          // 시간이 다 되면 자동으로 다음으로 (버튼 클릭과 동일 로직)
+                           handleNextClick(true); // isTimeout = true 전달
+                          return 0;
+                        }
+                        if (prevTime === 16) { // 15초 남았을 때 (즉, 15초 경과 후)
+                          setIsNextButtonEnabled(true);
+                        }
+                        return prevTime - 1;
+                      });
+                    }, 1000);
+
+                    // Cleanup 함수: 컴포넌트 언마운트 또는 단어 변경 시 타이머 정리
+                    return () => {
+                      if (timerRef.current) {
+                        clearInterval(timerRef.current);
+                      }
+                    };
+                  }, [currentWordIndex, shuffledWords]); // currentWordIndex나 shuffledWords가 변경될 때마다 실행
+
+                // --- 다음 버튼 클릭 핸들러 ---
+                const handleNextClick = (isTimeout = false) => {
+                     if (timerRef.current) clearInterval(timerRef.current); // 현재 타이머 중지
+
+                     const endTime = Date.now();
+                     const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0; // 초 단위로 계산
+                     const currentWord = shuffledWords[currentWordIndex];
+
+                     // 응답 저장 (콘솔 로깅으로 대체 가능)
+                     const newResponse = { word: currentWord.englishWord, duration: duration };
+                     setResponses(prev => [...prev, newResponse]);
+                     console.log("Response Recorded:", newResponse);
+
+                     // 다음 단어로 넘어가기 전 1초 딜레이
+                     setIsTransitioning(true);
+                     setTimeout(() => {
+                        if (currentWordIndex < shuffledWords.length - 1) {
+                            setCurrentWordIndex(prevIndex => prevIndex + 1);
+                             setIsTransitioning(false); // 다음 단어 표시 전 전환 상태 해제
+                        } else {
+                            // 마지막 단어 완료
+                            console.log("Learning phase complete. Responses:", responses); // 최종 응답 확인 (임시)
+                            window.location.href = `/round/${roundNumber}/recognition/start`; // 다음 단계로 이동
+                        }
+                     }, 1000);
+                 };
+
+
+                if (shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+                    // 단어 로딩 중이거나 완료된 경우 (필요시 로딩 표시 추가)
+                    return null; // 또는 로딩 스피너 등
+                }
+
+                const currentWordData = shuffledWords[currentWordIndex];
+                const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
+
+                return (
+                    <React.Fragment>
+                        {isTransitioning && <div className="transition-overlay"></div>} {/* 전환 오버레이 */}
+
+                        <div className="learning-content-wrapper">
+                            {/* 진행률 섹션 */}
+                            <div className="progress-section">
+                                <div className="progress-header">
+                                    <span>Round {roundNumber} | Learning</span>
+                                    <span>{currentWordIndex + 1} / {shuffledWords.length}</span>
+                                </div>
+                                <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
+                            </div>
+
+                            {/* 안내 문구 */}                            <div className="instruction-text">
+                                영어 단어의 발음과 주어진 문장을 연상하여,<br/>
+                                떠오르는 시각적인 장면을 상상해보세요.
+                            </div>
+
+                            {/* 단어 표시 섹션 */}                            <div className="word-display-section">
+                                {/* English Word */}                                <div className="word-card">
+                                    <span className="word-card-label">English Words</span>
+                                    <span className="english-word-text">{currentWordData.englishWord}</span>
+                                    {/* TODO: Add audio player here later */}                                </div>
+                                {/* Key Words, Verbal Cue, Korean Meaning */}                                <div className="word-card key-words-card">
+                                     <span className="word-card-label">Key Words</span>
+                                    <span className="key-words-text">{currentWordData.keyWords}</span>
+                                </div>
+                                <div className="word-card verbal-cue-card">
+                                     <span className="word-card-label">Verbal Cue</span>
+                                    <span className="verbal-cue-text">{currentWordData.verbalCue}</span>
+                                </div>
+                                <div className="word-card korean-meaning-card">
+                                     <span className="word-card-label">Korean Meaning</span>
+                                    <span className="korean-meaning-text">{currentWordData.koreanMeaning}</span>
+                                </div>
+                            </div>
+
+                            {/* 하단 섹션 (타이머, 버튼) */}                            <div className="footer-section">
+                                <span className="timer-text">{timeLeft}s</span>
+                                <window.BlueButton
+                                    text="Next"
+                                    onClick={() => handleNextClick(false)} // isTimeout = false 전달
+                                    disabled={!isNextButtonEnabled}
+                                />
+                            </div>
+                        </div>
+                    </React.Fragment>
+                );
+            }
+
+            // --- 최종 렌더링 ---
+            ReactDOM.render(
+                <window.MainLayout>
+                    <LearningPageContent />
+                </window.MainLayout>,
+                document.getElementById('root')
+            );
+        }
     </script>
     {% endraw %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
 </body>
 </html> 
