@@ -15,10 +15,11 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
 } else {
   console.log('Required libraries seem available. Proceeding...');
 
-  const { Layout, Menu, Button, Carousel, Row, Col } = antd;
+  const { Layout, Menu, Button, Carousel, Row, Col, Typography } = antd;
   const { Header, Content, Footer, Sider } = Layout;
   const { useState, useRef } = React;
   const { CheckCircleOutlined, ReadOutlined, ExperimentOutlined, FileTextOutlined } = icons;
+  const { Text } = Typography;
 
   // 아이콘 로드 추가 확인 (선택적)
   if (!icons || typeof icons.CheckCircleOutlined === 'undefined') {
@@ -130,6 +131,84 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
         >
             {text}
         </Button>
+    );
+  }
+
+  // --- 단계 시작 안내 페이지 공통 콘텐츠 컴포넌트 ---
+  window.PhaseStartContent = function PhaseStartContent({ roundNumber, phaseTitle, titleBackgroundColor, instructions, nextPageUrl }) {
+    const { Button, Typography } = antd;
+    const { Text } = Typography;
+
+    const handleNextClick = () => {
+        if (nextPageUrl) {
+            window.location.href = nextPageUrl;
+        }
+    };
+
+    // instruction 텍스트를 줄바꿈 기준으로 배열로 만듭니다.
+    const instructionLines = instructions.split('\n');
+
+    return (
+        <div className="phase-start-content" style={{ /* 스타일은 round_start.html의 것을 기반으로 하되, 일부 조정 가능 */
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            padding: '40px',
+            background: '#fff',
+            borderRadius: '8px',
+            maxWidth: '800px',
+            margin: 'auto',
+            textAlign: 'center'
+        }}>
+            {/* 단계 표시기 (round_start와 동일하게 유지) */}
+            <div className="step-indicator-box" style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '20px', marginBottom: '40px' }}>
+                <div className="step-indicator" style={{ backgroundColor: '#7C85AF', color: 'white', padding: '15px 25px', borderRadius: '10px', fontFamily: 'BBTreeG_B, sans-serif', fontSize: '22px', fontWeight: 'bold' }}>학습</div>
+                <span className="step-plus" style={{ fontFamily: 'BBTreeG_B, sans-serif', fontSize: '24px', fontWeight: 'bold', color: '#333' }}>+</span>
+                <div className="step-indicator" style={{ backgroundColor: '#78AD74', color: 'white', padding: '15px 25px', borderRadius: '10px', fontFamily: 'BBTreeG_B, sans-serif', fontSize: '22px', fontWeight: 'bold' }}>한국어 뜻 적기</div>
+                <span className="step-plus" style={{ fontFamily: 'BBTreeG_B, sans-serif', fontSize: '24px', fontWeight: 'bold', color: '#333' }}>+</span>
+                <div className="step-indicator" style={{ backgroundColor: '#C0B86C', color: 'white', padding: '15px 25px', borderRadius: '10px', fontFamily: 'BBTreeG_B, sans-serif', fontSize: '22px', fontWeight: 'bold' }}>영어 단어 적기</div>
+            </div>
+
+            {/* 제목 박스 (배경색은 prop으로 받음) */}
+            <div className="phase-title-box" style={{
+                backgroundColor: titleBackgroundColor || '#7C85AF', // 기본값 설정
+                color: 'white',
+                padding: '20px 40px',
+                borderRadius: '10px',
+                marginBottom: '30px',
+                fontFamily: 'BBTreeG_B, sans-serif',
+                fontSize: '36px',
+                fontWeight: 'bold',
+                display: 'inline-block'
+            }}>
+                [ {phaseTitle} ] 시작
+            </div>
+
+            {/* 안내 문구 (줄바꿈 처리) */}
+            <div className="phase-instructions" style={{
+                fontFamily: 'BBTreeGo_R, sans-serif',
+                fontSize: '20px',
+                lineHeight: 1.6,
+                color: '#333',
+                marginBottom: '40px',
+                textAlign: 'left',
+                whiteSpace: 'pre-line', // CSS로 줄바꿈 처리
+                width: '100%',
+                paddingLeft: '15%', // 들여쓰기 조정
+                boxSizing: 'border-box'
+            }}>
+                 {instructionLines.map((line, index) => (
+                    // 각 줄 앞에 불릿 포인트(•) 추가 (필요하다면)
+                    <React.Fragment key={index}>{line.startsWith('•') ? '' : '• '}{line}<br /></React.Fragment>
+                ))}
+            </div>
+
+            {/* 다음 버튼 */}
+            <window.BlueButton
+                text="Next"
+                onClick={handleNextClick}
+            />
+        </div>
     );
   }
 

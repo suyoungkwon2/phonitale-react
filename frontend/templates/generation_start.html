@@ -9,39 +9,45 @@
 </head>
 <body data-round-number="{{ round_number }}">
     <div id="root"></div>
+
+    <!-- React, ReactDOM, Ant Design, Icons, Moment -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@4.7.0/dist/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <!-- Common Components -->
+    <script src="/static/js/common_components.js" type="text/babel"></script>
+
+    <!-- Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+
     {% raw %}
     <script type="text/babel">
-      const { Layout, Menu, Button } = antd;
-      const { Header, Content, Footer } = Layout;
-      const roundNumber = document.body.getAttribute('data-round-number') || '1';
+        if (typeof window.MainLayout === 'undefined' || typeof window.PhaseStartContent === 'undefined') {
+            console.error('Core layout or PhaseStartContent component not loaded!');
+            ReactDOM.render(<div>Error: Core components failed to load.</div>, document.getElementById('root'));
+        } else {
+            const roundNumber = document.body.getAttribute('data-round-number') || '1';
 
-      function GenerationStartPage() {
-        return (
-          <Layout className="layout" style={{ minHeight: '100vh' }}>
-            <Header>
-              <Menu theme="dark" mode="horizontal">
-                <Menu.Item key={`generation-${roundNumber}-start`}>{`Round ${roundNumber} Generation Start`}</Menu.Item>
-              </Menu>
-            </Header>
-            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
-              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
-                <h1>{`Round ${roundNumber} - Generation Phase Start`}</h1>
-                <p>Instructions for the Generation phase of Round {roundNumber}.</p>
-                <Button type="primary">Next</Button>
-              </div>
-            </Content>
-            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
-          </Layout>
-        );
-      }
-      ReactDOM.render(<GenerationStartPage />, document.getElementById('root'));
+            // Define props for the Generation phase
+            const generationPhaseProps = {
+                roundNumber: roundNumber,
+                phaseTitle: "영어 단어 쓰기 테스트", // Figma 기준 타이틀
+                titleBackgroundColor: "#C0B86C", // Figma color
+                instructions: `답변 시간은 단어당 30초입니다.\n원할 때 다음 단어로 이동 가능하지만, 이전 단어로는 돌아갈 수 없습니다.`,
+                nextPageUrl: `/round/${roundNumber}/generation`
+            };
+
+            ReactDOM.render(
+                <window.MainLayout>
+                    <window.PhaseStartContent {...generationPhaseProps} />
+                </window.MainLayout>,
+                document.getElementById('root')
+            );
+        }
     </script>
     {% endraw %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
 </body>
 </html> 
