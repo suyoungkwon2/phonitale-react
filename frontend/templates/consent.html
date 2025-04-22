@@ -151,9 +151,11 @@
                     <Checkbox>동의합니다.</Checkbox>
                   </Form.Item>
                 <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}> {/* 버튼 오른쪽 정렬 */}
-                  <Button type="primary" htmlType="submit" disabled={!isSubmittable} size="large">
-                    Submit
-                  </Button>
+                  <window.BlueButton
+                    text="Submit"
+                    htmlType="submit"
+                    disabled={!isSubmittable}
+                   />
                 </Form.Item>
               </Form>
             </div>

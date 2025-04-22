@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Path
 from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -55,11 +55,18 @@ async def submit_consent(consent_data: ConsentData):
 
 @app.get("/instruction", response_class=HTMLResponse)
 async def get_instruction_page(request: Request):
-    return templates.TemplateResponse("instruction.html", {"request": request})
+    image_folder = "static/instructions"
+    # 이미지 파일 목록 생성 (여기서는 예시로 1.jpg부터 5.jpg까지)
+    # 실제 구현 시에는 폴더 내 파일을 동적으로 읽어오도록 수정 필요
+    image_files = [f"{i}.jpg" for i in range(1, 6)] # 예시 파일 목록
+    image_paths = [os.path.join("/", image_folder, f) for f in image_files]
+
+    # instruction.html 템플릿을 렌더링하고 request 객체와 이미지 경로 목록을 전달합니다.
+    return templates.TemplateResponse("instruction.html", {"request": request, "image_paths": image_paths})
 
 # Round specific routes using path parameters
 @app.get("/round/{round_number}/start", response_class=HTMLResponse)
-async def get_round_start_page(request: Request, round_number: int):
+async def get_round_start_page(request: Request, round_number: int = Path(..., title="The current round number", ge=1, le=3)):
     return templates.TemplateResponse("round_start.html", {"request": request, "round_number": round_number})
 
 @app.get("/round/{round_number}/learning/start", response_class=HTMLResponse)
