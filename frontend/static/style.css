@@ -1,1 +1,56 @@
-/* Basic styles can be added here later */ 
+/* Basic styles can be added here later */
+
+/* Common Layout Styles */
+.ant-layout-header {
+    background: #fff;
+    padding: 0 24px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+.logo {
+    /* Add styles for your logo */
+    font-size: 20px;
+    font-weight: bold;
+    color: #1890ff; /* Ant Design primary color */
+}
+.user-name {
+    /* Add styles for user name */
+}
+.ant-layout-sider {
+     background: #fdfdfd; /* Light background for sider */
+     border-right: 1px solid #f0f0f0;
+}
+.ant-menu-inline {
+    border-right: none;
+}
+.ant-menu-item {
+     margin-top: 8px;
+     margin-bottom: 8px;
+     height: 45px !important;
+     line-height: 45px !important;
+     border-radius: 5px;
+}
+.ant-menu-item::after {
+     border-right: none !important;
+}
+.ant-menu-item-selected {
+     background-color: #e6f7ff !important; /* Light blue for selected */
+     color: #1890ff !important;
+}
+.ant-menu-item .anticon {
+    margin-right: 10px; /* Space between icon and text */
+}
+.ant-menu-item .anticon + span {
+    vertical-align: middle;
+}
+ /* Custom styles for menu items based on Figma */
+.ant-menu-item-disabled {
+     background-color: #f5f5f5 !important;
+     color: rgba(0, 0, 0, 0.25) !important;
+     cursor: not-allowed;
+}
+.ant-menu:not(.ant-menu-horizontal) .ant-menu-item-selected {
+    border-left: 3px solid #1890ff; /* Blue left border for selected */
+} 

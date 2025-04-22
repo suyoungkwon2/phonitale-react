@@ -35,7 +35,7 @@
 1. **Consent 페이지**
     - Notion 페이지 임베딩. (Done)
     - 사용자 정보 입력 폼 구현. (Done)
-    - Submit 시 백엔드 API(Lambda)를 호출하여 정보 저장 및 타임스탬프 기록. (Frontend Logic Done, Backend API Endpoint Added - Lambda Integration Pending)
+    - [To Do] Submit 시 백엔드 API(Lambda)를 호출하여 정보 저장 및 타임스탬프 기록. (Frontend Logic Done, Backend API Endpoint Added - Lambda Integration Pending)
 2. **Instruction 페이지**:
     - 제공될 JPG 이미지들을 표시하고 넘길 수 있는 캐러셀 또는 유사 컴포넌트 구현.
 3. **Round 1 시작 안내 페이지**: 간단한 안내 문구 및 Start 버튼 구현.
