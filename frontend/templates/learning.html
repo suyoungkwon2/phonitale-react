@@ -152,6 +152,15 @@
         }
         */
 
+        /* Colored Underline Styles */
+        .underline-span {
+             display: inline-block; /* Allow border-bottom to show */
+             padding-bottom: 2px; /* Optional: Adjust space between text and underline */
+             border-bottom-width: 4px;
+             border-bottom-style: solid;
+             line-height: 1.1; /* Adjust line-height to prevent underline overlap with text below */
+        }
+
     </style>
 </head>
 <body data-round-number="{{ round_number }}">
@@ -180,24 +189,189 @@
             const { useState, useEffect, useRef } = React;
 
             const roundNumber = document.body.getAttribute('data-round-number') || '1';
-
-            // --- 임시 단어 데이터 ---
-            const TEMP_WORDS_DATA = [
-                { englishWord: "upheaval", keyWords: "위로, 힙을", verbalCue: "강아지 꼬리가 접히지 않고 뻣뻣하여 수의사에게 데려갔지만 꼬리를 접을 수 in(없는). 즉 교정할 수 없는, 고질적인", koreanMeaning: "대변동, 격변" },
-                { englishWord: "ephemeral", keyWords: "이, 피머를", verbalCue: "이 피머를(femur, 넓적다리뼈) 잠시만 빌려줄 수 있나요? 금방 돌려드릴게요.", koreanMeaning: "수명이 짧은, 단명하는" },
-                { englishWord: "ubiquitous", keyWords: "유비, 쿼터스", verbalCue: "유비 형은 스마트폰을 네(쿼터, quarter) 개나 가지고 있어서 어디에나 있는 것처럼 연락이 잘된다.", koreanMeaning: "어디에나 있는" },
-                { englishWord: "conventional", keyWords: "큰 벤", verbalCue: "큰 벤(van)은 전통적이고 관습적인 디자인의 자동차이다.", koreanMeaning: "관습적인, 전통적인" },
-                { englishWord: "provocative", keyWords: "풀어, 보크", verbalCue: "야구에서 투수가 보크(balk)를 풀어서(일부러 저질러서) 타자를 도발하는", koreanMeaning: "도발적인" },
-                { englishWord: "reciprocal", keyWords: "니, 씨 뿌릴걸", verbalCue: "네(니) 씨(seed) 뿌릴 걸 후회한다. -> 상호간에 서로 주고 받는 관계였는데...", koreanMeaning: "상호간의" },
-                { englishWord: "discrepancy", keyWords: "디스, 그래 판씨", verbalCue: "너는 나를 디스(disrespect)하지만 그래 판씨(판단)는 내가 한다. -> 서로 의견 차이가 나는 상황.", koreanMeaning: "차이, 불일치" },
-                { englishWord: "precarious", keyWords: "풀에, 카 레이스", verbalCue: "풀밭에서 카 레이스를 하면 불안정하고 위태롭다.", koreanMeaning: "불안정한, 위태로운" },
-                { englishWord: "substantial", keyWords: "써브, 스텐", verbalCue: "테니스 서브(serve) 연습을 위해 세워놓은 스테인리스 판이 상당히 크고 튼튼하다.", koreanMeaning: "상당한, 실질적인" },
-                { englishWord: "corroborate", keyWords: "코로, 보 레이트", verbalCue: "코로 보(bow)를 밀어서(rate) 약속을 확증하다.", koreanMeaning: "확증하다" },
-                { englishWord: "inevitable", keyWords: "인애, 비터블", verbalCue: "인애(人愛)는 피할 수 없는 숙명이다.", koreanMeaning: "피할 수 없는" },
-                { englishWord: "ameliorate", keyWords: "아멜리, 오래", verbalCue: "영화 '아멜리에'는 오래된 문제를 개선하고 더 좋게 만들려는 주인공의 이야기다.", koreanMeaning: "개선하다, 더 좋게 하다" },
+            const USER_GROUP = 'kss'; // 사용자 그룹 (임시로 kss 사용)
+            const CSV_PATH = '/static/words/words_data_test.csv';
+            const UNDERLINE_COLORS = [
+                'rgba(127, 151, 255, 0.7)', // 7F97FF with 70% opacity
+                'rgba(151, 218, 155, 0.7)', // 97DA9B with 70% opacity
+                'rgba(255, 186, 186, 0.7)', // FFBABA with 70% opacity
+                'rgba(226, 217, 138, 0.7)', // E2D98A with 70% opacity
+                'rgba(255, 185, 145, 0.7)', // FFB991 with 70% opacity
             ];
 
-            // --- Fisher-Yates Shuffle 함수 ---
+            // --- CSV 파서 --- 
+            function parseCSV(csvText) {
+                const lines = csvText.trim().split('\n');
+                if (lines.length < 2) return [];
+
+                // 헤더 파싱 (기존과 동일)
+                const headers = lines[0].split(',').map(h => h.trim());
+
+                const data = lines.slice(1).map(line => {
+                    const values = [];
+                    // 정규 표현식을 사용하여 따옴표로 묶인 필드 내의 쉼표는 무시하고 분리
+                    // 출처: https://stackoverflow.com/questions/11456850/split-a-string-by-commas-but-ignore-commas-within-double-quotes
+                     let currentMatch = '';
+                     let inQuotes = false;
+                     for (let i = 0; i < line.length; i++) {
+                         const char = line[i];
+                         if (char === '"' && (i === 0 || line[i-1] !== '\\')) { // 따옴표 처리 (이스케이프된 따옴표 무시)
+                            inQuotes = !inQuotes;
+                         } else if (char === ',' && !inQuotes) {
+                             values.push(currentMatch.trim().replace(/^"|"$/g, ''));
+                             currentMatch = '';
+                         } else {
+                             currentMatch += char;
+                         }
+                     }
+                     values.push(currentMatch.trim().replace(/^"|"$/g, '')); // 마지막 값 추가
+
+
+                    const entry = {};
+                    headers.forEach((header, index) => {
+                        if (values[index] !== undefined) {
+                             entry[header] = values[index];
+                         } else {
+                             entry[header] = ''; // 값이 없으면 빈 문자열 할당
+                             console.warn(`Missing value for header '${header}' in line: ${line}`);
+                         }
+                    });
+                    return entry;
+                });
+                return data;
+            }
+
+            // --- 인덱싱 문자열 파서 --- 
+            // 예: "{'대출이': '0:5', '많다': '5:9'}" -> [{key: "대출이", range: [0, 5]}, {key: "많다", range: [5, 9]}]
+            // 변경된 형식: "[{'key1': 's1:e1'}, {'key2': 's2:e2'}]" -> [{key: "key1", range: [s1, e1]}, ...]
+            function parseIndexingString(indexString) {
+                if (!indexString || typeof indexString !== 'string' || !indexString.startsWith('[')) {
+                    console.warn("Unexpected indexString format or empty:", indexString);
+                    return [];
+                }
+                const indices = [];
+                // 정규표현식을 사용하여 키와 값 추출 (따옴표 처리 포함)
+                const regex = /\{'([^\']+)':\s*'(\d+):(\d+)'\}/g;
+                let match;
+                while ((match = regex.exec(indexString)) !== null) {
+                     const key = match[1];
+                     const start = parseInt(match[2], 10);
+                     const end = parseInt(match[3], 10);
+                     if (!isNaN(start) && !isNaN(end)) {
+                         indices.push({ key: key, range: [start, end] });
+                     } else {
+                         console.warn(`Failed to parse range in indexString: ${match[0]}`);
+                     }
+                 }
+                 if (indices.length === 0 && indexString.length > 2) { // Check if string wasn't just "[]" but parsing failed
+                    console.warn("Could not parse any indices from non-empty string:", indexString);
+                 }
+                 return indices;
+             }
+            
+            // --- 밑줄 적용 렌더링 함수 --- 
+            function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
+                if (!word) return null;
+                // 인덱싱 정보가 없거나 빈 배열이면 그냥 단어 반환 (KeyWord의 경우도 처리)
+                if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
+                     // KeyWord이고 word가 배열이면 join해서 반환 (쉼표 등으로 구분된 경우)
+                     if (isKeyWord && Array.isArray(word)) return word.join(''); 
+                     return word; 
+                 }
+             
+                 let parts = [];
+                 let lastIndex = 0;
+                 let colorIndex = 0;
+ 
+                 // 인덱스 시작 위치를 기준으로 정렬 (겹치는 경우 처리 용이)
+                 const sortedIndices = [...indexingData].sort((a, b) => a.range[0] - b.range[0]);
+
+                sortedIndices.forEach(({ key, range }, groupIndex) => {
+                     // range가 없거나 유효하지 않은 경우 건너뛰기 (keyword 렌더링 시 range 없음)
+                     const [start, end] = range || [null, null]; 
+                     const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
+                     const style = {
+                         borderBottomColor: color,
+                         // borderBottomWidth: '4px', // Already set in CSS
+                         // borderBottomStyle: 'solid' // Already set in CSS
+                     };
+ 
+                     if (isKeyWord) {
+                         // Key Word 렌더링: word 문자열 내에서 key를 찾아 밑줄 적용
+                         let tempParts = [];
+                         let currentLastIndex = 0;
+                         const regex = new RegExp(key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g'); // Escape special regex chars
+                         let match;
+                         
+                         // parts 배열에 이전 텍스트 추가 (주의: 이 방식은 여러 키워드가 있을 때 복잡함)
+                         // -> 더 간단한 접근: 전체 문자열을 분할하고 각 부분에 스타일 적용
+                         // Reset parts for keyword rendering logic
+                         if (groupIndex === 0) parts = []; // 첫 번째 키워드에서만 초기화
+
+                         if (parts.length === 0 && lastIndex < word.length) {
+                             // 초기 텍스트 추가
+                              parts.push(word.substring(lastIndex, word.length));
+                         }
+
+                        // parts 배열을 순회하며 key에 해당하는 텍스트를 찾아 span으로 교체
+                         let newParts = [];
+                         parts.forEach(part => {
+                             if (typeof part === 'string') {
+                                 let subLastIndex = 0;
+                                 while ((match = regex.exec(part)) !== null) {
+                                     // Add text before the match
+                                     if (match.index > subLastIndex) {
+                                         newParts.push(part.substring(subLastIndex, match.index));
+                                     }
+                                     // Add the underlined match
+                                     newParts.push(<span key={`kw-${groupIndex}-${match.index}`} className="underline-span" style={style}>{match[0]}</span>);
+                                     subLastIndex = regex.lastIndex;
+                                 }
+                                 // Add remaining text
+                                 if (subLastIndex < part.length) {
+                                     newParts.push(part.substring(subLastIndex));
+                                 }
+                             } else {
+                                 // Already a React element (previous span), push as is
+                                 newParts.push(part);
+                             }
+                         });
+                         parts = newParts; // Update parts with the modified array
+                         // lastIndex 업데이트는 여기서는 불필요
+
+                     } else {
+                         // English Word 렌더링: range 부분만 밑줄
+                         if (start === null || end === null) return; // 유효한 range가 아니면 현재 반복 건너뛰기 (forEach는 return 사용)
+
+                        // Add the text before the current underlined part
+                        if (start > lastIndex) {
+                             parts.push(word.substring(lastIndex, start));
+                         }
+                          
+                         // Add the underlined part
+                         // 겹치는 경우 처리: 현재 start가 이전 lastIndex보다 작으면, 겹치는 부분 발생
+                         // 여기서는 단순하게 start부터 end까지만 그림 (이전 밑줄 위에 겹쳐 그려질 수 있음)
+                         if (start < lastIndex) {
+                             console.warn(`Overlapping range detected: [${start}, ${end}] overlaps with previous ending at ${lastIndex}`);
+                             // 겹치는 부분을 어떻게 처리할지 결정 필요 (예: 가장 긴 밑줄만?)
+                             // 일단은 그냥 그림
+                         }
+                         parts.push(<span key={`ew-${groupIndex}`} className="underline-span" style={style}>{word.substring(start, end)}</span>);
+                         // lastIndex 업데이트: 현재 끝점(end)과 이전 끝점(lastIndex) 중 더 큰 값 사용
+                         lastIndex = Math.max(lastIndex, end); 
+                     }
+                 });
+ 
+                 // Add the remaining part of the word (for English Word)
+                 if (!isKeyWord && lastIndex < word.length) {
+                     parts.push(word.substring(lastIndex));
+                 }
+              
+                return parts;
+            }
+
+
+            // Fisher-Yates Shuffle (기존 유지)
             function shuffleArray(array) {
                 let currentIndex = array.length, randomIndex;
                 while (currentIndex !== 0) {
@@ -210,24 +384,42 @@
             }
 
             function LearningPageContent() {
+                const [wordList, setWordList] = useState([]); // CSV 데이터 상태
                 const [shuffledWords, setShuffledWords] = useState([]);
                 const [currentWordIndex, setCurrentWordIndex] = useState(0);
                 const [timeLeft, setTimeLeft] = useState(30);
                 const [isNextButtonEnabled, setIsNextButtonEnabled] = useState(false);
                 const [startTime, setStartTime] = useState(null);
                 const [isTransitioning, setIsTransitioning] = useState(false);
-                const [responses, setResponses] = useState([]); // { word: string, duration: number }[]
-                const timerRef = useRef(null); // 타이머 interval 참조
+                const [responses, setResponses] = useState([]); 
+                const timerRef = useRef(null); 
 
-                // --- 초기화 Effect ---
+                // --- CSV 로드 및 초기화 Effect ---
                 useEffect(() => {
-                    const shuffled = shuffleArray([...TEMP_WORDS_DATA]);
-                    setShuffledWords(shuffled);
-                    setCurrentWordIndex(0);
-                    setResponses([]); // 라운드 시작 시 응답 초기화
-                }, []);
+                    fetch(CSV_PATH)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Network response was not ok');
+                            }
+                            return response.text();
+                        })
+                        .then(csvText => {
+                            const parsedData = parseCSV(csvText);
+                            console.log("Parsed CSV Data:", parsedData);
+                            setWordList(parsedData);
 
-                // --- 타이머 및 단어 변경 Effect ---
+                            const shuffled = shuffleArray([...parsedData]); // 기존 셔플 로직 활성화
+                            setShuffledWords(shuffled); // 전체 데이터 사용
+                            setCurrentWordIndex(0);
+                            setResponses([]); // 라운드 시작 시 응답 초기화
+                        })
+                        .catch(error => {
+                            console.error('Error fetching or parsing CSV:', error);
+                            // 오류 처리: 사용자에게 알림 등
+                        });
+                }, []); // 마운트 시 한 번만 실행
+
+                // --- 타이머 및 단어 변경 Effect (기존 유지) ---
                  useEffect(() => {
                     if (shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
                          // 단어가 없거나 모든 단어를 완료한 경우 타이머 중지
@@ -269,7 +461,7 @@
                     };
                   }, [currentWordIndex, shuffledWords]); // currentWordIndex나 shuffledWords가 변경될 때마다 실행
 
-                // --- 다음 버튼 클릭 핸들러 ---
+                // --- 다음 버튼 클릭 핸들러 (기존 유지) ---
                 const handleNextClick = (isTimeout = false) => {
                      if (timerRef.current) clearInterval(timerRef.current); // 현재 타이머 중지
 
@@ -304,6 +496,16 @@
 
                 const currentWordData = shuffledWords[currentWordIndex];
                 const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
+                
+                // 현재 그룹의 키워드와 인덱싱 정보 가져오기
+                const keywordKey = `keyword_${USER_GROUP}`;
+                const verbalCueKey = `verbal_cue_${USER_GROUP}`;
+                const keywordIndexingString = currentWordData[keywordKey]; 
+                const keywordIndices = parseIndexingString(keywordIndexingString);
+                // 실제 화면에 표시될 키워드 텍스트 (인덱싱 정보 제외)
+                 const displayKeyword = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : currentWordData[keywordKey];
+                 // Verbal cue는 kss 그룹 컬럼에서 직접 가져옴
+                const displayVerbalCue = currentWordData[verbalCueKey]; 
 
                 return (
                     <React.Fragment>
@@ -335,19 +537,27 @@
                             {/* 단어 표시 섹션 */}                            <div className="word-display-section">
                                 {/* English Word */}                                <div className="word-card english-word-card">
                                     <span className="word-card-label">English Words</span>
-                                    <span className="english-word-text">{currentWordData.englishWord}</span>
+                                    {/* 밑줄 렌더링 함수 사용 */}                                    
+                                    <span className="english-word-text">
+                                        {renderWordWithUnderlines(currentWordData.english_word, keywordIndices, false)}
+                                    </span>
                                 </div>
-                                {/* Key Words, Verbal Cue, Korean Meaning */}                                <div className="word-card key-words-card">
+                                {/* Key Words, Verbal Cue, Korean Meaning 그룹 */}                                <div className="word-card key-words-card">
                                      <span className="word-card-label">Key Words</span>
-                                    <span className="key-words-text">{currentWordData.keyWords}</span>
+                                    {/* 밑줄 렌더링 함수 사용 */}                                     
+                                    <span className="key-words-text">
+                                        {renderWordWithUnderlines(displayKeyword, keywordIndices, true)}
+                                    </span>
                                 </div>
                                 <div className="word-card verbal-cue-card">
                                      <span className="word-card-label">Verbal Cue</span>
-                                    <span className="verbal-cue-text">{currentWordData.verbalCue}</span>
+                                     {/* Verbal cue는 밑줄 없음 */}                                     
+                                    <span className="verbal-cue-text">{displayVerbalCue}</span>
                                 </div>
                                 <div className="word-card korean-meaning-card">
                                      <span className="word-card-label">Korean Meaning</span>
-                                    <span className="korean-meaning-text">{currentWordData.koreanMeaning}</span>
+                                     {/* Meaning은 밑줄 없음 */}                                     
+                                    <span className="korean-meaning-text">{currentWordData.meaning}</span>
                                 </div>
                             </div>
 
