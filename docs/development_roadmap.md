@@ -35,26 +35,27 @@
 1. **Consent 페이지**
     - Notion 페이지 임베딩. (Done)
     - 사용자 정보 입력 폼 구현. (Done)
-    - [To Do] Submit 시 백엔드 API(Lambda)를 호출하여 정보 저장 및 타임스탬프 기록. (Frontend Logic Done, Backend API Endpoint Added - Lambda Integration Pending)
-2. **Instruction 페이지**:
-    - 제공될 JPG 이미지들을 표시하고 넘길 수 있는 캐러셀 또는 유사 컴포넌트 구현.
-3. **Round 1 시작 안내 페이지**: 간단한 안내 문구 및 Start 버튼 구현.
-4. **Round 1 - Learning 시작 안내 페이지**: 안내 문구 및 Next 버튼 구현.
-5. **Round 1 - Learning 페이지**:
-    - CSV에서 단어 목록 로드 (초기에는 임시 데이터 사용 가능).
-    - 단어 랜덤 순서 표시 로직 구현.
-    - 타이머 (30초, 15초 후 Next 버튼 활성화) 구현.
-    - Ant Design Progress 컴포넌트를 사용한 진행률 표시줄 구현.
+    - Submit 시 백엔드 API(Lambda)를 호출하여 정보 저장 및 타임스탬프 기록. (Frontend Logic Done, Backend API Endpoint Added - Lambda Integration Pending)
+2. **Instruction 페이지 (Done)**:
+    - 제공될 JPG 이미지들을 표시하고 넘길 수 있는 캐러셀 또는 유사 컴포넌트 구현. (Done)
+3. **Round 1 시작 안내 페이지 (Done)**: 간단한 안내 문구 및 Start 버튼 구현. (Done)
+4. **Round 1 - Learning 시작 안내 페이지(Done)**: 안내 문구 및 Next 버튼 구현. (Done)
+5. **Round 1 - Learning 페이지 (Done)**:
+    - 임시 단어 목록(12개) 로드 및 표시. (Done)
+    - 단어 랜덤 순서 표시 로직 구현. (Done)
+    - 타이머 (30초 카운트다운, 15초 후 Next 버튼 활성화, 0초 시 자동 다음) 구현. (Done)
+    - Ant Design Progress 컴포넌트를 사용한 진행률(X / 12) 표시줄 구현. (Done)
     - (오디오 재생은 Phase 5에서 통합).
-    - 페이지 전환 시 1초 빈 화면 표시 및 타임스탬프 기록 (백엔드 API 호출).
-6. **Round 1 - Recognition 시작 안내 페이지**: 안내 문구 및 Next 버튼 구현.
+    - 페이지 전환 시 1초 빈 화면 표시 (메인 콘텐츠 영역만) 구현. (Done)
+    - 단어별 학습 시간 타임스탬프 기록 (콘솔 로깅). (Done)
+6. **Round 1 - Recognition 시작 안내 페이지(Done)**: 안내 문구 및 Next 버튼 구현. (Done)
 7. **Round 1 - Recognition Test 페이지**:
     - 영어 단어 표시.
     - Ant Design Input 컴포넌트를 사용한 한국어 뜻 입력 필드 구현.
     - 타이머 (30초, Next 버튼 항상 활성화) 구현.
     - Progress 컴포넌트 구현.
     - Next 버튼 클릭 시 응답 결과 및 타임스탬프 저장 (백엔드 API 호출).
-8. **Round 1 - Generation 시작 안내 페이지**: 안내 문구 및 Next 버튼 구현.
+8. **Round 1 - Generation 시작 안내 페이지(Done)**: 안내 문구 및 Next 버튼 구현.
 9. **Round 1 - Generation Test 페이지**:
     - 한국어 뜻 표시.
     - Ant Design Input 컴포넌트를 사용한 영어 단어 입력 필드 구현.
