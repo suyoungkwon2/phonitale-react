@@ -90,6 +90,14 @@
             font-size: 16px;
             color: #868686;
         }
+        /* Instruction text style (add this) */
+        .instruction-text {
+            font-family: 'BBTreeGo_R', sans-serif;
+            font-size: 20px;
+            color: #000;
+            text-align: center;
+            margin-bottom: 32px;
+        }
     </style>
 </head>
 <body data-round-number="{{ round_number }}">
@@ -289,7 +297,12 @@
                                      <span>Round {roundNumber} | Recognition</span>
                                      <span>{currentWordIndex + 1} / {shuffledWords.length}</span>
                                  </div>
-                                 <Progress percent={progressPercent} showInfo={false} strokeColor="#78AD74" /> {/* Green color for Recognition */}
+                                 <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" /> {/* Change to Primary Blue */}
+                            </div>
+
+                            {/* 안내 문구 추가 */}
+                            <div className="instruction-text">
+                                영어 단어를 보고, 한국어 뜻을 입력해주세요.
                             </div>
 
                              {/* Word Display Section (Figma based) */}
