@@ -6,41 +6,110 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <style>
+        /* Reusing styles from round_start.html, potentially move to style.css */
+        .survey-start-content { /* Adjusted class name */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            background: #fff;
+            border-radius: 8px;
+            text-align: center;
+            max-width: 800px;
+            margin: auto;
+        }
+        .survey-title-box { /* Adjusted class name */
+            background-color: #324496; /* Same dark blue as round start */
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            font-family: 'BBTreeG_B', sans-serif;
+            font-size: 36px;
+            font-weight: bold;
+            display: inline-block;
+        }
+        .survey-instructions { /* Adjusted class name */
+            font-family: 'BBTreeGo_R', sans-serif;
+            font-size: 20px;
+            line-height: 1.6;
+            color: #333;
+            margin-bottom: 40px;
+            white-space: pre-line;
+            text-align: left;
+            width: 100%;
+            padding-left: 20%; /* Adjust indent as needed based on Figma */
+            box-sizing: border-box;
+        }
+        /* Fonts would ideally be loaded globally in style.css or base template */
+    </style>
 </head>
 <body>
     <div id="root"></div>
+
+    <!-- React, ReactDOM, Ant Design, Icons, Moment -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/17.0.2/umd/react.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/17.0.2/umd/react-dom.production.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/dayjs/1.11.9/dayjs.min.js"></script>
+    <script src="https://unpkg.com/@ant-design/icons@4.7.0/dist/index.umd.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"></script>
+
+    <!-- Common Components -->
+    <script src="/static/js/common_components.js" type="text/babel"></script>
+
+    <!-- Babel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
+
     {% raw %}
     <script type="text/babel">
-      const { Layout, Menu, Button } = antd;
-      const { Header, Content, Footer } = Layout;
+        // Check if common components are loaded
+        if (typeof window.MainLayout === 'undefined' || typeof window.BlueButton === 'undefined') {
+            console.error('Core components not loaded!');
+            ReactDOM.render(<div>Error: Core components failed to load. Please check common_components.js</div>, document.getElementById('root'));
+        } else {
+            const { Button, Typography } = antd;
+            const { Text } = Typography;
 
-      function SurveyStartPage() {
-        return (
-          <Layout className="layout" style={{ minHeight: '100vh' }}>
-            <Header>
-              <Menu theme="dark" mode="horizontal">
-                <Menu.Item key="survey-start">Survey Start</Menu.Item>
-              </Menu>
-            </Header>
-            <Content style={{ padding: '0 50px', marginTop: '20px' }}>
-              <div className="site-layout-content" style={{ background: '#fff', padding: 24, minHeight: 280, textAlign: 'center' }}>
-                <h1>Survey Start</h1>
-                <p>Instructions for the final survey.</p>
-                <Button type="primary">Start Survey</Button>
-              </div>
-            </Content>
-            <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer>
-          </Layout>
-        );
-      }
-      ReactDOM.render(<SurveyStartPage />, document.getElementById('root'));
+            function SurveyStartContent() {
+                const handleStartClick = () => {
+                    window.location.href = '/survey'; // Navigate to the survey page
+                };
+
+                // Instructions based on Figma screenshot
+                const instructions = `• 모든 학습과 테스트가 완료되었습니다.
+• 이제 학습 중 제공된 키워드와 힌트 문장이 얼마나 도움이 되었는지 평가해 주세요.
+• 1~5점 척도로 선택해 주세요.
+  • 1점: 매우 불만족
+  • 5점: 매우 만족`;
+
+                return (
+                    <div className="survey-start-content"> {/* Adjusted class name */}
+                        <div className="survey-title-box"> {/* Adjusted class name */}
+                            학습 종료
+                        </div>
+                        <div className="survey-instructions"> {/* Adjusted class name */}
+                            {instructions}
+                        </div>
+                        {/* No step indicators needed here based on Figma */}
+                        <window.BlueButton
+                            text="Start"
+                            onClick={handleStartClick}
+                        />
+                    </div>
+                );
+            }
+
+            // Render the component within the MainLayout
+            ReactDOM.render(
+                <window.MainLayout>
+                    <SurveyStartContent />
+                </window.MainLayout>,
+                document.getElementById('root')
+            );
+        }
     </script>
     {% endraw %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
 </body>
 </html> 
