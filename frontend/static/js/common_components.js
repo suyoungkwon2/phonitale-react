@@ -44,7 +44,19 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
     }, []); // 빈 배열을 전달하여 마운트 시 한 번만 실행
 
     return (
-      <Header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
+      <Header style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          background: '#fff', 
+          borderBottom: '1px solid #f0f0f0',
+          // --- Fixed Header Styles ---
+          position: 'fixed', 
+          zIndex: 10, // Ensure header is above content
+          width: '100%',
+          top: 0 // Stick to the top
+          // --- End Fixed Header Styles ---
+       }}>
          {/* 로고 스타일은 CSS에서 관리하거나 필요시 여기에 인라인 스타일 추가 */}
          <div className="logo" style={{ color: '#000', fontWeight: 'bold', fontSize: '20px' }}>PHONITALE</div>
          <div className="user-name">{userName || 'User Name'}</div> {/* 상태값을 사용, 없으면 'User Name' 표시 */}
@@ -110,7 +122,18 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
     */
 
     return (
-      <Sider width={200} theme="light" style={{ background: '#fff' }}>
+      <Sider width={200} theme="light" style={{
+           background: '#fff',
+           // --- Fixed Sidebar Styles ---
+           overflow: 'auto', // Allow scrolling within sidebar if content overflows
+           height: '100vh', // Full viewport height
+           position: 'fixed',
+           left: 0,
+           top: 64, // Position below the fixed header (assuming header height is 64px)
+           bottom: 0,
+           zIndex: 9 // Below header but above content
+           // --- End Fixed Sidebar Styles ---
+       }}>
         {/* Steps 컴포넌트 사용, current prop은 여전히 유효 */}
         <Steps
           direction="vertical"
@@ -250,12 +273,25 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
 
   // --- 메인 레이아웃 컴포넌트 ---
   window.MainLayout = function MainLayout({ children }) { // 함수를 전역 스코프에 명시적으로 할당
+    const headerHeight = 64; // Define header height (adjust if needed)
+    const siderWidth = 200; // Define sidebar width
+
     return (
       <Layout className="layout" style={{ minHeight: '100vh' }}>
         <AppHeader />
-        <Layout>
+        <Layout style={{ 
+            // --- Adjust layout for fixed header/sidebar ---
+            paddingTop: headerHeight, // Add padding to account for fixed header
+            // --- End Adjust layout ---
+         }}>
           <AppSidebar />
-          <Layout style={{ padding: '24px 24px 24px' }}>
+          <Layout style={{ 
+              // --- Adjust content layout ---
+              padding: '24px 24px 24px',
+              marginLeft: siderWidth, // Add margin to account for fixed sidebar
+              minHeight: `calc(100vh - ${headerHeight}px)` // Ensure content area fills remaining height
+              // --- End Adjust content layout ---
+           }}>
             <Content>
               {children} {/* 페이지별 컨텐츠가 여기에 렌더링됩니다 */}
             </Content>
