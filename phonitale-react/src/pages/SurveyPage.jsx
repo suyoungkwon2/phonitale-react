@@ -175,14 +175,14 @@ const SurveyPage = () => {
 
         const currentWordData = wordList[currentWordIndex];
         const newResponse = {
-            word: currentWordData.english_word,
+            word: currentWordData.word,
             condition: USER_GROUP, // Add condition info
             usefulness: usefulnessRating,
             coherence: coherenceRating,
             timestamp: new Date().toISOString()
         };
         
-        const updatedResponses = { ...responses, [currentWordData.english_word]: newResponse };
+        const updatedResponses = { ...responses, [currentWordData.word]: newResponse };
         setResponses(updatedResponses);
         console.log("Survey Response Recorded:", newResponse);
 
@@ -210,8 +210,8 @@ const SurveyPage = () => {
     const progressPercent = Math.round(((currentWordIndex + 1) / wordList.length) * 100);
     const totalWordsDisplay = wordList.length;
 
-    const keywordKey = `keyword_${USER_GROUP}`;
-    const verbalCueKey = `verbal_cue_${USER_GROUP}`;
+    const keywordKey = `kss_keyword_refined`;
+    const verbalCueKey = `kss_verbal_cue`;
     const keywordIndexingString = currentWordData[keywordKey];
     const keywordIndices = parseIndexingString(keywordIndexingString);
     const displayKeyword = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : currentWordData[keywordKey];
@@ -222,8 +222,17 @@ const SurveyPage = () => {
     // --- Render Logic ---
     return (
         <MainLayout>
-            <div className="survey-content-wrapper" style={{ padding: '20px' }}>
-                {/* Progress Section */}                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
+            <div 
+                className="survey-content-wrapper" 
+                style={{ 
+                    padding: '20px', 
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
+                }}
+            >
+                {/* Progress Section */}                
+                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Survey</span>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {totalWordsDisplay}</span>
@@ -231,44 +240,78 @@ const SurveyPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
-                {/* Word Display Section */}                <div className="word-display-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '16px' }}>
+                {/* Word Display Section */}                
+                <div className="word-display-section" style={{ 
+                    width: '100%', 
+                    maxWidth: '550px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    marginBottom: '16px'
+                }}>
                      {/* Copied card structure from learning.html */}
-                     <div className="word-card english-word-card" style={{ /* styles */ }}>
-                         <span className="word-card-label" style={{ /* styles */ }}>English Words</span>
-                         <span className="english-word-text" style={{ /* styles */ }}>
-                             {renderWordWithUnderlines(currentWordData.english_word, keywordIndices, false)}
+                     <div className="word-card english-word-card" style={{
+                         background: '#fff', borderRadius: '20px', padding: '20px 32px', 
+                         boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
+                         position: 'relative', textAlign: 'center', minHeight: '80px', 
+                         display: 'flex', flexDirection: 'column', justifyContent: 'center', 
+                         marginBottom: '16px'
+                     }}>
+                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Words</span>
+                         <span className="english-word-text" style={{ fontFamily: 'Rubik', fontSize: '36px', fontWeight: 500, color: '#000', textAlign: 'center' }}>
+                             {renderWordWithUnderlines(currentWordData.word, keywordIndices, false)}
                          </span>
                      </div>
-                     <div className="word-card key-words-card" style={{ /* styles */ }}>
-                          <span className="word-card-label" style={{ /* styles */ }}>Key Words</span>
-                          <span className="key-words-text" style={{ /* styles */ }}>
+                     <div className="word-card key-words-card" style={{
+                         background: '#fff', borderRadius: '20px 20px 0 0', padding: '25px 32px 10px',
+                         boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
+                         position: 'relative', textAlign: 'center', minHeight: '80px', 
+                         display: 'flex', flexDirection: 'column', justifyContent: 'center', 
+                         marginBottom: '-1px', borderBottom: 'none'
+                     }}>
+                          <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Key Words</span>
+                          <span className="key-words-text" style={{ fontFamily: 'BBTreeGo_R', fontSize: '20px', color: '#000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px', textAlign: 'center' }}>
                               {renderWordWithUnderlines(displayKeyword, keywordIndices, true)}
                           </span>
                      </div>
-                     <div className="word-card verbal-cue-card" style={{ /* styles */ }}>
-                          <span className="word-card-label" style={{ /* styles */ }}>Verbal Cue</span>
-                          <span className="verbal-cue-text" style={{ /* styles */ }}>{displayVerbalCue}</span>
+                     <div className="word-card verbal-cue-card" style={{
+                         background: '#fff', padding: '15px 32px',
+                         boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
+                         position: 'relative', textAlign: 'center', minHeight: '80px', 
+                         display: 'flex', flexDirection: 'column', justifyContent: 'center', 
+                         borderTop: '1px dashed #C7C7C7', borderBottom: '1px dashed #C7C7C7', borderRadius: 0, lineHeight: 1.6, 
+                         marginBottom: '-1px'
+                     }}>
+                          <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Verbal Cue</span>
+                          <span className="verbal-cue-text" style={{ fontFamily: 'BBTreeGo_R', fontSize: '20px', color: '#000', lineHeight: 1.6, textAlign: 'center' }}>{displayVerbalCue}</span>
                      </div>
-                     <div className="word-card korean-meaning-card" style={{ /* styles */ }}>
-                          <span className="word-card-label" style={{ /* styles */ }}>Korean Meaning</span>
-                          <span className="korean-meaning-text" style={{ /* styles */ }}>{currentWordData.meaning}</span>
+                     <div className="word-card korean-meaning-card" style={{
+                         background: '#fff', borderRadius: '0 0 20px 20px', padding: '10px 32px 25px',
+                         boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
+                         position: 'relative', textAlign: 'center', minHeight: '80px', 
+                         display: 'flex', flexDirection: 'column', justifyContent: 'center',
+                         borderTop: 'none'
+                     }}>
+                          <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Korean Meaning</span>
+                          <span className="korean-meaning-text" style={{ fontFamily: 'BBTreeGo_R', fontSize: '30px', color: '#000', textAlign: 'center' }}>{currentWordData.meaning}</span>
                      </div>
                  </div>
 
-                {/* Rating Section */}                <div className="rating-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '32px' }}>
-                    <div className="rating-card" style={{ /* card styles */ marginBottom: '16px' }}>
-                        <span className="word-card-label" style={{ /* label styles */ }}>Usefulness</span>
-                        <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 학습에 얼마나 도움이 되었나요?</div>
+                {/* Rating Section */}                
+                <div className="rating-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '32px' }}>
+                    <div className="rating-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
+                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Usefulness</span>
+                        <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 학습에 얼마나 도움이 되었나요?</div>
                         <Rate allowHalf={false} count={5} value={usefulnessRating} onChange={setUsefulnessRating} style={{ fontSize: '28px' }} />
                     </div>
-                    <div className="rating-card" style={{ /* card styles */ }}>
-                        <span className="word-card-label" style={{ /* label styles */ }}>Coherence</span>
-                        <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 얼마나 명확하고 자연스러웠나요?</div>
+                    <div className="rating-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
+                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Coherence</span>
+                        <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 얼마나 명확하고 자연스러웠나요?</div>
                         <Rate allowHalf={false} count={5} value={coherenceRating} onChange={setCoherenceRating} style={{ fontSize: '28px' }} />
                     </div>
                 </div>
 
-                {/* Footer Section */}                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                {/* Footer Section */}                
+                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <BlueButton
                         text="Next"
                         onClick={handleNextClick}

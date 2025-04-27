@@ -1,5 +1,7 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
+import { Spin, Layout } from 'antd';
+import { useExperiment } from './context/ExperimentContext';
 
 // Import Page Components
 import ConsentPage from './pages/ConsentPage';
@@ -18,6 +20,16 @@ import EndPage from './pages/EndPage';
 // import MainLayout from './components/MainLayout'; 
 
 function App() {
+  const { isLoadingWords } = useExperiment();
+
+  if (isLoadingWords) {
+    return (
+      <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <Spin size="large" />
+      </Layout>
+    );
+  }
+
   return (
     <Routes>
       {/* Main experiment flow routes - assuming MainLayout is applied within each page */}

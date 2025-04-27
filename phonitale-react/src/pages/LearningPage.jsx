@@ -3,6 +3,7 @@ import { Progress, Spin } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
+import { useExperiment } from '../context/ExperimentContext';
 
 // --- Helper Functions (from original script) ---
 // CSV Parser
@@ -41,7 +42,7 @@ function parseIndexingString(indexString) {
         return [];
     }
     const indices = [];
-    const regex = /\{'([^\']+)':\s*'(\d+):(\d+)'\}/g;
+    const regex = /\{\'([^\']+)\':\s*\'(\d+):(\d+)\'\}/g;
     let match;
     while ((match = regex.exec(indexString)) !== null) {
         const key = match[1];
@@ -142,44 +143,33 @@ function shuffleArray(array) {
 const LearningPage = () => {
     const { roundNumber } = useParams();
     const navigate = useNavigate();
-    const [wordList, setWordList] = useState([]);
+    const { wordList, isLoadingWords } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [isNextButtonEnabled, setIsNextButtonEnabled] = useState(false);
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
-    const [responses, setResponses] = useState([]); // To store timing responses
+    const [responses, setResponses] = useState([]);
     const timerRef = useRef(null);
 
     const USER_GROUP = 'kss'; // TODO: Make this dynamic if needed
-    const CSV_PATH = '/words/words_data_test.csv'; // Assuming CSV is in /public/words/
 
-    // Load and Shuffle Words
     useEffect(() => {
-        setIsLoading(true);
-        fetch(CSV_PATH)
-            .then(response => response.ok ? response.text() : Promise.reject('Network error'))
-            .then(csvText => {
-                const parsedData = parseCSV(csvText);
-                setWordList(parsedData);
-                const shuffled = shuffleArray([...parsedData]);
-                setShuffledWords(shuffled);
-                setCurrentWordIndex(0);
-                setResponses([]);
-                setIsLoading(false);
-            })
-            .catch(error => {
-                console.error('Error fetching/parsing CSV:', error);
-                setIsLoading(false);
-                // TODO: Show error message to user
-            });
-    }, [roundNumber]); // Re-fetch if roundNumber changes? (Likely not needed if words are same across rounds)
+        if (!isLoadingWords && wordList.length > 0) {
+            console.log("Global word list loaded in LearningPage, shuffling...");
+            const shuffled = shuffleArray([...wordList]);
+            setShuffledWords(shuffled);
+            setCurrentWordIndex(0);
+            setResponses([]);
+        } else if (!isLoadingWords && wordList.length === 0) {
+            console.error("Word list is empty after loading.");
+            // TODO: Show error message to user
+        }
+    }, [wordList, isLoadingWords, roundNumber]);
 
-    // Timer and Word Transition Logic
     useEffect(() => {
-        if (isLoading || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+        if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) clearInterval(timerRef.current);
             return;
         }
@@ -206,9 +196,8 @@ const LearningPage = () => {
         }, 1000);
 
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [currentWordIndex, shuffledWords, isLoading]);
+    }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
-    // Next Button Handler
     const handleNextClick = (isTimeout = false) => {
         if (timerRef.current) clearInterval(timerRef.current);
 
@@ -220,7 +209,7 @@ const LearningPage = () => {
         const newResponse = { 
             round: roundNumber,
             phase: 'learning', 
-            word: currentWord.english_word,
+            word: currentWord.word,
             duration: duration,
             timestamp: new Date().toISOString() 
         };
@@ -242,7 +231,7 @@ const LearningPage = () => {
         }, 500); // Shorter transition time
     };
 
-    if (isLoading) {
+    if (isLoadingWords && shuffledWords.length === 0) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
@@ -254,8 +243,8 @@ const LearningPage = () => {
     const currentWordData = shuffledWords[currentWordIndex];
     const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
 
-    const keywordKey = `keyword_${USER_GROUP}`;
-    const verbalCueKey = `verbal_cue_${USER_GROUP}`;
+    const keywordKey = `kss_keyword_refined`;
+    const verbalCueKey = `kss_verbal_cue`;
     const keywordIndices = parseIndexingString(currentWordData[keywordKey]);
     const displayKeyword = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : currentWordData[keywordKey];
     const displayVerbalCue = currentWordData[verbalCueKey];
@@ -267,11 +256,15 @@ const LearningPage = () => {
                 className="learning-content-wrapper" 
                 style={{ 
                     opacity: isTransitioning ? 0 : 1, 
-                    transition: 'opacity 0.3s ease-in-out', // Smooth transition
-                    padding: '20px' // Add some padding
+                    transition: 'opacity 0.3s ease-in-out',
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
                 }}
             >
-                {/* Progress Section */}                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
+                {/* Progress Section */}                
+                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Round {roundNumber} | Learning</span>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {shuffledWords.length}</span>
@@ -279,24 +272,25 @@ const LearningPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
-                {/* Instruction Text */}                <div className="instruction-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', textAlign: 'center', marginBottom: '32px', whiteSpace: 'pre-line' }}>
+                {/* Instruction Text */}                
+                <div className="instruction-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', textAlign: 'center', marginBottom: '32px', whiteSpace: 'pre-line' }}>
                     영어 단어의 발음과 주어진 문장을 연상하여,<br/>
                     떠오르는 시각적인 장면을 상상해보세요.
                 </div>
 
-                {/* Word Display Section */}                <div className="word-display-section" style={{ 
+                {/* Word Display Section */}                
+                <div className="word-display-section" style={{ 
                     width: '100%', 
                     maxWidth: '550px', 
                     display: 'flex', 
                     flexDirection: 'column', 
                     marginBottom: '32px',
-                    margin: '0 auto'
                 }}>
                     {/* Base Card Style */}                    
                     <div className="word-card english-word-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Words</span>
                         <span className="english-word-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '36px', fontWeight: 500, color: '#000' }}>
-                            {renderWordWithUnderlines(currentWordData.english_word, keywordIndices, false)}
+                            {renderWordWithUnderlines(currentWordData.word, keywordIndices, false)}
                         </span>
                     </div>
                      <div className="word-card key-words-card" style={{ background: '#fff', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: '20px 20px 0 0', paddingTop: '25px', paddingBottom: '10px' }}>
@@ -315,7 +309,8 @@ const LearningPage = () => {
                     </div>
                 </div>
 
-                {/* Footer Section */}                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                {/* Footer Section */}                
+                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <span className="timer-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{timeLeft}s</span>
                     <BlueButton
                         text="Next"
@@ -324,7 +319,7 @@ const LearningPage = () => {
                     />
                 </div>
 
-                 {/* Underline CSS - ideally move to a CSS file */}                 
+                 {/* Underline CSS */}                 
                  <style>{`
                     .underline-span {
                          display: inline-block;
