@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Progress, Input, Spin } from 'antd';
+import { Progress, Input, Spin, message } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
+import { submitResponse } from '../utils/api';
 
 // --- Helper Functions (제거 또는 이동 필요) ---
 // parseCSV 및 shuffleArray 제거
@@ -24,145 +25,121 @@ const GenerationPage = () => {
     const { roundNumber: roundNumberStr } = useParams();
     const navigate = useNavigate();
     const { wordList: wordsByRound, isLoadingWords } = useExperiment();
-    const [shuffledWords, setShuffledWords] = useState([]);
+    const [wordsForRound, setWordsForRound] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
+    const [userInput, setUserInput] = useState('');
     const [timeLeft, setTimeLeft] = useState(30);
-    const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [userAnswer, setUserAnswer] = useState(""); 
-    const [responses, setResponses] = useState([]);
     const timerRef = useRef(null);
-    const inputRef = useRef(null); 
-
-    const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses';
+    const timestampInRef = useRef(null);
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
-            const wordsForCurrentRound = wordsByRound[roundNumber] || [];
-            console.log(`GenerationPage Round ${roundNumber}: Loaded ${wordsForCurrentRound.length} words.`);
-            
-            if (wordsForCurrentRound.length > 0) {
-                const shuffled = shuffleArray([...wordsForCurrentRound]);
-                setShuffledWords(shuffled);
-            } else {
-                setShuffledWords([]);
-                console.warn(`No words found for round ${roundNumber}`);
-            }
-            setCurrentWordIndex(0);
-            setResponses([]);
-            setUserAnswer("");
+            const words = wordsByRound[roundNumber] || [];
+            console.log(`GenerationPage Round ${roundNumber}: Loaded ${words.length} words.`);
+            setWordsForRound(words);
         } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
-            console.error("Word list object is empty after loading.");
-            setShuffledWords([]);
+            console.error("GenerationPage: Word list object is empty after loading.");
+            setWordsForRound([]);
         }
+        setCurrentWordIndex(0);
     }, [wordsByRound, isLoadingWords, roundNumber]);
 
     useEffect(() => {
-        if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+        if (isLoadingWords || wordsForRound.length === 0 || currentWordIndex >= wordsForRound.length) {
             if (timerRef.current) clearInterval(timerRef.current);
             return;
         }
 
+        timestampInRef.current = new Date().toISOString();
+        console.log(`GenerationPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
+
+        setUserInput('');
         setTimeLeft(30);
-        setStartTime(Date.now());
-        setUserAnswer("");
-        if (inputRef.current) inputRef.current.focus();
 
         if (timerRef.current) clearInterval(timerRef.current);
-
         timerRef.current = setInterval(() => {
             setTimeLeft(prevTime => {
                 if (prevTime <= 1) {
                     clearInterval(timerRef.current);
-                    handleNextClick(true); // Timeout
+                    handleNextClick(true);
                     return 0;
                 }
                 return prevTime - 1;
             });
         }, 1000);
 
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [currentWordIndex, shuffledWords, isLoadingWords]);
-
-    const submitResponses = async (finalResponses) => {
-        const userId = sessionStorage.getItem('userName') || 'unknown_user'; 
-        const payload = {
-            userId: userId,
-            round: roundNumber,
-            phase: 'generation',
-            responses: finalResponses
+        return () => {
+            if (timerRef.current) clearInterval(timerRef.current);
         };
-        console.log("Submitting responses:", payload);
-        try {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-            if (response.ok) {
-                console.log('Responses submitted successfully');
-            } else {
-                console.error('Failed to submit responses:', response.status, await response.text());
-            }
-        } catch (error) {
-            console.error('Error submitting responses:', error);
-        }
-    };
+    }, [currentWordIndex, wordsForRound, isLoadingWords]);
 
-    const handleNextClick = (isTimeout = false) => {
+    const handleNextClick = async (isTimeout = false) => {
         if (timerRef.current) clearInterval(timerRef.current);
-
-        const endTime = Date.now();
-        const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
-        const currentWordData = shuffledWords[currentWordIndex];
-        const formattedAnswer = userAnswer.trim().toLowerCase();
-        const correctAnswer = currentWordData.word.trim().toLowerCase();
-
-        const newResponse = {
-            meaning: currentWordData.meaning,
-            word: currentWordData.word,
-            answer: formattedAnswer,
-            is_correct: formattedAnswer === correctAnswer,
-            duration: duration,
-            isTimeout: isTimeout,
-            timestamp: new Date().toISOString()
-        };
-        const updatedResponses = [...responses, newResponse];
-        setResponses(updatedResponses);
-        console.log("Generation Response Recorded:", newResponse);
-
         setIsTransitioning(true);
-        setTimeout(() => {
-            if (currentWordIndex < shuffledWords.length - 1) {
-                setCurrentWordIndex(prevIndex => prevIndex + 1);
-                setIsTransitioning(false);
-            } else {
-                console.log(`Generation Round ${roundNumber} Complete. Responses:`, updatedResponses);
-                submitResponses(updatedResponses);
 
-                if (roundNumber < 3) {
-                    navigate(`/round/${roundNumber + 1}/learning/start`);
+        const timestampOut = new Date().toISOString();
+        const timestampIn = timestampInRef.current;
+        const currentWord = wordsForRound[currentWordIndex];
+        const userId = sessionStorage.getItem('userId');
+        let duration = null;
+        if (timestampIn && timestampOut) {
+            try { duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000); } catch (e) { /*...*/ }
+        }
+
+        console.log(`Generation Word: ${currentWord?.meaning}, User Input: ${userInput}, Duration: ${duration}s, Timeout: ${isTimeout}`);
+
+        if (!userId) {
+            console.error("User ID not found!");
+            setIsTransitioning(false);
+            return;
+        }
+
+        try {
+            const responseData = {
+                user: userId,
+                english_word: currentWord.word,
+                round_number: roundNumber,
+                page_type: 'generation',
+                timestamp_in: timestampIn,
+                timestamp_out: timestampOut,
+                duration: duration,
+                response: userInput || null,
+            };
+            await submitResponse(responseData);
+            console.log("Generation response submitted for:", currentWord.meaning);
+        } catch (error) {
+            console.error("Failed to submit generation response:", error);
+            message.error(`Failed to save response: ${error.message}`);
+        } finally {
+            setTimeout(() => {
+                if (currentWordIndex < wordsForRound.length - 1) {
+                    setCurrentWordIndex(prevIndex => prevIndex + 1);
+                    setIsTransitioning(false);
                 } else {
-                    navigate('/survey/start');
+                    console.log(`Generation Round ${roundNumber} Complete.`);
+                    if (roundNumber < 3) {
+                        navigate(`/round/${roundNumber + 1}/start`);
+                    } else {
+                        navigate('/survey/start');
+                    }
                 }
-            }
-        }, 500);
+            }, 300);
+        }
     };
 
     if (isLoadingWords) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
-    if (shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+    if (wordsForRound.length === 0 || currentWordIndex >= wordsForRound.length) {
         return <MainLayout><div>No words for this round or loading error.</div></MainLayout>;
     }
 
-    const currentWordData = shuffledWords[currentWordIndex];
-    const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
+    const currentWordData = wordsForRound[currentWordIndex];
+    const progressPercent = Math.round(((currentWordIndex + 1) / wordsForRound.length) * 100);
 
     return (
         <MainLayout>
@@ -181,7 +158,7 @@ const GenerationPage = () => {
                 <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Round {roundNumber} | Generation Test</span>
-                        <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {shuffledWords.length}</span>
+                        <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {wordsForRound.length}</span>
                     </div>
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
@@ -203,10 +180,9 @@ const GenerationPage = () => {
                      <div className="word-card input-card" style={{ background: '#fff', borderRadius: '20px', padding: '25px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Word</span>
                         <Input
-                            ref={inputRef}
                             placeholder="Enter English word"
-                            value={userAnswer}
-                            onChange={(e) => setUserAnswer(e.target.value)}
+                            value={userInput}
+                            onChange={(e) => setUserInput(e.target.value)}
                             className="english-input"
                             size="large"
                             bordered={false}

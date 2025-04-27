@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Layout, Form, Input, Button, Checkbox, Row, Col, Typography, Alert } from 'antd';
+import { Layout, Form, Input, Button, Checkbox, Row, Col, Typography, Alert, message } from 'antd';
 import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위해 사용
-import axios from 'axios'; // axios 임포트
 import BlueButton from '../components/BlueButton';
 import MainLayout from '../components/MainLayout'; // MainLayout import
 import { useExperiment } from '../context/ExperimentContext'; // useExperiment 훅 임포트
+import { submitConsent } from '../utils/api'; // API 유틸리티 임포트
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Link } = Typography;
 
 const ConsentPage = () => {
   const [form] = Form.useForm();
@@ -15,6 +15,7 @@ const ConsentPage = () => {
   const [error, setError] = useState(null); // 에러 상태 추가
   const navigate = useNavigate(); // Hook for navigation
   const { setUserId } = useExperiment(); // setUserId 함수 가져오기
+  const notionEmbedUrl = "https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1";
 
   // Watch form values to enable/disable submit button
   const values = Form.useWatch([], form);
@@ -35,35 +36,27 @@ const ConsentPage = () => {
 
   const onFinish = async (formData) => {
     console.log('Received values of form: ', formData);
-    // API 엔드포인트 URL (API Gateway 호출 URL + 경로)
-    const apiUrl = 'https://wstvol0isg.execute-api.us-east-2.amazonaws.com/dev/consent';
-
     setIsLoading(true); // 로딩 시작
     setError(null); // 이전 에러 초기화
 
     try {
-      const payload = {
+      const consentData = {
         name: formData.name,
         phone: formData.phone,
         email: formData.email,
         consent_agreed: formData.agree
       };
-      console.log('Sending payload:', payload);
+      console.log('Sending consent data:', consentData);
 
-      const response = await axios.post(apiUrl, payload, {
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
+      const response = await submitConsent(consentData);
 
-      console.log('Consent submitted successfully:', response.data);
+      console.log('Consent submitted successfully:', response);
 
       // 응답 데이터에서 userId 같은 식별자 처리 (백엔드 응답 형식 확인 필요)
-      // 예시: 백엔드가 { userId: 'some-unique-id' } 형태로 응답한다고 가정
-      if (response.data && response.data.userId) {
-        setUserId(response.data.userId); // 전역 상태 업데이트
-        sessionStorage.setItem('userId', response.data.userId); // 세션 스토리지에도 저장 (백업/새로고침 대비)
-        console.log('Global userId set:', response.data.userId);
+      if (response && response.userId) {
+        setUserId(response.userId); // 전역 상태 업데이트
+        sessionStorage.setItem('userId', response.userId); // 세션 스토리지에도 저장 (백업/새로고침 대비)
+        console.log('Global userId set:', response.userId);
       } else {
         // userId가 응답에 없다면 임시 ID 생성 또는 다른 처리 방식 고려
         console.warn('userId not found in response, proceeding without setting global userId.');
@@ -71,6 +64,8 @@ const ConsentPage = () => {
 
       // sessionStorage에 사용자 이름 저장 (기존과 동일)
       sessionStorage.setItem('userName', formData.name);
+      sessionStorage.setItem('userEmail', formData.email); // email 저장
+      sessionStorage.setItem('consentTimestamp', response.consentTimestamp); // 시작 timestamp 저장
       navigate('/instruction'); // 다음 페이지로 이동
 
     } catch (err) {
@@ -97,9 +92,25 @@ const ConsentPage = () => {
     }
   };
 
+  const onFinishFailed = (errorInfo) => {
+    console.log('Failed:', errorInfo);
+    message.error('Please fill in all required fields and agree to the consent.');
+  };
+
+  // 브라우저 뒤로가기 방지
+  useEffect(() => {
+    const preventGoBack = () => {
+      history.pushState(null, "", location.href);
+      console.log("Prevented back navigation on Consent Page.");
+    };
+    history.pushState(null, "", location.href);
+    window.addEventListener("popstate", preventGoBack);
+    return () => window.removeEventListener("popstate", preventGoBack);
+  }, []);
+
   return (
     <MainLayout> {/* MainLayout으로 감싸기 */}
-        <div className="site-layout-content" style={{ background: '#fff', padding: '40px', borderRadius: '8px', width: '100%', margin: 'auto' }}>
+        <div className="site-layout-content" style={{ background: '#fff', padding: '40px', borderRadius: '8px', width: '100%', maxWidth: '800px', margin: 'auto' }}>
             <Row justify="center" style={{ marginBottom: '24px' }}>
                <Col>
                   <div style={{ backgroundColor: '#394A7F', color: 'white', padding: '16px 24px', borderRadius: '8px', textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }}>
@@ -108,22 +119,34 @@ const ConsentPage = () => {
                </Col>
             </Row>
 
-            <Paragraph>실험에 참여해 주셔서 감사합니다. 아래 링크에서 참가 동의서를 읽고 서명해 주세요.</Paragraph>
-            <Paragraph>※ 동의하지 않으면 실험에 참여하실 수 없습니다.</Paragraph>
-
-            {/* Notion Embed */}
-            <div style={{ border: '1px solid #d9d9d9', borderRadius: '2px', padding: '20px', marginBottom: '24px', backgroundColor: '#fafafa' }}>
-               <iframe src="https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1" width="100%" height="400px" frameBorder="0" allowFullScreen style={{display: 'block', margin: 'auto'}}></iframe>
+            <Paragraph style={{ textAlign: 'center', marginBottom: '20px' }}>
+                실험에 참여해 주셔서 감사합니다.<br />
+                아래 내용의 참가 동의서를 주의 깊게 읽어주세요.
+            </Paragraph>
+            <div style={{ border: '1px solid #d9d9d9', borderRadius: '2px', padding: '20px', marginBottom: '24px', backgroundColor: '#fafafa', height: '640px' }}>
+               <iframe 
+                   src={notionEmbedUrl} 
+                   width="100%" 
+                   height="600px"
+                   frameBorder="0" 
+                   allowFullScreen 
+                   style={{display: 'block', margin: 'auto'}}
+                   title="Experiment Consent Form"
+               ></iframe>
             </div>
+            <Paragraph style={{ textAlign: 'center', marginBottom: '30px' }}>
+                동의서 내용을 모두 확인하셨다면, 아래에 정보를 입력하고 동의 여부를 체크해주세요.
+            </Paragraph>
 
             {/* 에러 메시지 표시 영역 */} 
-            {error && <Alert message="오류" description={error} type="error" showIcon style={{ marginBottom: '24px', maxWidth: 600, margin: 'auto' }}/>}
+            {error && <Alert message="오류" description={error} type="error" showIcon style={{ marginBottom: '24px' }}/>}
 
             {/* User Info Form */}
             <Form
               form={form}
               layout="horizontal"
               onFinish={onFinish}
+              onFinishFailed={onFinishFailed}
               labelCol={{ span: 4 }}
               wrapperCol={{ span: 18 }}
               style={{ maxWidth: 600, margin: 'auto' }}
@@ -159,7 +182,7 @@ const ConsentPage = () => {
                   wrapperCol={{ offset: 4, span: 18 }}
                   rules={[{
                       validator: (_, value) =>
-                      value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.')),
+                      value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.'))
                   }]}
                 >
                   <Checkbox>동의합니다.</Checkbox>

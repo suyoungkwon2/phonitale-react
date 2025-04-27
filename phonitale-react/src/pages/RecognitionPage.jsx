@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Progress, Input, Spin } from 'antd';
+import { Progress, Input, Spin, message } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
+import { submitResponse } from '../utils/api'; // API 유틸리티 임포트
 
 // --- Helper Functions (제거 또는 이동 필요) ---
 // parseCSV 및 shuffleArray 제거
@@ -36,6 +37,7 @@ const RecognitionPage = () => {
     const inputRef = useRef(null); 
     // 추가: 오디오 재생 타임아웃 ID 저장을 위한 Ref
     const audioTimeoutRefs = useRef([]); 
+    const timestampInRef = useRef(null); // 페이지 진입 시각 저장용 ref
 
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses'; // API Gateway endpoint for submitting responses
 
@@ -169,12 +171,16 @@ const RecognitionPage = () => {
     };
 
     // Next Button Handler
-    const handleNextClick = (isTimeout = false) => {
+    const handleNextClick = async (isTimeout = false) => {
         if (timerRef.current) clearInterval(timerRef.current);
 
         const endTime = Date.now();
         const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
         const currentWordData = shuffledWords[currentWordIndex];
+
+        const timestampOut = new Date().toISOString();
+        const timestampIn = timestampInRef.current;
+        const userId = sessionStorage.getItem('userId');
 
         const newResponse = {
             word: currentWordData.word,
@@ -183,7 +189,7 @@ const RecognitionPage = () => {
             is_correct: userAnswer.trim() === currentWordData.meaning.trim(), // Basic correctness check
             duration: duration,
             isTimeout: isTimeout,
-            timestamp: new Date().toISOString()
+            timestamp: timestampOut
         };
         const updatedResponses = [...responses, newResponse];
         setResponses(updatedResponses);
@@ -201,6 +207,37 @@ const RecognitionPage = () => {
                 navigate(`/round/${roundNumber}/generation/start`);
             }
         }, 500); // Shorter transition time
+
+        // --- API 호출 --- 
+        try {
+            const responseData = {
+                user: userId,
+                english_word: currentWordData.word,
+                round_number: roundNumber,
+                page_type: 'recognition',
+                timestamp_in: timestampIn,
+                timestamp_out: timestampOut,
+                duration: duration,
+                response: userAnswer || null, // 사용자 입력 (없으면 null)
+            };
+            await submitResponse(responseData);
+            console.log("Recognition response submitted for:", currentWordData.word);
+        } catch (error) {
+            console.error("Failed to submit recognition response:", error);
+            message.error(`Failed to save response: ${error.message}`); // 사용자에게 피드백
+        } finally {
+            setTimeout(() => {
+                if (currentWordIndex < shuffledWords.length - 1) {
+                    setCurrentWordIndex(prevIndex => prevIndex + 1);
+                    setIsTransitioning(false);
+                } else {
+                    console.log(`Recognition Round ${roundNumber} Complete.`);
+                    // 다음 단계 (Generation) 시작 페이지로 이동
+                    navigate(`/round/${roundNumber}/generation/start`); 
+                }
+            }, 300); // 딜레이
+        }
+        // --- API 호출 끝 --- 
     };
 
     // 로딩 상태 표시 변경 (isLoading -> isLoadingWords)

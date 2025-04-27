@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Progress, Rate, Spin } from 'antd';
+import { Progress, Rate, Spin, message } from 'antd';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
+import { submitResponse } from '../utils/api';
 
 // --- Helper Functions (LearningPage에서 재복사) ---
 // Indexing String Parser
@@ -282,13 +283,12 @@ const SurveyPage = () => {
     const { wordList: wordsByRound, isLoadingWords } = useExperiment();
     const [surveyWordList, setSurveyWordList] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
-    const [responses, setResponses] = useState([]);
     const [usefulnessRating, setUsefulnessRating] = useState(0);
     const [coherenceRating, setCoherenceRating] = useState(0);
-    const wordContainerRef = useRef(null); // 영어 단어 컨테이너 ref 추가
-    const [underlineStyles, setUnderlineStyles] = useState([]); // 밑줄 스타일 상태 추가
-
-    const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses';
+    const wordContainerRef = useRef(null);
+    const [underlineStyles, setUnderlineStyles] = useState([]);
+    const timestampInRef = useRef(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
@@ -300,9 +300,6 @@ const SurveyPage = () => {
             console.log(`SurveyPage: Combined ${combinedList.length} words for survey.`);
             setSurveyWordList(combinedList);
             setCurrentWordIndex(0);
-            setResponses([]);
-            setUsefulnessRating(0);
-            setCoherenceRating(0);
         } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
             console.error("SurveyPage: Word list object is empty after loading.");
             setSurveyWordList([]);
@@ -310,11 +307,15 @@ const SurveyPage = () => {
     }, [wordsByRound, isLoadingWords]);
 
     useEffect(() => {
+        if (isLoadingWords || surveyWordList.length === 0 || currentWordIndex >= surveyWordList.length) {
+            return;
+        }
+        timestampInRef.current = new Date().toISOString();
+        console.log(`SurveyPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
         setUsefulnessRating(0);
         setCoherenceRating(0);
-    }, [currentWordIndex]);
+    }, [currentWordIndex, surveyWordList, isLoadingWords]);
 
-    // --- 신규: 밑줄 스타일 계산 useEffect ---
     useEffect(() => {
         if (!isLoadingWords && surveyWordList.length > 0 && currentWordIndex < surveyWordList.length && wordContainerRef.current) {
             const currentWordData = surveyWordList[currentWordIndex];
@@ -326,67 +327,63 @@ const SurveyPage = () => {
             setUnderlineStyles(styles);
         }
          else {
-             setUnderlineStyles([]); // 로딩 중이거나 데이터 없으면 초기화
+             setUnderlineStyles([]);
          }
-    }, [currentWordIndex, surveyWordList, isLoadingWords, wordContainerRef.current]); // surveyWordList 의존성 추가, ref.current 포함
+    }, [currentWordIndex, surveyWordList, isLoadingWords, wordContainerRef.current]);
 
-    const submitResponses = async (finalResponses) => {
-        const userId = sessionStorage.getItem('userName') || 'unknown_user';
-        const payload = {
-            userId: userId,
-            round: 0,
-            phase: 'survey',
-            responses: finalResponses.map(r => ({
-                word: r.word,
-                meaning: r.meaning,
-                usefulness: r.usefulness, 
-                coherence: r.coherence,
-                timestamp: r.timestamp
-            }))
-        };
-        console.log("Submitting survey responses:", payload);
-        try {
-            const response = await fetch(API_ENDPOINT, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(payload),
-            });
-            if (response.ok) {
-                console.log('Survey responses submitted successfully');
-            } else {
-                console.error('Failed to submit survey responses:', response.status, await response.text());
-            }
-        } catch (error) {
-            console.error('Error submitting survey responses:', error);
-        }
-    };
-
-    const handleNextClick = () => {
+    const handleNextClick = async () => {
         if (usefulnessRating === 0 || coherenceRating === 0) {
-            alert('Please rate both usefulness and coherence.');
+            message.warning('Please rate both usefulness and coherence.');
+            return;
+        }
+        if (isSubmitting) return;
+        setIsSubmitting(true);
+
+        const timestampOut = new Date().toISOString();
+        const timestampIn = timestampInRef.current;
+        const currentWordData = surveyWordList[currentWordIndex];
+        const userId = sessionStorage.getItem('userId');
+        let duration = null;
+        if (timestampIn && timestampOut) {
+            try { duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000); } catch (e) { /*...*/ }
+        }
+
+        console.log(`Survey Word: ${currentWordData?.word}, Usefulness: ${usefulnessRating}, Coherence: ${coherenceRating}, Duration: ${duration}s`);
+
+        if (!userId) {
+            console.error("User ID not found!");
+            message.error("User session error. Please restart the experiment.");
+            setIsSubmitting(false);
             return;
         }
 
-        const currentWordData = surveyWordList[currentWordIndex];
-        const newResponse = {
-            word: currentWordData.word,
-            meaning: currentWordData.meaning,
-            usefulness: usefulnessRating,
-            coherence: coherenceRating,
-            timestamp: new Date().toISOString()
-        };
-        const updatedResponses = [...responses, newResponse];
-        setResponses(updatedResponses);
-        console.log("Survey Response Recorded:", newResponse);
+        try {
+            const responseData = {
+                user: userId,
+                english_word: currentWordData.word,
+                round_number: 0,
+                page_type: 'survey',
+                timestamp_in: timestampIn,
+                timestamp_out: timestampOut,
+                duration: duration,
+                usefulness: usefulnessRating,
+                coherence: coherenceRating,
+            };
+            await submitResponse(responseData);
+            console.log("Survey response submitted for:", currentWordData.word);
 
-        if (currentWordIndex < surveyWordList.length - 1) {
-            setCurrentWordIndex(prevIndex => prevIndex + 1);
-        } else {
-            console.log('Survey Complete. Final Responses:', updatedResponses);
-            submitResponses(updatedResponses);
-            navigate('/end');
+            if (currentWordIndex < surveyWordList.length - 1) {
+                setCurrentWordIndex(prevIndex => prevIndex + 1);
+            } else {
+                console.log('Survey Complete.');
+                navigate('/end');
+            }
+
+        } catch (error) {
+            console.error("Failed to submit survey response:", error);
+            message.error(`Failed to save response: ${error.message}`);
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -404,13 +401,12 @@ const SurveyPage = () => {
 
     const keywordKey = `kss_keyword_refined`;
     const verbalCueKey = `kss_verbal_cue`;
-    // 키워드 처리 로직 추가
     const keywordIndexingString = currentWordData[keywordKey];
     const keywordIndices = parseIndexingString(keywordIndexingString);
     const displayKeywordString = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : (keywordIndexingString || "N/A");
     const displayVerbalCue = currentWordData[verbalCueKey] || "N/A";
 
-    const isNextDisabled = usefulnessRating === 0 || coherenceRating === 0;
+    const isNextDisabled = usefulnessRating === 0 || coherenceRating === 0 || isSubmitting;
 
     return (
         <MainLayout>
@@ -540,12 +536,12 @@ const SurveyPage = () => {
                     }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Usefulness</span>
                         <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 학습에 얼마나 도움이 되었나요?</div>
-                        <Rate allowHalf={false} count={5} value={usefulnessRating} onChange={setUsefulnessRating} style={{ fontSize: '28px' }} />
+                        <Rate allowHalf={false} count={5} value={usefulnessRating} onChange={setUsefulnessRating} style={{ fontSize: '28px' }} disabled={isSubmitting} />
                     </div>
                     <div className="rating-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Coherence</span>
                         <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 얼마나 명확하고 자연스러웠나요?</div>
-                        <Rate allowHalf={false} count={5} value={coherenceRating} onChange={setCoherenceRating} style={{ fontSize: '28px' }} />
+                        <Rate allowHalf={false} count={5} value={coherenceRating} onChange={setCoherenceRating} style={{ fontSize: '28px' }} disabled={isSubmitting} />
                     </div>
                 </div>
 
@@ -554,6 +550,7 @@ const SurveyPage = () => {
                         text="Next"
                         onClick={handleNextClick}
                         disabled={isNextDisabled}
+                        loading={isSubmitting}
                     />
                 </div>
             </div>

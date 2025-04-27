@@ -4,6 +4,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
+import { submitResponse } from '../utils/api';
 
 // --- Helper Functions (from original script) ---
 // CSV Parser
@@ -250,12 +251,12 @@ const LearningPage = () => {
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [isNextButtonEnabled, setIsNextButtonEnabled] = useState(false);
-    const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const timerRef = useRef(null);
     const audioTimeoutRefs = useRef([]);
-    const wordContainerRef = useRef(null); // 영어 단어 컨테이너 ref 추가
-    const [underlineStyles, setUnderlineStyles] = useState([]); // 밑줄 스타일 상태 추가
+    const wordContainerRef = useRef(null);
+    const [underlineStyles, setUnderlineStyles] = useState([]);
+    const timestampInRef = useRef(null);
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
@@ -286,21 +287,28 @@ const LearningPage = () => {
             return;
         }
 
+        timestampInRef.current = new Date().toISOString();
+        console.log(`LearningPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
+
         const currentWordData = shuffledWords[currentWordIndex];
 
         setTimeLeft(30);
         setIsNextButtonEnabled(false);
-        setStartTime(Date.now());
 
         if (timerRef.current) clearInterval(timerRef.current);
         timerRef.current = setInterval(() => {
             setTimeLeft(prevTime => {
                 if (prevTime <= 1) {
                     clearInterval(timerRef.current);
-                    handleNextClick(true); // Timeout
+                    handleNextClick(true);
                     return 0;
                 }
-                if (prevTime === 30) { 
+
+                // Determine the activation delay based on environment
+                const activationDelay = process.env.NODE_ENV === 'development' ? 2 : 15;
+
+                // Enable the button after the specified delay
+                if (prevTime === 30 - activationDelay) { 
                     setIsNextButtonEnabled(true);
                 }
                 return prevTime - 1;
@@ -337,7 +345,6 @@ const LearningPage = () => {
         };
     }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
-    // --- 신규: 밑줄 스타일 계산 useEffect ---
     useEffect(() => {
         if (!isLoadingWords && shuffledWords.length > 0 && currentWordIndex < shuffledWords.length && wordContainerRef.current) {
             const currentWordData = shuffledWords[currentWordIndex];
@@ -349,29 +356,59 @@ const LearningPage = () => {
             setUnderlineStyles(styles);
         }
          else {
-             setUnderlineStyles([]); // 로딩 중이거나 데이터 없으면 초기화
+             setUnderlineStyles([]);
          }
-    }, [currentWordIndex, shuffledWords, isLoadingWords, wordContainerRef.current]); // ref.current도 의존성 배열에 포함
+    }, [currentWordIndex, shuffledWords, isLoadingWords, wordContainerRef.current]);
 
-    const handleNextClick = (isTimeout = false) => {
+    const handleNextClick = async (isTimeout = false) => {
         if (timerRef.current) clearInterval(timerRef.current);
-
-        const endTime = Date.now();
-        const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
-        const currentWord = shuffledWords[currentWordIndex];
-
-        console.log(`Learning Word: ${currentWord?.word}, Duration: ${duration}s, Timeout: ${isTimeout}`);
-
         setIsTransitioning(true);
-        setTimeout(() => {
-            if (currentWordIndex < shuffledWords.length - 1) {
-                setCurrentWordIndex(prevIndex => prevIndex + 1);
-                setIsTransitioning(false);
-            } else {
-                 console.log(`Learning Round ${roundNumber} Complete.`);
-                 navigate(`/round/${roundNumber}/recognition/start`);
-            }
-        }, 500);
+
+        const timestampOut = new Date().toISOString();
+        const timestampIn = timestampInRef.current;
+        const currentWord = shuffledWords[currentWordIndex];
+        const userId = sessionStorage.getItem('userId');
+
+        let duration = null;
+        if (timestampIn && timestampOut) {
+            try {
+                duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000);
+            } catch (e) { console.error("Error calculating duration:", e); }
+        }
+
+        console.log(`Learning Word: ${currentWord?.word}, Duration: ${duration}s, Timeout: ${isTimeout}, In: ${timestampIn}, Out: ${timestampOut}`);
+
+        if (!userId) {
+            console.error("User ID not found in sessionStorage!");
+            setIsTransitioning(false);
+            return; 
+        }
+
+        try {
+            const responseData = {
+                user: userId,
+                english_word: currentWord.word,
+                round_number: roundNumber,
+                page_type: 'learning',
+                timestamp_in: timestampIn,
+                timestamp_out: timestampOut,
+                duration: duration,
+            };
+            await submitResponse(responseData);
+            console.log("Learning response submitted successfully for:", currentWord.word);
+        } catch (error) {
+            console.error("Failed to submit learning response:", error);
+        } finally {
+            setTimeout(() => {
+                if (currentWordIndex < shuffledWords.length - 1) {
+                    setCurrentWordIndex(prevIndex => prevIndex + 1);
+                    setIsTransitioning(false);
+                } else {
+                    console.log(`Learning Round ${roundNumber} Complete.`);
+                    navigate(`/round/${roundNumber}/recognition/start`);
+                }
+            }, 300);
+        }
     };
 
     if (isLoadingWords) {
@@ -392,7 +429,6 @@ const LearningPage = () => {
     const displayKeywordString = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : (keywordIndexingString || "N/A");
     const displayVerbalCue = currentWordData[verbalCueKey];
 
-    // --- Render Logic ---
     return (
         <MainLayout>
             <div 
@@ -406,7 +442,6 @@ const LearningPage = () => {
                     alignItems: 'center'
                 }}
             >
-                {/* Progress Section */}                
                 <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Round {roundNumber} | Learning</span>
@@ -415,13 +450,11 @@ const LearningPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
-                {/* Instruction Text */}                
                 <div className="instruction-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', textAlign: 'center', marginBottom: '32px', whiteSpace: 'pre-line' }}>
                     영어 단어의 발음과 주어진 문장을 연상하여,<br/>
                     떠오르는 시각적인 장면을 상상해보세요.
                 </div>
 
-                {/* Word Display Section */}                
                 <div className="word-display-section" style={{ 
                     width: '100%', 
                     maxWidth: '550px', 
@@ -429,7 +462,6 @@ const LearningPage = () => {
                     flexDirection: 'column', 
                     marginBottom: '32px',
                 }}>
-                    {/* Base Card Style */}                    
                     <div className="word-card english-word-card" style={{ 
                         background: '#fff', 
                         borderRadius: '20px', 
@@ -445,7 +477,7 @@ const LearningPage = () => {
                     }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Words</span>
                         <span 
-                            ref={wordContainerRef} // ref 할당
+                            ref={wordContainerRef}
                             className="english-word-text-container" 
                             style={{ 
                                 position: 'relative', 
@@ -516,7 +548,6 @@ const LearningPage = () => {
                     </div>
                 </div>
 
-                {/* Footer Section */}                
                 <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <span className="timer-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{timeLeft}s</span>
                     <BlueButton
