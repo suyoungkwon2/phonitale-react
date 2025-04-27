@@ -1,0 +1,37 @@
+/* Header Styles */
+
+.app-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #fff !important; /* Use !important to override potential antd styles */
+    border-bottom: 1px solid #f0f0f0;
+    /* Fixed Header Styles */
+    position: fixed !important; /* Ensure fixed position */
+    top: 0;
+    left: 0; /* Ensure it starts from the left edge */
+    z-index: 10 !important; /* Ensure header is above sidebar */
+    width: 100% !important; /* Ensure full width */
+    height: 64px; /* Explicit height, adjust if needed */
+    padding: 0 24px; /* Add some padding */
+    box-sizing: border-box; /* Include padding in width */
+}
+
+.app-logo {
+    display: flex;
+    align-items: center;
+    color: #000;
+    font-weight: bold;
+    font-size: 20px;
+}
+
+.app-logo img {
+    height: 24px; /* Icon height */
+    margin-right: 8px; /* Space between icon and text */
+}
+
+.app-user-name {
+    /* Add styles for user name if needed, e.g., */
+    /* font-size: 14px; */
+    /* color: rgba(0, 0, 0, 0.65); */
+} 

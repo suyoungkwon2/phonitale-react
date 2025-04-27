@@ -7,7 +7,9 @@
     <!-- Ant Design CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <!-- Custom CSS -->
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
     <!-- Google Fonts (If needed for BBTreeGo font, otherwise remove) -->
     <!-- <link rel="stylesheet" href="YOUR_FONT_URL_HERE"> -->
     <style>
@@ -113,7 +115,7 @@
             const { Button, Typography, Space } = antd;
             const { Text } = Typography;
 
-            // Read round number from body data attribute
+      // Read round number from body data attribute
             const roundNumber = document.body.getAttribute('data-round-number') || '1'; // Default to 1
 
             function RoundStartContent() {
@@ -124,7 +126,7 @@
 
                 const instructions = `• 각 라운드는 다음 순서로 진행됩니다.\n• 총 3회 반복되며, 구성은 모두 동일합니다.`;
 
-                return (
+        return (
                     <div className="round-start-content">
                         <div className="round-title-box">
                             Round {roundNumber} 시작
@@ -143,15 +145,15 @@
                             text="Start"
                             onClick={handleStartClick}
                         />
-                    </div>
+              </div>
                 );
             }
 
             // Render the component within the MainLayout
             ReactDOM.render(
-                <window.MainLayout>
+                <MainLayout>
                     <RoundStartContent />
-                </window.MainLayout>,
+                </MainLayout>,
                 document.getElementById('root')
             );
         }

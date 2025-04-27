@@ -6,6 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
+    <style>
+        /* Global styles */
+        body { font-family: sans-serif; }
+        #root {}
+        .ant-layout-content { padding: 0; margin: 0; }
+    </style>
 </head>
 <body data-round-number="{{ round_number }}">
     <div id="root"></div>
@@ -29,7 +39,7 @@
             console.error('Core layout or PhaseStartContent component not loaded!');
             ReactDOM.render(<div>Error: Core components failed to load.</div>, document.getElementById('root'));
         } else {
-            const roundNumber = document.body.getAttribute('data-round-number') || '1';
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
 
             // Define props for the Generation phase
             const generationPhaseProps = {

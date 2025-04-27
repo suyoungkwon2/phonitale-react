@@ -16,7 +16,9 @@
     <!-- Ant Design CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <!-- Your custom styles -->
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
     <style>
         /* Instruction 페이지 전용 스타일 */
         .instruction-title-bar {
@@ -143,20 +145,20 @@
             <div className="instruction-content-card">
                  {/* Carousel 코드 복원 및 조건부 렌더링 */}
                  {isCarouselReady ? (
-                   <Carousel
-                     ref={carouselRef}
-                     afterChange={handleAfterChange}
-                     dots={true}
-                     arrows={true}
-                     infinite={false}
-                     style={{ width: '100%', maxWidth: '700px' }}
-                   >
-                    {instructionImages.map((imgSrc, index) => (
-                      <div key={index}>
-                        <img src={imgSrc} alt={`Instruction ${index + 1}`} />
-                      </div>
-                    ))}
-                  </Carousel>
+               <Carousel
+                 ref={carouselRef}
+                 afterChange={handleAfterChange}
+                 dots={true}
+                 arrows={true}
+                 infinite={false}
+                 style={{ width: '100%', maxWidth: '700px' }}
+               >
+                {instructionImages.map((imgSrc, index) => (
+                  <div key={index}>
+                    <img src={imgSrc} alt={`Instruction ${index + 1}`} />
+                  </div>
+                ))}
+              </Carousel>
                  ) : (
                     // 캐러셀 준비 전 로딩 표시 또는 빈 공간 (선택적)
                     <div style={{ minHeight: '400px', display:'flex', alignItems:'center', justifyContent:'center' }}>

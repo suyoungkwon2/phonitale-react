@@ -1,0 +1,46 @@
+# .github/workflows/react-ci.yml
+name: React CI
+
+on:
+  push:
+    branches: [ react-migration ] # react-migration 브랜치에 push될 때 실행
+  pull_request:
+    branches: [ main, react-migration ] # main 또는 react-migration 브랜치로 pull request가 생성/업데이트될 때 실행
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [20.x] # 사용할 Node.js 버전 지정 (LTS 버전 권장)
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4 # 코드 저장소를 워크플로우 환경으로 가져옴
+
+    - name: Set up Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v4 # Node.js 환경 설정
+      with:
+        node-version: ${{ matrix.node-version }}
+        cache: 'npm' # npm 의존성 캐싱 활성화
+        cache-dependency-path: phonitale-react/package-lock.json # 캐시 경로 수정
+
+    - name: Install dependencies
+      working-directory: ./phonitale-react # 작업 디렉토리 지정
+      run: npm install # package-lock.json을 기반으로 의존성 설치
+
+    - name: Build project
+      working-directory: ./phonitale-react # 작업 디렉토리 지정
+      run: npm run build # Vite 프로젝트 빌드 명령어 실행 (package.json에 정의된 스크립트)
+      env:
+        CI: false # 빌드 중 경고를 에러로 처리하지 않도록 설정 (필요에 따라 조정)
+
+    # 선택 사항: Lint 또는 Test 단계 추가 (package.json에 스크립트가 정의되어 있다면)
+    # - name: Run linter
+    #   working-directory: ./phonitale-react
+    #   run: npm run lint
+    #
+    # - name: Run tests
+    #   working-directory: ./phonitale-react
+    #   run: npm run test

@@ -6,8 +6,49 @@
     <title>Phonitale Experiment</title>
     <!-- Ant Design CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
-    <!-- Your custom styles -->
-    <link rel="stylesheet" href="/static/style.css">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <!-- Sidebar Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <!-- Custom Fonts -->
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
+    <style>
+        /* Global styles */
+        body { font-family: sans-serif; }
+        #root {}
+        .ant-layout-content { padding: 0; margin: 0; }
+
+        /* Index page specific styles */
+        .index-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center; /* Center content vertically */
+            background: #fff;
+            padding: 60px 40px;
+            border-radius: 8px;
+            max-width: 800px;
+            min-height: 400px; /* Ensure some height */
+            margin: auto;
+            text-align: center;
+        }
+        .index-title {
+            font-family: 'BBTreeG_B', sans-serif;
+            font-size: 48px;
+            font-weight: bold;
+            color: #324496; /* Match consent title color? */
+            margin-bottom: 30px;
+        }
+         .index-description {
+             font-family: 'BBTreeGo_R', sans-serif;
+             font-size: 20px;
+             color: #555;
+             line-height: 1.6;
+             margin-bottom: 40px;
+         }
+
+    </style>
 </head>
 <body>
     <div id="root"></div>

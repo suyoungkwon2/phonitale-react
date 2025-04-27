@@ -78,6 +78,18 @@
 
 1. **오디오 파일 통합**: Client에서 단어 발음 오디오 파일을 불러와 Learning 및 Recognition 단계에서 재생하는 기능을 구현합니다. (Lambda 함수 또는 다른 방식 필요)
 2. **Figma 디자인 적용**: MCP 사용 또는 Ant Design 컴포넌트를 커스터마이징하여 Figma 시안에 맞게 UI를 구체화합니다. (project_description.ini의 Figma 링크 참조)
+    - `/consent`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4952&t=eQqR0ZDnp1GSf6lI-4
+    - `/instruction`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4999&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/start`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4897&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/learning/start`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4853&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/learning`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4804&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/recognition/start`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-5091&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/recognition`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-5185&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/generation/start`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-5112&t=eQqR0ZDnp1GSf6lI-4
+    - `/round/{round_number}/generation`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-5216&t=eQqR0ZDnp1GSf6lI-4
+    - `/survey/start`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4874&t=eQqR0ZDnp1GSf6lI-4
+    - `/survey`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-5133&t=eQqR0ZDnp1GSf6lI-4
+    - `/end`: https://www.figma.com/design/QGsNYF4xyZQfLALancYV02/-Soundle--Screen?node-id=111-4886&t=eQqR0ZDnp1GSf6lI-4
 3. **CSV 데이터 연동**: 실제 실험에 사용할 단어 목록 CSV 파일을 프론트엔드에서 로드하도록 구현합니다.
 4. **전체 흐름 테스트**: 모든 기능이 정상적으로 작동하는지, 데이터가 정확히 저장되는지 등을 종합적으로 테스트합니다.
 5. **배포 준비**: 필요시 AWS Amplify, S3+CloudFront 등을 이용한 배포 환경을 설정합니다.

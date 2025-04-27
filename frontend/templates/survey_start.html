@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
     <style>
         /* Reusing styles from round_start.html, potentially move to style.css */
         .survey-start-content { /* Adjusted class name */
@@ -84,7 +88,7 @@
   • 1점: 매우 불만족
   • 5점: 매우 만족`;
 
-                return (
+        return (
                     <div className="survey-start-content"> {/* Adjusted class name */}
                         <div className="survey-title-box"> {/* Adjusted class name */}
                             학습 종료
@@ -97,7 +101,7 @@
                             text="Start"
                             onClick={handleStartClick}
                         />
-                    </div>
+              </div>
                 );
             }
 

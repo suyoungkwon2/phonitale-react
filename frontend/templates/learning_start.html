@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
     <!-- 필요한 경우 여기에 PhaseStartContent 관련 CSS 추가 -->
 </head>
 <body data-round-number="{{ round_number }}">
@@ -32,7 +34,7 @@
             ReactDOM.render(<div>Error: Core components failed to load.</div>, document.getElementById('root'));
         } else {
             // Read round number from body data attribute
-            const roundNumber = document.body.getAttribute('data-round-number') || '1';
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
 
             // Define props for the Learning phase
             const learningPhaseProps = {
