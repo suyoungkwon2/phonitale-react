@@ -34,6 +34,8 @@ const RecognitionPage = () => {
     const [responses, setResponses] = useState([]); // 응답 저장 유지
     const timerRef = useRef(null);
     const inputRef = useRef(null); 
+    // 추가: 오디오 재생 타임아웃 ID 저장을 위한 Ref
+    const audioTimeoutRefs = useRef([]); 
 
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses'; // API Gateway endpoint for submitting responses
 
@@ -68,20 +70,25 @@ const RecognitionPage = () => {
         // 의존성 배열에 wordsByRound, roundNumber 추가
     }, [wordsByRound, isLoadingWords, roundNumber]);
 
-    // Timer and Word Transition Logic (isLoading -> isLoadingWords)
+    // Timer and Word Transition Logic + 오디오 재생
     useEffect(() => {
         if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) clearInterval(timerRef.current);
+            // 이전 타임아웃 클리어
+            audioTimeoutRefs.current.forEach(clearTimeout);
+            audioTimeoutRefs.current = [];
             return;
         }
+
+        const currentWordData = shuffledWords[currentWordIndex]; // 현재 단어 데이터 가져오기
 
         setTimeLeft(30);
         setStartTime(Date.now());
         setUserAnswer(""); 
-        if (inputRef.current) inputRef.current.focus(); // Focus input
+        if (inputRef.current) inputRef.current.focus(); 
 
+        // --- Timer Logic --- 
         if (timerRef.current) clearInterval(timerRef.current);
-
         timerRef.current = setInterval(() => {
             setTimeLeft(prevTime => {
                 if (prevTime <= 1) {
@@ -93,7 +100,42 @@ const RecognitionPage = () => {
             });
         }, 1000);
 
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+        // --- Audio Playback Logic --- 
+        // 이전 오디오 타임아웃 클리어
+        audioTimeoutRefs.current.forEach(clearTimeout);
+        audioTimeoutRefs.current = [];
+
+        if (currentWordData?.audio_path) {
+            const audioPath = `/${currentWordData.audio_path}`; // public 폴더 기준 경로
+            const playAudio = () => {
+                try {
+                    const audio = new Audio(audioPath);
+                    audio.play().catch(e => console.error("Audio play failed:", e));
+                    console.log(`Playing audio: ${audioPath}`);
+                } catch (error) {
+                    console.error("Error creating or playing audio:", error);
+                }
+            };
+
+            // 2초 후 재생 예약
+            const timeoutId1 = setTimeout(playAudio, 2000);
+            // 7초 후 재생 예약
+            const timeoutId2 = setTimeout(playAudio, 7000);
+
+            // 타임아웃 ID 저장
+            audioTimeoutRefs.current.push(timeoutId1, timeoutId2);
+        } else {
+            console.warn(`Audio path not found for word: ${currentWordData?.word}`);
+        }
+
+        // Cleanup 함수
+        return () => { 
+            if (timerRef.current) clearInterval(timerRef.current);
+            // 컴포넌트 언마운트 또는 의존성 변경 시 타임아웃 클리어
+            audioTimeoutRefs.current.forEach(clearTimeout);
+            audioTimeoutRefs.current = [];
+        };
+    // 의존성 배열 유지
     }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
     // Function to send responses to API

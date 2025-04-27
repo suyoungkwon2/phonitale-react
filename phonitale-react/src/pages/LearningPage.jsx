@@ -154,6 +154,7 @@ const LearningPage = () => {
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const timerRef = useRef(null);
+    const audioTimeoutRefs = useRef([]);
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
@@ -179,15 +180,18 @@ const LearningPage = () => {
     useEffect(() => {
         if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) clearInterval(timerRef.current);
+            audioTimeoutRefs.current.forEach(clearTimeout);
+            audioTimeoutRefs.current = [];
             return;
         }
+
+        const currentWordData = shuffledWords[currentWordIndex];
 
         setTimeLeft(30);
         setIsNextButtonEnabled(false);
         setStartTime(Date.now());
 
         if (timerRef.current) clearInterval(timerRef.current);
-
         timerRef.current = setInterval(() => {
             setTimeLeft(prevTime => {
                 if (prevTime <= 1) {
@@ -202,7 +206,34 @@ const LearningPage = () => {
             });
         }, 1000);
 
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
+        audioTimeoutRefs.current.forEach(clearTimeout);
+        audioTimeoutRefs.current = [];
+
+        if (currentWordData?.audio_path) {
+            const audioPath = `/${currentWordData.audio_path}`;
+            const playAudio = () => {
+                try {
+                    const audio = new Audio(audioPath);
+                    audio.play().catch(e => console.error("Audio play failed:", e));
+                    console.log(`Playing audio: ${audioPath}`);
+                } catch (error) {
+                    console.error("Error creating or playing audio:", error);
+                }
+            };
+
+            const timeoutId1 = setTimeout(playAudio, 2000);
+            const timeoutId2 = setTimeout(playAudio, 7000);
+
+            audioTimeoutRefs.current.push(timeoutId1, timeoutId2);
+        } else {
+            console.warn(`Audio path not found for word: ${currentWordData?.word}`);
+        }
+
+        return () => { 
+            if (timerRef.current) clearInterval(timerRef.current);
+            audioTimeoutRefs.current.forEach(clearTimeout);
+            audioTimeoutRefs.current = [];
+        };
     }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
     const handleNextClick = (isTimeout = false) => {
