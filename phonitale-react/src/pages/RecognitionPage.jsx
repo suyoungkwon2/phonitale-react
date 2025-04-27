@@ -21,34 +21,52 @@ function shuffleArray(array) {
 
 // --- Recognition Page Component ---
 const RecognitionPage = () => {
-    const { roundNumber } = useParams();
+    const { roundNumber: roundNumberStr } = useParams(); // 문자열로 받아옴
     const navigate = useNavigate();
-    const { wordList, isLoadingWords } = useExperiment();
+    // 변경: wordList는 이제 객체 형태 { 1: [], 2: [], 3: [] }
+    const { wordList: wordsByRound, isLoadingWords } = useExperiment(); 
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
     const [userAnswer, setUserAnswer] = useState(""); 
-    const [responses, setResponses] = useState([]);
+    const [responses, setResponses] = useState([]); // 응답 저장 유지
     const timerRef = useRef(null);
     const inputRef = useRef(null); 
 
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses'; // API Gateway endpoint for submitting responses
 
-    // 변경: 전역 wordList 로딩 및 셔플
+    // 추가: roundNumber를 숫자로 변환
+    const roundNumber = parseInt(roundNumberStr, 10);
+
+    // 변경: 라운드별 단어 목록 가져오기 및 셔플
     useEffect(() => {
-        if (!isLoadingWords && wordList.length > 0) {
-            console.log("Global word list loaded in RecognitionPage, shuffling...");
-            const shuffled = shuffleArray([...wordList]);
-            setShuffledWords(shuffled);
+        // isLoadingWords가 false이고, wordsByRound 객체가 로드되었는지 확인
+        if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
+            // 현재 라운드 번호에 해당하는 단어 목록 가져오기 (없으면 빈 배열)
+            const wordsForCurrentRound = wordsByRound[roundNumber] || [];
+            console.log(`RecognitionPage Round ${roundNumber}: Loaded ${wordsForCurrentRound.length} words.`);
+            
+            if (wordsForCurrentRound.length > 0) {
+                const shuffled = shuffleArray([...wordsForCurrentRound]);
+                setShuffledWords(shuffled);
+            } else {
+                 // 해당 라운드 단어가 없으면 빈 배열 설정
+                 setShuffledWords([]);
+                 console.warn(`No words found for round ${roundNumber}`);
+                 // TODO: 사용자에게 알림 또는 다음 단계로 자동 이동 등의 처리 추가 가능
+            }
+            // 라운드 시작 시 상태 초기화
             setCurrentWordIndex(0);
-            setResponses([]);
-            setUserAnswer("");
-        } else if (!isLoadingWords && wordList.length === 0) {
-            console.error("Word list is empty after loading.");
+            setResponses([]); // 라운드 시작 시 응답 초기화
+            setUserAnswer(""); // 라운드 시작 시 사용자 답변 초기화
+        } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
+            console.error("Word list object is empty after loading.");
+            setShuffledWords([]);
         }
-    }, [wordList, isLoadingWords, roundNumber]);
+        // 의존성 배열에 wordsByRound, roundNumber 추가
+    }, [wordsByRound, isLoadingWords, roundNumber]);
 
     // Timer and Word Transition Logic (isLoading -> isLoadingWords)
     useEffect(() => {

@@ -15,13 +15,13 @@ function parseCSV(csvText) {
             if (char === '\"' && (i === 0 || line[i-1] !== '\\')) { 
                 inQuotes = !inQuotes;
             } else if (char === ',' && !inQuotes) {
-                values.push(currentMatch.trim().replace(/^\"|\"$/g, ''));
+                values.push(currentMatch.replace(/^\"|\"$/g, '').trim());
                 currentMatch = '';
             } else {
                 currentMatch += char;
             }
         }
-        values.push(currentMatch.trim().replace(/^\"|\"$/g, '')); 
+        values.push(currentMatch.replace(/^\"|\"$/g, '').trim()); 
         const entry = {};
         headers.forEach((header, index) => {
             entry[header] = values[index] !== undefined ? values[index] : '';
@@ -39,7 +39,7 @@ const ExperimentContext = createContext();
 export const ExperimentProvider = ({ children }) => {
   const [userId, setUserId] = useState(null);
   const [currentRound, setCurrentRound] = useState(1);
-  const [wordList, setWordList] = useState([]);
+  const [wordList, setWordList] = useState({});
   const [isLoadingWords, setIsLoadingWords] = useState(true);
 
   useEffect(() => {
@@ -55,13 +55,24 @@ export const ExperimentProvider = ({ children }) => {
       .then(csvText => {
           console.log("CSV text loaded, length:", csvText.length);
           const parsedData = parseCSV(csvText);
-          console.log("Parsed word data count:", parsedData.length);
-          setWordList(parsedData);
+          console.log("Total parsed words from CSV:", parsedData.length);
+          
+          const wordsByRound = { 1: [], 2: [], 3: [] };
+          parsedData.forEach(word => {
+              const round = parseInt(word.round, 10);
+              if (round === 1 || round === 2 || round === 3) {
+                  wordsByRound[round].push(word);
+              } 
+          });
+
+          console.log("Words grouped by round:", wordsByRound);
+          setWordList(wordsByRound); 
           setIsLoadingWords(false);
       })
       .catch(error => {
-          console.error('Error fetching/parsing CSV in Context:', error);
-          setIsLoadingWords(false);
+          console.error('Error fetching/parsing/grouping CSV in Context:', error);
+          setIsLoadingWords(false); 
+          setWordList({});
       });
   }, []);
 

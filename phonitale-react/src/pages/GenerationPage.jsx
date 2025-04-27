@@ -21,9 +21,9 @@ function shuffleArray(array) {
 
 // --- Generation Page Component ---
 const GenerationPage = () => {
-    const { roundNumber } = useParams();
+    const { roundNumber: roundNumberStr } = useParams();
     const navigate = useNavigate();
-    const { wordList, isLoadingWords } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -36,18 +36,28 @@ const GenerationPage = () => {
 
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses';
 
+    const roundNumber = parseInt(roundNumberStr, 10);
+
     useEffect(() => {
-        if (!isLoadingWords && wordList.length > 0) {
-            console.log("Global word list loaded in GenerationPage, shuffling...");
-            const shuffled = shuffleArray([...wordList]);
-            setShuffledWords(shuffled);
+        if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
+            const wordsForCurrentRound = wordsByRound[roundNumber] || [];
+            console.log(`GenerationPage Round ${roundNumber}: Loaded ${wordsForCurrentRound.length} words.`);
+            
+            if (wordsForCurrentRound.length > 0) {
+                const shuffled = shuffleArray([...wordsForCurrentRound]);
+                setShuffledWords(shuffled);
+            } else {
+                setShuffledWords([]);
+                console.warn(`No words found for round ${roundNumber}`);
+            }
             setCurrentWordIndex(0);
             setResponses([]);
             setUserAnswer("");
-        } else if (!isLoadingWords && wordList.length === 0) {
-            console.error("Word list is empty after loading.");
+        } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
+            console.error("Word list object is empty after loading.");
+            setShuffledWords([]);
         }
-    }, [wordList, isLoadingWords, roundNumber]);
+    }, [wordsByRound, isLoadingWords, roundNumber]);
 
     useEffect(() => {
         if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
@@ -57,7 +67,7 @@ const GenerationPage = () => {
 
         setTimeLeft(30);
         setStartTime(Date.now());
-        setUserAnswer(""); 
+        setUserAnswer("");
         if (inputRef.current) inputRef.current.focus();
 
         if (timerRef.current) clearInterval(timerRef.current);
@@ -109,14 +119,14 @@ const GenerationPage = () => {
         const endTime = Date.now();
         const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
         const currentWordData = shuffledWords[currentWordIndex];
-        const formattedAnswer = userAnswer.trim().toLowerCase(); // Format answer
+        const formattedAnswer = userAnswer.trim().toLowerCase();
         const correctAnswer = currentWordData.word.trim().toLowerCase();
 
         const newResponse = {
             meaning: currentWordData.meaning,
             word: currentWordData.word,
             answer: formattedAnswer,
-            is_correct: formattedAnswer === correctAnswer, // Correctness check
+            is_correct: formattedAnswer === correctAnswer,
             duration: duration,
             isTimeout: isTimeout,
             timestamp: new Date().toISOString()
@@ -131,26 +141,24 @@ const GenerationPage = () => {
                 setCurrentWordIndex(prevIndex => prevIndex + 1);
                 setIsTransitioning(false);
             } else {
-                // End of generation phase
                 console.log(`Generation Round ${roundNumber} Complete. Responses:`, updatedResponses);
-                submitResponses(updatedResponses); // Submit data to API
+                submitResponses(updatedResponses);
 
-                const currentRound = parseInt(roundNumber, 10);
-                if (currentRound < 3) {
-                    navigate(`/round/${currentRound + 1}/learning/start`); // Go to next round
+                if (roundNumber < 3) {
+                    navigate(`/round/${roundNumber + 1}/learning/start`);
                 } else {
-                    navigate('/survey/start'); // Go to survey after round 3
+                    navigate('/survey/start');
                 }
             }
         }, 500);
     };
 
-    if (isLoadingWords && shuffledWords.length === 0) {
+    if (isLoadingWords) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
     if (shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
-        return <MainLayout><div>Loading or phase complete...</div></MainLayout>;
+        return <MainLayout><div>No words for this round or loading error.</div></MainLayout>;
     }
 
     const currentWordData = shuffledWords[currentWordIndex];

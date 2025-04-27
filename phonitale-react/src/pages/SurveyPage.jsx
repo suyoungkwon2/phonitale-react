@@ -113,7 +113,8 @@ function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
 // --- Survey Page Component ---
 const SurveyPage = () => {
     const navigate = useNavigate();
-    const { wordList, isLoadingWords } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
+    const [surveyWordList, setSurveyWordList] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [responses, setResponses] = useState([]);
     const [usefulnessRating, setUsefulnessRating] = useState(0);
@@ -122,16 +123,23 @@ const SurveyPage = () => {
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses';
 
     useEffect(() => {
-        if (!isLoadingWords && wordList.length > 0) {
-            console.log("Global word list loaded in SurveyPage.");
+        if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
+            const combinedList = [
+                ...(wordsByRound[1] || []),
+                ...(wordsByRound[2] || []),
+                ...(wordsByRound[3] || [])
+            ];
+            console.log(`SurveyPage: Combined ${combinedList.length} words for survey.`);
+            setSurveyWordList(combinedList);
             setCurrentWordIndex(0);
             setResponses([]);
             setUsefulnessRating(0);
             setCoherenceRating(0);
-        } else if (!isLoadingWords && wordList.length === 0) {
-            console.error("Word list is empty after loading.");
+        } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
+            console.error("SurveyPage: Word list object is empty after loading.");
+            setSurveyWordList([]);
         }
-    }, [wordList, isLoadingWords]);
+    }, [wordsByRound, isLoadingWords]);
 
     useEffect(() => {
         setUsefulnessRating(0);
@@ -177,7 +185,7 @@ const SurveyPage = () => {
             return;
         }
 
-        const currentWordData = wordList[currentWordIndex];
+        const currentWordData = surveyWordList[currentWordIndex];
         const newResponse = {
             word: currentWordData.word,
             meaning: currentWordData.meaning,
@@ -189,7 +197,7 @@ const SurveyPage = () => {
         setResponses(updatedResponses);
         console.log("Survey Response Recorded:", newResponse);
 
-        if (currentWordIndex < wordList.length - 1) {
+        if (currentWordIndex < surveyWordList.length - 1) {
             setCurrentWordIndex(prevIndex => prevIndex + 1);
         } else {
             console.log('Survey Complete. Final Responses:', updatedResponses);
@@ -198,17 +206,17 @@ const SurveyPage = () => {
         }
     };
 
-    if (isLoadingWords || wordList.length === 0) {
+    if (isLoadingWords || surveyWordList.length === 0) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
-    if (currentWordIndex >= wordList.length) {
+    if (currentWordIndex >= surveyWordList.length) {
         console.warn("Current word index out of bounds after loading.");
         return <MainLayout><div>Unexpected state: Index out of bounds.</div></MainLayout>;
     }
 
-    const currentWordData = wordList[currentWordIndex];
-    const progressPercent = Math.round(((currentWordIndex + 1) / wordList.length) * 100);
+    const currentWordData = surveyWordList[currentWordIndex];
+    const progressPercent = Math.round(((currentWordIndex + 1) / surveyWordList.length) * 100);
 
     const keywordKey = `kss_keyword_refined`;
     const verbalCueKey = `kss_verbal_cue`;
@@ -234,7 +242,7 @@ const SurveyPage = () => {
                 <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Survey</span>
-                        <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {wordList.length}</span>
+                        <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {surveyWordList.length}</span>
                     </div>
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>

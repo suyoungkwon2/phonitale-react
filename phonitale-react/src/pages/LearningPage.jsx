@@ -42,7 +42,7 @@ function parseIndexingString(indexString) {
         return [];
     }
     const indices = [];
-    const regex = /\{\'([^\']+)\':\s*\'(\d+):(\d+)\'\}/g;
+    const regex = /\{'([^\']+)\':\s*'(\d+):(\d+)\'\}/g;
     let match;
     while ((match = regex.exec(indexString)) !== null) {
         const key = match[1];
@@ -72,50 +72,53 @@ function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
 
     let parts = [];
     let lastIndex = 0;
-    const sortedIndices = [...indexingData].sort((a, b) => a.range[0] - b.range[0]);
+    const sortedIndices = [...indexingData].sort((a, b) => (a.range && b.range) ? a.range[0] - b.range[0] : 0);
 
     sortedIndices.forEach(({ key, range }, groupIndex) => {
+        if (!range) return;
+
         const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
         const style = { borderBottomColor: color };
 
         if (isKeyWord) {
-            // Simplified Key Word rendering: Assume word is a string (e.g., joined keys)
-             if (parts.length === 0 && lastIndex === 0) parts.push(word); // Start with the full word string
+             if (parts.length === 0 && lastIndex === 0) parts.push(word);
  
              let newParts = [];
              parts.forEach(part => {
                  if (typeof part === 'string') {
-                     const regex = new RegExp(key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&'), 'g');
+                     const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+                     const regex = new RegExp(escapedKey, 'g');
                      let subLastIndex = 0;
                      let match;
                      while ((match = regex.exec(part)) !== null) {
                          if (match.index > subLastIndex) {
                              newParts.push(part.substring(subLastIndex, match.index));
                          }
-                         newParts.push(<span key={`kw-${groupIndex}-${match.index}`} className="underline-span" style={style}>{match[0]}</span>);
+                         const spanKey = `kw-${groupIndex}-${match.index}`; 
+                         newParts.push(<span key={spanKey} className="underline-span" style={style}>{match[0]}</span>);
                          subLastIndex = regex.lastIndex;
                      }
                      if (subLastIndex < part.length) {
                          newParts.push(part.substring(subLastIndex));
                      }
                  } else {
-                     newParts.push(part); // Keep existing spans
+                     newParts.push(part);
                  }
              });
              parts = newParts;
 
         } else {
-             // English Word rendering (range based)
-             const [start, end] = range || [null, null];
-             if (start === null || end === null) return;
+             const [start, end] = range;
+             if (start === null || end === null) return; 
 
             if (start > lastIndex) {
                 parts.push(word.substring(lastIndex, start));
             }
-            if (start < lastIndex) {
-                 console.warn(`Overlapping range detected: [${start}, ${end}]`);
-            }
-            parts.push(<span key={`ew-${groupIndex}`} className="underline-span" style={style}>{word.substring(start, end)}</span>);
+             if (start < lastIndex) {
+                  console.warn(`Overlapping range detected: [${start}, ${end}]`);
+             }
+            const spanKey = `ew-${groupIndex}-${start}-${end}`; 
+            parts.push(<span key={spanKey} className="underline-span" style={style}>{word.substring(start, end)}</span>);
             lastIndex = Math.max(lastIndex, end);
         }
     });
@@ -123,7 +126,7 @@ function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
     if (!isKeyWord && lastIndex < word.length) {
         parts.push(word.substring(lastIndex));
     }
-
+    
     return parts;
 }
 
@@ -141,32 +144,37 @@ function shuffleArray(array) {
 
 // --- Learning Page Component ---
 const LearningPage = () => {
-    const { roundNumber } = useParams();
+    const { roundNumber: roundNumberStr } = useParams();
     const navigate = useNavigate();
-    const { wordList, isLoadingWords } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [isNextButtonEnabled, setIsNextButtonEnabled] = useState(false);
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [responses, setResponses] = useState([]);
     const timerRef = useRef(null);
 
-    const USER_GROUP = 'kss'; // TODO: Make this dynamic if needed
+    const roundNumber = parseInt(roundNumberStr, 10);
 
     useEffect(() => {
-        if (!isLoadingWords && wordList.length > 0) {
-            console.log("Global word list loaded in LearningPage, shuffling...");
-            const shuffled = shuffleArray([...wordList]);
-            setShuffledWords(shuffled);
+        if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
+            const wordsForCurrentRound = wordsByRound[roundNumber] || [];
+            console.log(`LearningPage Round ${roundNumber}: Loaded ${wordsForCurrentRound.length} words.`);
+            
+            if (wordsForCurrentRound.length > 0) {
+                const shuffled = shuffleArray([...wordsForCurrentRound]);
+                setShuffledWords(shuffled);
+            } else {
+                 setShuffledWords([]);
+                 console.warn(`No words found for round ${roundNumber}`);
+            }
             setCurrentWordIndex(0);
-            setResponses([]);
-        } else if (!isLoadingWords && wordList.length === 0) {
-            console.error("Word list is empty after loading.");
-            // TODO: Show error message to user
+        } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
+            console.error("Word list object is empty after loading.");
+            setShuffledWords([]);
         }
-    }, [wordList, isLoadingWords, roundNumber]);
+    }, [wordsByRound, isLoadingWords, roundNumber]);
 
     useEffect(() => {
         if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
@@ -187,8 +195,7 @@ const LearningPage = () => {
                     handleNextClick(true); // Timeout
                     return 0;
                 }
-                // Enable next button after 15 seconds (at timeLeft 15)
-                if (prevTime === 16) { 
+                if (prevTime === 30) { 
                     setIsNextButtonEnabled(true);
                 }
                 return prevTime - 1;
@@ -205,17 +212,7 @@ const LearningPage = () => {
         const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
         const currentWord = shuffledWords[currentWordIndex];
 
-        // Record response locally (API call will be separate)
-        const newResponse = { 
-            round: roundNumber,
-            phase: 'learning', 
-            word: currentWord.word,
-            duration: duration,
-            timestamp: new Date().toISOString() 
-        };
-        const updatedResponses = [...responses, newResponse];
-        setResponses(updatedResponses);
-        console.log("Response Recorded:", newResponse);
+        console.log(`Learning Word: ${currentWord?.word}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
         setIsTransitioning(true);
         setTimeout(() => {
@@ -223,21 +220,18 @@ const LearningPage = () => {
                 setCurrentWordIndex(prevIndex => prevIndex + 1);
                 setIsTransitioning(false);
             } else {
-                 // End of learning phase for this round
-                 console.log(`Learning Round ${roundNumber} Complete. Responses:`, updatedResponses);
-                 // TODO: Save responses array (e.g., to chrome.storage or send to API)
+                 console.log(`Learning Round ${roundNumber} Complete.`);
                  navigate(`/round/${roundNumber}/recognition/start`);
             }
-        }, 500); // Shorter transition time
+        }, 500);
     };
 
-    if (isLoadingWords && shuffledWords.length === 0) {
+    if (isLoadingWords) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
     if (shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
-        // Should ideally navigate away or show completion message before this
-        return <MainLayout><div>Loading or phase complete...</div></MainLayout>;
+        return <MainLayout><div>No words for this round or loading error.</div></MainLayout>;
     }
 
     const currentWordData = shuffledWords[currentWordIndex];
@@ -245,8 +239,9 @@ const LearningPage = () => {
 
     const keywordKey = `kss_keyword_refined`;
     const verbalCueKey = `kss_verbal_cue`;
-    const keywordIndices = parseIndexingString(currentWordData[keywordKey]);
-    const displayKeyword = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : currentWordData[keywordKey];
+    const keywordIndexingString = currentWordData[keywordKey];
+    const keywordIndices = parseIndexingString(keywordIndexingString);
+    const displayKeywordString = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : (keywordIndexingString || "N/A");
     const displayVerbalCue = currentWordData[verbalCueKey];
 
     // --- Render Logic ---
@@ -296,7 +291,7 @@ const LearningPage = () => {
                      <div className="word-card key-words-card" style={{ background: '#fff', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderRadius: '20px 20px 0 0', paddingTop: '25px', paddingBottom: '10px' }}>
                          <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Key Words</span>
                         <span className="key-words-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            {renderWordWithUnderlines(displayKeyword, keywordIndices, true)}
+                            {renderWordWithUnderlines(displayKeywordString, keywordIndices, true)}
                         </span>
                     </div>
                     <div className="word-card verbal-cue-card" style={{ background: '#fff', padding: '15px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', borderTop: '1px dashed #C7C7C7', borderBottom: '1px dashed #C7C7C7', borderRadius: 0, lineHeight: 1.6 }}>
