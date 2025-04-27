@@ -3,37 +3,11 @@ import { Progress, Input, Spin } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
+import { useExperiment } from '../context/ExperimentContext';
 
-// --- Helper Functions (Copied from LearningPage) ---
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim());
-    const data = lines.slice(1).map(line => {
-        const values = [];
-        let currentMatch = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            if (char === '"' && (i === 0 || line[i-1] !== '\\')) { 
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                values.push(currentMatch.trim().replace(/^"|"$/g, ''));
-                currentMatch = '';
-            } else {
-                currentMatch += char;
-            }
-        }
-        values.push(currentMatch.trim().replace(/^"|"$/g, '')); 
-        const entry = {};
-        headers.forEach((header, index) => {
-            entry[header] = values[index] !== undefined ? values[index] : '';
-        });
-        return entry;
-    });
-    return data;
-}
-
+// --- Helper Functions (제거 또는 이동 필요) ---
+// parseCSV 및 shuffleArray 제거
+// Fisher-Yates Shuffle
 function shuffleArray(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex !== 0) {
@@ -49,45 +23,34 @@ function shuffleArray(array) {
 const GenerationPage = () => {
     const { roundNumber } = useParams();
     const navigate = useNavigate();
-    const [wordList, setWordList] = useState([]);
+    const { wordList, isLoadingWords } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [userAnswer, setUserAnswer] = useState(""); 
     const [responses, setResponses] = useState([]);
     const timerRef = useRef(null);
     const inputRef = useRef(null); 
 
-    const CSV_PATH = '/words/words_data_test.csv';
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses';
 
-    // Load and Shuffle Words
     useEffect(() => {
-        setIsLoading(true);
-        fetch(CSV_PATH)
-            .then(response => response.ok ? response.text() : Promise.reject('Network error'))
-            .then(csvText => {
-                const parsedData = parseCSV(csvText);
-                setWordList(parsedData);
-                const shuffled = shuffleArray([...parsedData]);
-                setShuffledWords(shuffled);
-                setCurrentWordIndex(0);
-                setResponses([]); 
-                setUserAnswer("");
-                setIsLoading(false);
-            })
-            .catch(error => {
-                console.error('Error fetching/parsing CSV:', error);
-                setIsLoading(false);
-            });
-    }, [roundNumber]);
+        if (!isLoadingWords && wordList.length > 0) {
+            console.log("Global word list loaded in GenerationPage, shuffling...");
+            const shuffled = shuffleArray([...wordList]);
+            setShuffledWords(shuffled);
+            setCurrentWordIndex(0);
+            setResponses([]);
+            setUserAnswer("");
+        } else if (!isLoadingWords && wordList.length === 0) {
+            console.error("Word list is empty after loading.");
+        }
+    }, [wordList, isLoadingWords, roundNumber]);
 
-    // Timer and Word Transition Logic
     useEffect(() => {
-        if (isLoading || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+        if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) clearInterval(timerRef.current);
             return;
         }
@@ -111,9 +74,8 @@ const GenerationPage = () => {
         }, 1000);
 
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [currentWordIndex, shuffledWords, isLoading]);
+    }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
-    // Function to send responses to API
     const submitResponses = async (finalResponses) => {
         const userId = sessionStorage.getItem('userName') || 'unknown_user'; 
         const payload = {
@@ -141,7 +103,6 @@ const GenerationPage = () => {
         }
     };
 
-    // Next Button Handler
     const handleNextClick = (isTimeout = false) => {
         if (timerRef.current) clearInterval(timerRef.current);
 
@@ -149,11 +110,11 @@ const GenerationPage = () => {
         const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
         const currentWordData = shuffledWords[currentWordIndex];
         const formattedAnswer = userAnswer.trim().toLowerCase(); // Format answer
-        const correctAnswer = currentWordData.english_word.trim().toLowerCase();
+        const correctAnswer = currentWordData.word.trim().toLowerCase();
 
         const newResponse = {
             meaning: currentWordData.meaning,
-            word: currentWordData.english_word,
+            word: currentWordData.word,
             answer: formattedAnswer,
             is_correct: formattedAnswer === correctAnswer, // Correctness check
             duration: duration,
@@ -184,7 +145,7 @@ const GenerationPage = () => {
         }, 500);
     };
 
-    if (isLoading) {
+    if (isLoadingWords && shuffledWords.length === 0) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
@@ -195,7 +156,6 @@ const GenerationPage = () => {
     const currentWordData = shuffledWords[currentWordIndex];
     const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
 
-    // --- Render Logic ---
     return (
         <MainLayout>
             <div 

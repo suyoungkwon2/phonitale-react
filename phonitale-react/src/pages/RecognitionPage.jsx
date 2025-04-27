@@ -3,37 +3,11 @@ import { Progress, Input, Spin } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
+import { useExperiment } from '../context/ExperimentContext';
 
-// --- Helper Functions (Copied from LearningPage) ---
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim());
-    const data = lines.slice(1).map(line => {
-        const values = [];
-        let currentMatch = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            if (char === '"' && (i === 0 || line[i-1] !== '\\')) { 
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                values.push(currentMatch.trim().replace(/^"|"$/g, ''));
-                currentMatch = '';
-            } else {
-                currentMatch += char;
-            }
-        }
-        values.push(currentMatch.trim().replace(/^"|"$/g, '')); 
-        const entry = {};
-        headers.forEach((header, index) => {
-            entry[header] = values[index] !== undefined ? values[index] : '';
-        });
-        return entry;
-    });
-    return data;
-}
-
+// --- Helper Functions (제거 또는 이동 필요) ---
+// parseCSV 및 shuffleArray 제거
+// Fisher-Yates Shuffle (useExperiment에서 가져오거나 여기에 유지할 수 있음)
 function shuffleArray(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex !== 0) {
@@ -49,45 +23,36 @@ function shuffleArray(array) {
 const RecognitionPage = () => {
     const { roundNumber } = useParams();
     const navigate = useNavigate();
-    const [wordList, setWordList] = useState([]);
+    const { wordList, isLoadingWords } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [userAnswer, setUserAnswer] = useState(""); 
     const [responses, setResponses] = useState([]);
     const timerRef = useRef(null);
     const inputRef = useRef(null); 
 
-    const CSV_PATH = '/words/words_data_test.csv';
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses'; // API Gateway endpoint for submitting responses
 
-    // Load and Shuffle Words
+    // 변경: 전역 wordList 로딩 및 셔플
     useEffect(() => {
-        setIsLoading(true);
-        fetch(CSV_PATH)
-            .then(response => response.ok ? response.text() : Promise.reject('Network error'))
-            .then(csvText => {
-                const parsedData = parseCSV(csvText);
-                setWordList(parsedData);
-                const shuffled = shuffleArray([...parsedData]);
-                setShuffledWords(shuffled);
-                setCurrentWordIndex(0);
-                setResponses([]); 
-                setUserAnswer("");
-                setIsLoading(false);
-            })
-            .catch(error => {
-                console.error('Error fetching/parsing CSV:', error);
-                setIsLoading(false);
-            });
-    }, [roundNumber]);
+        if (!isLoadingWords && wordList.length > 0) {
+            console.log("Global word list loaded in RecognitionPage, shuffling...");
+            const shuffled = shuffleArray([...wordList]);
+            setShuffledWords(shuffled);
+            setCurrentWordIndex(0);
+            setResponses([]);
+            setUserAnswer("");
+        } else if (!isLoadingWords && wordList.length === 0) {
+            console.error("Word list is empty after loading.");
+        }
+    }, [wordList, isLoadingWords, roundNumber]);
 
-    // Timer and Word Transition Logic
+    // Timer and Word Transition Logic (isLoading -> isLoadingWords)
     useEffect(() => {
-        if (isLoading || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+        if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) clearInterval(timerRef.current);
             return;
         }
@@ -111,7 +76,7 @@ const RecognitionPage = () => {
         }, 1000);
 
         return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [currentWordIndex, shuffledWords, isLoading]);
+    }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
     // Function to send responses to API
     const submitResponses = async (finalResponses) => {
@@ -178,7 +143,8 @@ const RecognitionPage = () => {
         }, 500); // Shorter transition time
     };
 
-    if (isLoading) {
+    // 로딩 상태 표시 변경 (isLoading -> isLoadingWords)
+    if (isLoadingWords && shuffledWords.length === 0) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
@@ -189,7 +155,7 @@ const RecognitionPage = () => {
     const currentWordData = shuffledWords[currentWordIndex];
     const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
 
-    // --- Render Logic ---
+    // --- Render Logic (기존과 유사, word 컬럼 사용 확인) ---
     return (
         <MainLayout>
             <div 
