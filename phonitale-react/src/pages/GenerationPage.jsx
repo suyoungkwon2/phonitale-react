@@ -218,7 +218,14 @@ const GenerationPage = () => {
                     한국어 뜻을 보고, 영어 단어를 입력해주세요.
                 </div>
 
-                {/* Word Display & Input Section (Order reversed from Recognition) */}                <div className="word-display-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '32px' }}>
+                {/* Word Display & Input Section (Order reversed from Recognition) */}                <div className="word-display-section" style={{
+                    width: '100%', 
+                    maxWidth: '550px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    marginBottom: '32px',
+                    margin: '0 auto'
+                }}>
                      {/* Input card first */}                     <div className="word-card input-card" style={{ background: '#fff', borderRadius: '20px', padding: '25px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Word</span>
                         <Input

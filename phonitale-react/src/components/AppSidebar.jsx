@@ -1,16 +1,17 @@
 import React from 'react';
 import { Layout, Steps } from 'antd';
 import { CheckCircleOutlined } from '@ant-design/icons';
-import { useLocation } from 'react-router-dom'; // Import useLocation
+import { useLocation, useNavigate } from 'react-router-dom'; // useNavigate 추가
 
 const { Sider } = Layout;
 
 const AppSidebar = () => {
-  const location = useLocation(); // Use the hook to get location object
-  const currentPath = location.pathname; // Get the current path
+  const location = useLocation();
+  const navigate = useNavigate(); // useNavigate 훅 사용
+  const currentPath = location.pathname;
 
   console.log("AppSidebar component rendering...");
-  console.log("Current location pathname:", currentPath); // Log the path from useLocation
+  console.log("Current location pathname:", currentPath);
 
   let currentStepKey = 'consent'; // Default step
 
@@ -34,12 +35,12 @@ const AppSidebar = () => {
   console.log(`Determined step key: ${currentStepKey}`);
 
   const stepsData = [
-    { key: 'consent', title: 'Consent' },
-    { key: 'instruction', title: 'Instruction' },
-    { key: 'round1', title: 'Round 1' },
-    { key: 'round2', title: 'Round 2' },
-    { key: 'round3', title: 'Round 3' },
-    { key: 'survey', title: 'Survey' },
+    { key: 'consent', title: 'Consent', path: '/' }, // 경로 추가
+    { key: 'instruction', title: 'Instruction', path: '/instruction' }, // 경로 추가
+    { key: 'round1', title: 'Round 1', path: '/round/1/start' }, // 경로 추가 (라운드 시작 페이지)
+    { key: 'round2', title: 'Round 2', path: '/round/2/start' }, // 경로 추가
+    { key: 'round3', title: 'Round 3', path: '/round/3/start' }, // 경로 추가
+    { key: 'survey', title: 'Survey', path: '/survey/start' }, // 경로 추가 (설문 시작 페이지)
     // 'End' step is not visually represented in the Steps component itself
   ];
 
@@ -59,6 +60,12 @@ const AppSidebar = () => {
       if (index < currentIndex) return 'finish';
       if (index === currentIndex) return 'process';
       return 'wait';
+  };
+
+  // 네비게이션 함수
+  const handleStepClick = (path) => {
+      console.log(`Navigating to: ${path}`);
+      navigate(path);
   };
 
   return (
@@ -94,6 +101,8 @@ const AppSidebar = () => {
               title={step.title}
               status={status} // Use status to control styling (finish, process, wait)
               icon={stepIcon}
+              onClick={() => handleStepClick(step.path)} // 클릭 핸들러 추가
+              style={{ cursor: 'pointer' }} // 클릭 가능 표시
             />
           );
         })}

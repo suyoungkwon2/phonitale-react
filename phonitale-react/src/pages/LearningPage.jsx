@@ -284,7 +284,14 @@ const LearningPage = () => {
                     떠오르는 시각적인 장면을 상상해보세요.
                 </div>
 
-                {/* Word Display Section */}                <div className="word-display-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '32px' }}>
+                {/* Word Display Section */}                <div className="word-display-section" style={{ 
+                    width: '100%', 
+                    maxWidth: '550px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    marginBottom: '32px',
+                    margin: '0 auto'
+                }}>
                     {/* Base Card Style */}                    
                     <div className="word-card english-word-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Words</span>

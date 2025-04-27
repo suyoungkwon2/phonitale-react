@@ -67,7 +67,14 @@
     (1) React 프로젝트 설정 (완료): Vite (선호) 또는 Create React App을 사용하여 새로운 React 프로젝트 구조를 설정해주세요. 
     (2) 컴포넌트 마이그레이션 (완료): 기존 frontend/static/js/common_components.js와 frontend/templates/ 내 HTML 파일들에 포함된 React 컴포넌트들을 새로운 프로젝트 구조의 개별 .jsx 파일로 마이그레이션하는 것을 도와주세요.
     (3) 클라이언트 라우팅 설정 (완료): React Router를 사용하여 FastAPI 라우팅을 대체하고, 모든 실험 단계(Consent, Instruction, Round 1-3 Learning/Recognition/Generation, Survey, End)에 대한 클라이언트 사이드 라우팅을 설정해주세요.
-    (4) 상태 관리 재설계: 현재 분산된 상태 관리 방식을 표준 React 상태 관리(예: useState, useContext)로 전환하는 방법을 안내해주세요.
-    (5) API 호출 리팩토링: 기존 API 호출 로직(예: consent.html의 /api/consent 호출)을 React 컴포넌트 내에서 fetch 또는 axios를 사용하여 AWS API Gateway 엔드포인트(https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/)를 직접 호출하도록 수정하는 방법을 보여주세요.
-    (6) manifest.json 생성: 크롬 익스텐션(manifest version 3)을 위한 초기 manifest.json 파일 생성을 도와주세요. 필요한 권한(storage, API 엔드포인트 접근을 위한 host_permissions 등)을 포함하고, React 앱이 새 탭에서 열리도록 설정하는 방법을 알려주세요.
+    (4) 상태 관리 재설계 (완료): 현재 분산된 상태 관리 방식을 표준 React 상태 관리(예: useState, useContext)로 전환하는 방법을 안내해주세요.
+    (5) API 호출 리팩토링 (진행중)): 기존 API 호출 로직(예: consent.html의 /api/consent 호출)을 React 컴포넌트 내에서 fetch 또는 axios를 사용하여 AWS API Gateway 엔드포인트(https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/)를 직접 호출하도록 수정하는 방법을 보여주세요.
+    핵심 로직 구현 및 상태 관리 구체화:
+        - API 호출과 연동하여 각 페이지의 세부 기능(타이머, 프로그레스 바, 오디오 재생, 사용자 입력 처리 등)을 구현합니다.
+        - 필요에 따라 useState와 useExperiment 훅을 사용하여 지역 및 전역 상태를 관리합니다.
+    (6) Vercel 배포 설정:
+        - 어느 정도 기능 구현이 진행된 후, 개발 중인 React 앱을 쉽게 확인하고 테스트하기 위해 Vercel 배포를 설정할 수 있습니다. GitHub 저장소 연결만으로 간단하게 설정 가능합니다.
+    (7) Figma 디자인 맞추기:
+        기능 구현이 안정화된 후, Figma 디자인을 보면서 CSS 스타일, Ant Design 컴포넌트 사용 등을 조정하여 UI를 개선합니다.
+
 
