@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
     <style>
         /* Styles adapted from learning.html */
         .survey-content-wrapper {
@@ -333,7 +337,7 @@
 
                 const isNextDisabled = usefulnessRating === 0 || coherenceRating === 0;
 
-                return (
+        return (
                     <div className="survey-content-wrapper">
                         {/* Progress Section */}
                         <div className="progress-section">
@@ -399,7 +403,7 @@
                                 disabled={isNextDisabled} // Disable if either rating is 0
                             />
                         </div>
-                    </div>
+              </div>
                 );
             }
 

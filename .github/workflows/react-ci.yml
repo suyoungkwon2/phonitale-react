@@ -24,18 +24,23 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
         cache: 'npm' # npm 의존성 캐싱 활성화
+        cache-dependency-path: phonitale-react/package-lock.json # 캐시 경로 수정
 
     - name: Install dependencies
+      working-directory: ./phonitale-react # 작업 디렉토리 지정
       run: npm install # package-lock.json을 기반으로 의존성 설치
 
     - name: Build project
+      working-directory: ./phonitale-react # 작업 디렉토리 지정
       run: npm run build # Vite 프로젝트 빌드 명령어 실행 (package.json에 정의된 스크립트)
       env:
         CI: false # 빌드 중 경고를 에러로 처리하지 않도록 설정 (필요에 따라 조정)
 
     # 선택 사항: Lint 또는 Test 단계 추가 (package.json에 스크립트가 정의되어 있다면)
     # - name: Run linter
+    #   working-directory: ./phonitale-react
     #   run: npm run lint
     #
     # - name: Run tests
+    #   working-directory: ./phonitale-react
     #   run: npm run test

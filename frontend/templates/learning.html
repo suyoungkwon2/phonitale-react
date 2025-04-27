@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
     <style>
         /* Learning 페이지 전용 스타일 */
         .learning-content-wrapper {
@@ -188,7 +192,7 @@
             const { Progress } = antd; // Import Progress
             const { useState, useEffect, useRef } = React;
 
-            const roundNumber = document.body.getAttribute('data-round-number') || '1';
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
             const USER_GROUP = 'kss'; // 사용자 그룹 (임시로 kss 사용)
             const CSV_PATH = '/static/words/words_data_test.csv';
             const UNDERLINE_COLORS = [
@@ -507,7 +511,7 @@
                  // Verbal cue는 kss 그룹 컬럼에서 직접 가져옴
                 const displayVerbalCue = currentWordData[verbalCueKey]; 
 
-                return (
+        return (
                     <React.Fragment>
                         {/* 전환 오버레이 제거 */}
                         {/* {isTransitioning && <div className="transition-overlay"></div>} */}
@@ -569,7 +573,7 @@
                                     disabled={!isNextButtonEnabled}
                                 />
                             </div>
-                        </div>
+              </div>
                     </React.Fragment>
                 );
             }

@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
     <style>
         /* Styles adapted from survey_start.html */
         .end-content-wrapper { /* Adjusted class name */
@@ -84,7 +88,7 @@
                 const endMessage = `• 실험에 참여해 주셔서 감사합니다.
 • 리워드는 실험 종료 후 2~3주 이내에 작성하신 휴대폰 번호로 문자 발송될 예정입니다.`;
 
-                return (
+        return (
                     <div className="end-content-wrapper">
                         <div className="end-title-box">
                             실험 종료
@@ -93,9 +97,9 @@
                             {endMessage}
                         </div>
                         {/* No button needed on this page */}
-                    </div>
-                );
-            }
+              </div>
+        );
+      }
 
             ReactDOM.render(
                 <window.MainLayout>

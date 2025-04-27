@@ -8,7 +8,83 @@
     <!-- Ant Design CSS -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <!-- Your custom styles -->
-    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <style>
+        body {
+            /* background-color: #f3f4fb; Figma 배경색 */
+            font-family: sans-serif; /* 기본 폰트 */
+        }
+        /* Layout container div */
+        #root {
+            /* This div will contain the React rendered layout */
+        }
+        .ant-layout-content {
+            /* 기본 콘텐츠 영역 패딩 등 제거 (MainLayout에서 관리) */
+            padding: 0; 
+            margin: 0;
+        }
+        /* Add other global styles or overrides here if needed */
+
+        /* Styles for the Notion embed container */
+        .notion-embed-container {
+            width: 100%; 
+            height: 500px; /* Adjust height as needed */
+            border: 1px solid #d9d9d9; /* Light grey border */
+            margin-bottom: 30px; 
+            overflow: hidden; /* Hide scrollbars if Notion handles it */
+            background-color: #f0f0f0; /* Placeholder background */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888;
+            font-style: italic;
+        }
+
+        .consent-form-container {
+            display: flex;
+            flex-direction: column; /* Stack form elements vertically */
+            align-items: center; /* Center form elements horizontally */
+            width: 100%;
+            max-width: 600px; /* Limit form width */
+            margin: 0 auto; /* Center the container */
+        }
+
+        .consent-form {
+            display: flex; 
+            flex-direction: column;
+            gap: 15px; /* Space between form rows */
+            width: 100%; /* Form takes full width of container */
+            margin-bottom: 20px;
+        }
+
+        .consent-form .ant-form-item {
+            margin-bottom: 0; /* Remove default bottom margin from antd Form.Item */
+            display: flex;
+            flex-direction: row; /* Align label and input horizontally */
+            align-items: center; /* Vertically center label and input */
+            gap: 10px; /* Space between label and input */
+        }
+        
+        .consent-form .ant-form-item-label {
+             width: 120px; /* Fixed width for labels */
+             text-align: right;
+             flex-shrink: 0; /* Prevent label from shrinking */
+        }
+
+        .consent-form .ant-form-item-control {
+            flex-grow: 1; /* Allow input to take remaining space */
+        }
+
+        .consent-checkbox-container {
+            display: flex; 
+            align-items: center; 
+            gap: 10px; /* Space between checkbox and label */
+            margin-bottom: 30px;
+        }
+
+    </style>
 </head>
 <body>
     <div id="root"></div>
@@ -86,87 +162,79 @@
         };
 
         return (
-          // Layout, Header, Sidebar 등은 MainLayout에서 처리
           <React.Fragment>
             <div className="site-layout-content" style={{ background: '#fff', padding: '40px', borderRadius: '8px', width: '100%', maxWidth: '900px', margin: 'auto' }}>
-              <Row justify="center" style={{ marginBottom: '24px' }}>
-                 <Col>
-                    {/* 제목 스타일은 instruction 페이지와 유사하게 맞출 수 있음 */}
-                    <div style={{ backgroundColor: '#394A7F', color: 'white', padding: '16px 24px', borderRadius: '8px', textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-                       실험 참가 동의서
-                    </div>
-                 </Col>
-              </Row>
+                <Row justify="center" style={{ marginBottom: '24px' }}>
+                   <Col>
+                      <div style={{ backgroundColor: '#394A7F', color: 'white', padding: '16px 24px', borderRadius: '8px', textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }}>
+                         실험 참가 동의서
+                      </div>
+                   </Col>
+                </Row>
 
-              <Paragraph>실험에 참여해 주셔서 감사합니다. 아래 링크에서 참가 동의서를 읽고 서명해 주세요.</Paragraph>
-              <Paragraph>※ 동의하지 않으면 실험에 참여하실 수 없습니다.</Paragraph>
+                <Paragraph>실험에 참여해 주셔서 감사합니다. 아래 링크에서 참가 동의서를 읽고 서명해 주세요.</Paragraph>
+                <Paragraph>※ 동의하지 않으면 실험에 참여하실 수 없습니다.</Paragraph>
 
-              {/* Notion Embed */}
-              <div style={{ border: '1px solid #d9d9d9', borderRadius: '2px', padding: '20px', marginBottom: '24px', backgroundColor: '#fafafa' }}>
-                 <iframe src="https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1" width="100%" height="400px" frameBorder="0" allowFullScreen style={{display: 'block', margin: 'auto'}}></iframe>
-              </div>
+                {/* Notion Embed */}
+                <div style={{ border: '1px solid #d9d9d9', borderRadius: '2px', padding: '20px', marginBottom: '24px', backgroundColor: '#fafafa' }}>
+                   <iframe src="https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1" width="100%" height="400px" frameBorder="0" allowFullScreen style={{display: 'block', margin: 'auto'}}></iframe>
+                </div>
 
-              {/* User Info Form */}
-              <Form
-                form={form}
-                layout="horizontal"
-                onFinish={onFinish}
-                labelCol={{ span: 4 }}
-                wrapperCol={{ span: 18 }}
-                style={{ maxWidth: 600, margin: 'auto' }} // Center the form items a bit
-                autoComplete="off"
-              >
-                {/* Form Items (Name, Phone, Email, Agree Checkbox) - 내용은 동일 */}
-                <Form.Item
-                    name="name"
-                    label="이름"
-                    rules={[{ required: true, message: '이름을 입력해주세요!' }]}
-                  >
-                    <Input />
-                  </Form.Item>
+                {/* User Info Form */}
+                <Form
+                  form={form}
+                  layout="horizontal"
+                  onFinish={onFinish}
+                  labelCol={{ span: 4 }}
+                  wrapperCol={{ span: 18 }}
+                  style={{ maxWidth: 600, margin: 'auto' }}
+                  autoComplete="off"
+                >
                   <Form.Item
-                    name="phone"
-                    label="핸드폰 번호"
-                    rules={[{ required: true, message: '핸드폰 번호를 입력해주세요!' }]}
-                  >
-                    <Input />
+                      name="name"
+                      label="이름"
+                      rules={[{ required: true, message: '이름을 입력해주세요!' }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="phone"
+                      label="핸드폰 번호"
+                      rules={[{ required: true, message: '핸드폰 번호를 입력해주세요!' }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="email"
+                      label="이메일 주소"
+                      rules={[
+                          { required: true, message: '이메일 주소를 입력해주세요!' },
+                          { type: 'email', message: '유효한 이메일 주소를 입력해주세요!'}
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="agree"
+                      valuePropName="checked"
+                      wrapperCol={{ offset: 4, span: 18 }}
+                      rules={[{
+                          validator: (_, value) =>
+                          value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.')),
+                      }]}
+                    >
+                      <Checkbox>동의합니다.</Checkbox>
+                    </Form.Item>
+                  <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}>
+                    <window.BlueButton text="Submit" htmlType="submit" disabled={!isSubmittable} />
                   </Form.Item>
-                  <Form.Item
-                    name="email"
-                    label="이메일 주소"
-                    rules={[
-                        { required: true, message: '이메일 주소를 입력해주세요!' },
-                        { type: 'email', message: '유효한 이메일 주소를 입력해주세요!'}
-                    ]}
-                  >
-                    <Input />
-                  </Form.Item>
-                  <Form.Item
-                    name="agree"
-                    valuePropName="checked"
-                    wrapperCol={{ offset: 4, span: 18 }} // Adjust alignment
-                    rules={[{
-                        validator: (_, value) =>
-                        value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.')),
-                    }]}
-                  >
-                    <Checkbox>동의합니다.</Checkbox>
-                  </Form.Item>
-                <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}> {/* 버튼 오른쪽 정렬 */}
-                  <window.BlueButton
-                    text="Submit"
-                    htmlType="submit"
-                    disabled={!isSubmittable}
-                   />
-                </Form.Item>
-              </Form>
+                </Form>
             </div>
           </React.Fragment>
         );
       }
 
       // --- 최종 렌더링 ---
-      // MainLayout 안에 페이지별 콘텐츠 컴포넌트를 넣습니다.
       ReactDOM.render(
         <MainLayout>
           <ConsentPageContent />

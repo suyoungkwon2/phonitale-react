@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
     <style>
         /* recognition.html specific styles, similar to learning.html */
         .recognition-content-wrapper {
@@ -126,7 +130,7 @@
             const { Progress, Input } = antd; // Import required components
             const { useState, useEffect, useRef } = React;
 
-            const roundNumber = document.body.getAttribute('data-round-number') || '1';
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
             const CSV_PATH = '/static/words/words_data_test.csv'; // Same CSV as learning
 
             // --- CSV 파서 (learning.html에서 가져옴) ---
@@ -281,7 +285,7 @@
                 const currentWordData = shuffledWords[currentWordIndex];
                 const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
 
-                return (
+        return (
                      <React.Fragment>
                          {/* Transition effect similar to learning.html */}
                          <div
@@ -317,11 +321,11 @@
                                 {/* Korean Meaning Input Card */}
                                 <div className="word-card input-card">
                                     <span className="word-card-label">Korean Meaning</span>
-                                    <Input
+                <Input
                                         ref={inputRef} // Assign ref
-                                        placeholder="Enter Korean meaning"
-                                        value={userAnswer}
-                                        onChange={(e) => setUserAnswer(e.target.value)}
+                    placeholder="Enter Korean meaning"
+                    value={userAnswer}
+                    onChange={(e) => setUserAnswer(e.target.value)}
                                         className="korean-input"
                                         size="large" // Make input larger if needed
                                         bordered={false} // Remove border for cleaner look if desired
@@ -339,7 +343,7 @@
                                     disabled={false} // Button is always enabled
                                 />
                             </div>
-                        </div>
+              </div>
                      </React.Fragment>
                 );
             }

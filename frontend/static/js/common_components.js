@@ -29,126 +29,109 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
   }
 
   // --- Header 컴포넌트 ---
-  window.AppHeader = function AppHeader() { // 함수를 전역 스코프에 명시적으로 할당
-    const [userName, setUserName] = useState(null); // 사용자 이름 상태 추가
+  window.AppHeader = function AppHeader() {
+    const [userName, setUserName] = useState(null);
 
     useEffect(() => {
-      // 컴포넌트 마운트 시 sessionStorage에서 사용자 이름 가져오기
       const storedName = sessionStorage.getItem('userName');
       if (storedName) {
         setUserName(storedName);
       } else {
-        // 저장된 이름이 없으면 기본값 또는 다른 로직 처리 가능
         console.log('User name not found in sessionStorage.');
       }
-    }, []); // 빈 배열을 전달하여 마운트 시 한 번만 실행
+    }, []);
 
     return (
-      <Header style={{ 
-          display: 'flex', 
-          justifyContent: 'space-between', 
-          alignItems: 'center', 
-          background: '#fff', 
-          borderBottom: '1px solid #f0f0f0',
-          // --- Fixed Header Styles ---
-          position: 'fixed', 
-          zIndex: 10, // Ensure header is above content
-          width: '100%',
-          top: 0 // Stick to the top
-          // --- End Fixed Header Styles ---
-       }}>
-         {/* 로고 스타일은 CSS에서 관리하거나 필요시 여기에 인라인 스타일 추가 */}
-         <div className="logo" style={{ color: '#000', fontWeight: 'bold', fontSize: '20px' }}>PHONITALE</div>
-         <div className="user-name">{userName || 'User Name'}</div> {/* 상태값을 사용, 없으면 'User Name' 표시 */}
+      <Header className="app-header">
+         <div className="app-logo">
+            <img 
+                src="/static/images/icon.png" 
+                alt="Phonitale Icon"
+            />
+            PHONITALE
+         </div>
+         <div className="app-user-name">{userName || 'User Name'}</div>
       </Header>
     );
   }
 
   // --- Sidebar 컴포넌트 ---
-  window.AppSidebar = function AppSidebar() { // 함수를 전역 스코프에 명시적으로 할당
-    console.log("AppSidebar component rendering..."); // Sidebar 렌더링 시작 로그
+  window.AppSidebar = function AppSidebar() {
+    console.log("AppSidebar component rendering...");
 
-    // --- 기존 동적 로직 복원 ---
     const currentPath = window.location.pathname;
-    let currentStepKey = 'consent'; // 경로 기반으로 현재 단계 key 결정 (기본값 consent)
-
+    let currentStepKey = 'consent';
     // Determine current step key based on path
     if (currentPath === '/instruction') currentStepKey = 'instruction';
     else if (currentPath.startsWith('/round/1')) currentStepKey = 'round1';
     else if (currentPath.startsWith('/round/2')) currentStepKey = 'round2';
     else if (currentPath.startsWith('/round/3')) currentStepKey = 'round3';
     else if (currentPath.startsWith('/survey')) currentStepKey = 'survey';
-    else if (currentPath === '/end') currentStepKey = 'end'; // 종료 페이지 추가 고려
-    // 기본값은 'consent' 유지
-    console.log(`Current path: ${currentPath}, Determined step key: ${currentStepKey}`); // 경로 및 결정된 키 로그
+    else if (currentPath === '/end') currentStepKey = 'end';
+    console.log(`Current path: ${currentPath}, Determined step key: ${currentStepKey}`);
 
     const stepsData = [
-      { key: 'consent', icon: <CheckCircleOutlined />, title: 'Consent' }, // path 제거 (불필요)
-      { key: 'instruction', icon: <ReadOutlined />, title: 'Instruction' },
-      { key: 'round1', icon: <ExperimentOutlined />, title: 'Round 1' },
-      { key: 'round2', icon: <ExperimentOutlined />, title: 'Round 2' },
-      { key: 'round3', icon: <ExperimentOutlined />, title: 'Round 3' },
-      { key: 'survey', icon: <FileTextOutlined />, title: 'Survey' },
-      // { key: 'end', icon: <CheckCircleOutlined />, title: 'End' } // 종료 단계 예시
+      { key: 'consent', title: 'Consent' },
+      { key: 'instruction', title: 'Instruction' },
+      { key: 'round1', title: 'Round 1' },
+      { key: 'round2', title: 'Round 2' },
+      { key: 'round3', title: 'Round 3' },
+      { key: 'survey', title: 'Survey' },
     ];
 
-    const currentStepIndex = stepsData.findIndex(step => step.key === currentStepKey);
-    console.log(`Current step index: ${currentStepIndex}`); // 계산된 인덱스 로그
+    let displayStepIndex = stepsData.findIndex(step => step.key === currentStepKey);
+    if (currentPath === '/end') {
+        displayStepIndex = stepsData.length; // 모든 단계를 완료한 것으로 간주
+    }
+    console.log(`Current step index for status calculation: ${displayStepIndex}`);
 
-    // status 계산 함수
-    const determineStatus = (index, currentIndex) => {
-      if (index < currentIndex) return 'finish';
-      if (index === currentIndex) return 'process';
-      return 'wait';
-    };
-
-    // --- items 배열 생성 로직 제거 ---
-    /*
-    const items = stepsData.map((step, index) => {
-        let status = 'wait';
-        if (index < currentStepIndex) {
-            status = 'finish';
-        } else if (index === currentStepIndex) {
-            status = 'process';
+    const determineStatus = (index, currentIndex, path) => {
+        if (path === '/end') {
+            return 'finish'; // /end 경로에서는 무조건 finish 반환
         }
-        return {
-            key: step.key,
-            title: step.title,
-            icon: step.icon,
-            status: status,
-        };
-    });
-    console.log('Generated Steps items:', items);
-    */
-
+        // 기존 로직 유지
+        if (index < currentIndex) return 'finish';
+        if (index === currentIndex) return 'process';
+        return 'wait';
+    };
+    
     return (
-      <Sider width={200} theme="light" style={{
+      <Sider width={200} theme="light" style={{ /* 기존 Sider 스타일 유지 */
            background: '#fff',
-           // --- Fixed Sidebar Styles ---
-           overflow: 'auto', // Allow scrolling within sidebar if content overflows
-           height: '100vh', // Full viewport height
+           overflow: 'auto',
+           height: '100vh',
            position: 'fixed',
            left: 0,
-           top: 64, // Position below the fixed header (assuming header height is 64px)
+           top: 64,
            bottom: 0,
-           zIndex: 9 // Below header but above content
-           // --- End Fixed Sidebar Styles ---
+           zIndex: 9
        }}>
-        {/* Steps 컴포넌트 사용, current prop은 여전히 유효 */}
         <Steps
+          className="figma-steps"
           direction="vertical"
-          current={currentStepIndex} // 동적 인덱스 사용
-          // items prop 제거
+          current={displayStepIndex}
         >
-          {/* items prop 대신 Steps.Step 자식 컴포넌트로 직접 렌더링 */}
-          {stepsData.map((step, index) => (
-            <Steps.Step
-              key={step.key}
-              title={step.title}
-              icon={step.icon}
-              status={determineStatus(index, currentStepIndex)} // 상태 계산 함수 사용
-            />
-          ))}
+          {stepsData.map((step, index) => {
+            const status = determineStatus(index, displayStepIndex, currentPath);
+            const stepClassName = `figma-step-${status}`;
+            
+            let stepIcon;
+            if (status === 'finish') {
+                stepIcon = <CheckCircleOutlined />;
+            } else {
+                stepIcon = <span className={`figma-step-icon ${stepClassName}`}>{index + 1}</span>;
+            }
+
+            return (
+              <Steps.Step
+                className={stepClassName}
+                key={step.key}
+                title={step.title}
+                status={status}
+                icon={stepIcon}
+              />
+            );
+          })}
         </Steps>
       </Sider>
     );
@@ -272,33 +255,32 @@ if (typeof React === 'undefined' || typeof antd === 'undefined' || typeof icons 
   }
 
   // --- 메인 레이아웃 컴포넌트 ---
-  window.MainLayout = function MainLayout({ children }) { // 함수를 전역 스코프에 명시적으로 할당
-    const headerHeight = 64; // Define header height (adjust if needed)
-    const siderWidth = 200; // Define sidebar width
+  window.MainLayout = function MainLayout({ children }) {
+    const headerHeight = 64; // header.css 에서 정의한 높이와 일치시킴
+    const siderWidth = 200;
 
     return (
       <Layout className="layout" style={{ minHeight: '100vh' }}>
         <AppHeader />
         <Layout style={{ 
-            // --- Adjust layout for fixed header/sidebar ---
-            paddingTop: headerHeight, // Add padding to account for fixed header
-            // --- End Adjust layout ---
+            // 헤더 높이만큼 상단 패딩 추가 (고정 헤더 공간 확보)
+            paddingTop: headerHeight, 
          }}>
           <AppSidebar />
           <Layout style={{ 
-              // --- Adjust content layout ---
+              // 사이드바 너비만큼 왼쪽 마진 추가 (고정 사이드바 공간 확보)
               padding: '24px 24px 24px',
-              marginLeft: siderWidth, // Add margin to account for fixed sidebar
-              minHeight: `calc(100vh - ${headerHeight}px)` // Ensure content area fills remaining height
-              // --- End Adjust content layout ---
+              marginLeft: siderWidth,
+              minHeight: `calc(100vh - ${headerHeight}px)`
            }}>
-            <Content>
-              {children} {/* 페이지별 컨텐츠가 여기에 렌더링됩니다 */}
+            <Content
+                // Add a class for potential content-specific styling
+                // className="main-content"
+            >
+              {children} 
             </Content>
           </Layout>
         </Layout>
-        {/* Footer는 필요하다면 여기에 추가할 수 있습니다 */}
-        {/* <Footer style={{ textAlign: 'center' }}>Phonitale Experiment ©2024</Footer> */}
       </Layout>
     );
   }

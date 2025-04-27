@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/antd/4.23.3/antd.min.css" />
     <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/custom.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/header.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/sidebar.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', path='/fonts/fonts.css') }}">
     <style>
         /* generation.html specific styles, similar to recognition.html */
         .generation-content-wrapper {
@@ -125,7 +129,7 @@
             const { Progress, Input } = antd;
             const { useState, useEffect, useRef } = React;
 
-            const roundNumber = document.body.getAttribute('data-round-number') || '1';
+      const roundNumber = document.body.getAttribute('data-round-number') || '1';
             const CSV_PATH = '/static/words/words_data_test.csv';
 
             // --- CSV 파서 (from learning.html) ---
@@ -279,7 +283,7 @@
                 const currentWordData = shuffledWords[currentWordIndex];
                 const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
 
-                return (
+        return (
                      <React.Fragment>
                          <div
                              className="generation-content-wrapper"
@@ -308,10 +312,10 @@
                                  {/* English Word Input Card (위로 이동) */}
                                  <div className="word-card input-card">
                                      <span className="word-card-label">English Word</span>
-                                     <Input
+                <Input
                                          ref={inputRef}
-                                         placeholder="Enter English word"
-                                         value={userAnswer}
+                    placeholder="Enter English word"
+                    value={userAnswer}
                                          onChange={(e) => setUserAnswer(e.target.value)} // Store raw input
                                          className="english-input"
                                          size="large"
@@ -338,7 +342,7 @@
                                     disabled={false} // Always enabled
                                 />
                             </div>
-                        </div>
+              </div>
                      </React.Fragment>
                 );
             }
