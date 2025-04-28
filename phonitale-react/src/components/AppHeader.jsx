@@ -18,7 +18,13 @@ const AppHeader = () => {
   }, []);
 
   return (
-    <Header className="app-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'white' }}>
+    <Header className="app-header" style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'space-between', 
+      background: 'white',
+      borderBottom: '1px solid #868686'
+    }}>
        <div className="app-logo" style={{ display: 'flex', alignItems: 'center' }}>
           {/* 이미지 경로는 public 폴더 기준으로 설정 필요 */}
           <img 
