@@ -1,39 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Progress, Input, Spin } from 'antd';
+import { Progress, Input, Spin, message } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
+import { useExperiment } from '../context/ExperimentContext';
+import { submitResponse } from '../utils/api'; // API 유틸리티 임포트
 
-// --- Helper Functions (Copied from LearningPage) ---
-function parseCSV(csvText) {
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim());
-    const data = lines.slice(1).map(line => {
-        const values = [];
-        let currentMatch = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            if (char === '"' && (i === 0 || line[i-1] !== '\\')) { 
-                inQuotes = !inQuotes;
-            } else if (char === ',' && !inQuotes) {
-                values.push(currentMatch.trim().replace(/^"|"$/g, ''));
-                currentMatch = '';
-            } else {
-                currentMatch += char;
-            }
-        }
-        values.push(currentMatch.trim().replace(/^"|"$/g, '')); 
-        const entry = {};
-        headers.forEach((header, index) => {
-            entry[header] = values[index] !== undefined ? values[index] : '';
-        });
-        return entry;
-    });
-    return data;
-}
-
+// --- Helper Functions (제거 또는 이동 필요) ---
+// parseCSV 및 shuffleArray 제거
+// Fisher-Yates Shuffle (useExperiment에서 가져오거나 여기에 유지할 수 있음)
 function shuffleArray(array) {
     let currentIndex = array.length, randomIndex;
     while (currentIndex !== 0) {
@@ -47,58 +22,75 @@ function shuffleArray(array) {
 
 // --- Recognition Page Component ---
 const RecognitionPage = () => {
-    const { roundNumber } = useParams();
+    const { roundNumber: roundNumberStr } = useParams(); // 문자열로 받아옴
     const navigate = useNavigate();
-    const [wordList, setWordList] = useState([]);
+    // 변경: wordList는 이제 객체 형태 { 1: [], 2: [], 3: [] }
+    const { wordList: wordsByRound, isLoadingWords } = useExperiment(); 
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
     const [startTime, setStartTime] = useState(null);
     const [isTransitioning, setIsTransitioning] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [userAnswer, setUserAnswer] = useState(""); 
-    const [responses, setResponses] = useState([]);
+    const [responses, setResponses] = useState([]); // 응답 저장 유지
     const timerRef = useRef(null);
     const inputRef = useRef(null); 
+    // 추가: 오디오 재생 타임아웃 ID 저장을 위한 Ref
+    const audioTimeoutRefs = useRef([]); 
+    const timestampInRef = useRef(null); // 페이지 진입 시각 저장용 ref
 
-    const CSV_PATH = '/words/words_data_test.csv';
     const API_ENDPOINT = 'https://2ml24s4a3jfj5hqx4y644cgzbq0jbzmt.lambda-url.us-east-2.on.aws/responses'; // API Gateway endpoint for submitting responses
 
-    // Load and Shuffle Words
-    useEffect(() => {
-        setIsLoading(true);
-        fetch(CSV_PATH)
-            .then(response => response.ok ? response.text() : Promise.reject('Network error'))
-            .then(csvText => {
-                const parsedData = parseCSV(csvText);
-                setWordList(parsedData);
-                const shuffled = shuffleArray([...parsedData]);
-                setShuffledWords(shuffled);
-                setCurrentWordIndex(0);
-                setResponses([]); 
-                setUserAnswer("");
-                setIsLoading(false);
-            })
-            .catch(error => {
-                console.error('Error fetching/parsing CSV:', error);
-                setIsLoading(false);
-            });
-    }, [roundNumber]);
+    // 추가: roundNumber를 숫자로 변환
+    const roundNumber = parseInt(roundNumberStr, 10);
 
-    // Timer and Word Transition Logic
+    // 변경: 라운드별 단어 목록 가져오기 및 셔플
     useEffect(() => {
-        if (isLoading || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+        // isLoadingWords가 false이고, wordsByRound 객체가 로드되었는지 확인
+        if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
+            // 현재 라운드 번호에 해당하는 단어 목록 가져오기 (없으면 빈 배열)
+            const wordsForCurrentRound = wordsByRound[roundNumber] || [];
+            console.log(`RecognitionPage Round ${roundNumber}: Loaded ${wordsForCurrentRound.length} words.`);
+            
+            if (wordsForCurrentRound.length > 0) {
+                const shuffled = shuffleArray([...wordsForCurrentRound]);
+                setShuffledWords(shuffled);
+            } else {
+                 // 해당 라운드 단어가 없으면 빈 배열 설정
+                 setShuffledWords([]);
+                 console.warn(`No words found for round ${roundNumber}`);
+                 // TODO: 사용자에게 알림 또는 다음 단계로 자동 이동 등의 처리 추가 가능
+            }
+            // 라운드 시작 시 상태 초기화
+            setCurrentWordIndex(0);
+            setResponses([]); // 라운드 시작 시 응답 초기화
+            setUserAnswer(""); // 라운드 시작 시 사용자 답변 초기화
+        } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
+            console.error("Word list object is empty after loading.");
+            setShuffledWords([]);
+        }
+        // 의존성 배열에 wordsByRound, roundNumber 추가
+    }, [wordsByRound, isLoadingWords, roundNumber]);
+
+    // Timer and Word Transition Logic + 오디오 재생
+    useEffect(() => {
+        if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) clearInterval(timerRef.current);
+            // 이전 타임아웃 클리어
+            audioTimeoutRefs.current.forEach(clearTimeout);
+            audioTimeoutRefs.current = [];
             return;
         }
+
+        const currentWordData = shuffledWords[currentWordIndex]; // 현재 단어 데이터 가져오기
 
         setTimeLeft(30);
         setStartTime(Date.now());
         setUserAnswer(""); 
-        if (inputRef.current) inputRef.current.focus(); // Focus input
+        if (inputRef.current) inputRef.current.focus(); 
 
+        // --- Timer Logic --- 
         if (timerRef.current) clearInterval(timerRef.current);
-
         timerRef.current = setInterval(() => {
             setTimeLeft(prevTime => {
                 if (prevTime <= 1) {
@@ -110,8 +102,43 @@ const RecognitionPage = () => {
             });
         }, 1000);
 
-        return () => { if (timerRef.current) clearInterval(timerRef.current); };
-    }, [currentWordIndex, shuffledWords, isLoading]);
+        // --- Audio Playback Logic --- 
+        // 이전 오디오 타임아웃 클리어
+        audioTimeoutRefs.current.forEach(clearTimeout);
+        audioTimeoutRefs.current = [];
+
+        if (currentWordData?.audio_path) {
+            const audioPath = `/${currentWordData.audio_path}`; // public 폴더 기준 경로
+            const playAudio = () => {
+                try {
+                    const audio = new Audio(audioPath);
+                    audio.play().catch(e => console.error("Audio play failed:", e));
+                    console.log(`Playing audio: ${audioPath}`);
+                } catch (error) {
+                    console.error("Error creating or playing audio:", error);
+                }
+            };
+
+            // 2초 후 재생 예약
+            const timeoutId1 = setTimeout(playAudio, 2000);
+            // 7초 후 재생 예약
+            const timeoutId2 = setTimeout(playAudio, 7000);
+
+            // 타임아웃 ID 저장
+            audioTimeoutRefs.current.push(timeoutId1, timeoutId2);
+        } else {
+            console.warn(`Audio path not found for word: ${currentWordData?.word}`);
+        }
+
+        // Cleanup 함수
+        return () => { 
+            if (timerRef.current) clearInterval(timerRef.current);
+            // 컴포넌트 언마운트 또는 의존성 변경 시 타임아웃 클리어
+            audioTimeoutRefs.current.forEach(clearTimeout);
+            audioTimeoutRefs.current = [];
+        };
+    // 의존성 배열 유지
+    }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
     // Function to send responses to API
     const submitResponses = async (finalResponses) => {
@@ -144,21 +171,25 @@ const RecognitionPage = () => {
     };
 
     // Next Button Handler
-    const handleNextClick = (isTimeout = false) => {
+    const handleNextClick = async (isTimeout = false) => {
         if (timerRef.current) clearInterval(timerRef.current);
 
         const endTime = Date.now();
         const duration = startTime ? Math.round((endTime - startTime) / 1000) : 0;
         const currentWordData = shuffledWords[currentWordIndex];
 
+        const timestampOut = new Date().toISOString();
+        const timestampIn = timestampInRef.current;
+        const userId = sessionStorage.getItem('userId');
+
         const newResponse = {
-            word: currentWordData.english_word,
+            word: currentWordData.word,
             answer: userAnswer,
             correct_answer: currentWordData.meaning, // Include correct answer for evaluation
             is_correct: userAnswer.trim() === currentWordData.meaning.trim(), // Basic correctness check
             duration: duration,
             isTimeout: isTimeout,
-            timestamp: new Date().toISOString()
+            timestamp: timestampOut
         };
         const updatedResponses = [...responses, newResponse];
         setResponses(updatedResponses);
@@ -176,9 +207,41 @@ const RecognitionPage = () => {
                 navigate(`/round/${roundNumber}/generation/start`);
             }
         }, 500); // Shorter transition time
+
+        // --- API 호출 --- 
+        try {
+            const responseData = {
+                user: userId,
+                english_word: currentWordData.word,
+                round_number: roundNumber,
+                page_type: 'recognition',
+                timestamp_in: timestampIn,
+                timestamp_out: timestampOut,
+                duration: duration,
+                response: userAnswer || null, // 사용자 입력 (없으면 null)
+            };
+            await submitResponse(responseData);
+            console.log("Recognition response submitted for:", currentWordData.word);
+        } catch (error) {
+            console.error("Failed to submit recognition response:", error);
+            message.error(`Failed to save response: ${error.message}`); // 사용자에게 피드백
+        } finally {
+            setTimeout(() => {
+                if (currentWordIndex < shuffledWords.length - 1) {
+                    setCurrentWordIndex(prevIndex => prevIndex + 1);
+                    setIsTransitioning(false);
+                } else {
+                    console.log(`Recognition Round ${roundNumber} Complete.`);
+                    // 다음 단계 (Generation) 시작 페이지로 이동
+                    navigate(`/round/${roundNumber}/generation/start`); 
+                }
+            }, 300); // 딜레이
+        }
+        // --- API 호출 끝 --- 
     };
 
-    if (isLoading) {
+    // 로딩 상태 표시 변경 (isLoading -> isLoadingWords)
+    if (isLoadingWords && shuffledWords.length === 0) {
         return <MainLayout><div style={{ textAlign: 'center', padding: '50px' }}><Spin size="large" /></div></MainLayout>;
     }
 
@@ -189,7 +252,7 @@ const RecognitionPage = () => {
     const currentWordData = shuffledWords[currentWordIndex];
     const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
 
-    // --- Render Logic ---
+    // --- Render Logic (기존과 유사, word 컬럼 사용 확인) ---
     return (
         <MainLayout>
             <div 
@@ -197,10 +260,14 @@ const RecognitionPage = () => {
                 style={{ 
                     opacity: isTransitioning ? 0 : 1, 
                     transition: 'opacity 0.3s ease-in-out',
-                    padding: '20px' 
+                    padding: '20px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center'
                 }}
             >
-                {/* Progress Section */}                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
+                {/* Progress Section */}                
+                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Round {roundNumber} | Recognition Test</span>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {shuffledWords.length}</span>
@@ -208,14 +275,22 @@ const RecognitionPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
-                {/* Instruction Text */}                <div className="instruction-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', textAlign: 'center', marginBottom: '32px' }}>
+                {/* Instruction Text */}                
+                <div className="instruction-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', textAlign: 'center', marginBottom: '32px' }}>
                     영어 단어를 보고, 한국어 뜻을 입력해주세요.
                 </div>
 
-                {/* Word Display & Input Section */}                <div className="word-display-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '32px' }}>
+                {/* Word Display & Input Section */}                
+                <div className="word-display-section" style={{
+                    width: '100%', 
+                    maxWidth: '550px', 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    marginBottom: '32px',
+                }}>
                     <div className="word-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
                         <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Words</span>
-                        <span className="english-word-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '36px', fontWeight: 500, color: '#000' }}>{currentWordData.english_word}</span>
+                        <span className="english-word-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '36px', fontWeight: 500, color: '#000' }}>{currentWordData.word}</span>
                     </div>
 
                     <div className="word-card input-card" style={{ background: '#fff', borderRadius: '20px', padding: '25px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
@@ -234,7 +309,8 @@ const RecognitionPage = () => {
                     </div>
                 </div>
 
-                {/* Footer Section */}                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+                {/* Footer Section */}                
+                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                     <span className="timer-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{timeLeft}s</span>
                     <BlueButton
                         text="Next"
