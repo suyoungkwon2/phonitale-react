@@ -320,7 +320,7 @@ const LearningPage = () => {
                 }
 
                 const nextTime = prevTime - 1;
-                const activationDelay = process.env.NODE_ENV === 'development' ? 2 : 15;
+                const activationDelay = 2;
                 if (!isNextButtonEnabled && (30 - nextTime) >= activationDelay) {
                     console.log(`Enabling Next button: currentTime=${nextTime}, delay=${activationDelay}`);
                     setIsNextButtonEnabled(true);
