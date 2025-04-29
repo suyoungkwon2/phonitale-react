@@ -11,8 +11,8 @@ const RoundStartPage = () => {
   const { roundNumber } = useParams();
 
   const handleStartClick = () => {
-    // 실제 다음 단계 경로 확인 필요 (예: /round/1/learning)
-    navigate(`/round/${roundNumber}/learning`);
+    // navigate 경로 끝에 '/start' 추가
+    navigate(`/round/${roundNumber}/learning/start`);
   };
 
   const instructions = [
