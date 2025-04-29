@@ -32,3 +32,12 @@
 - **Layout 배경색 변경**:
     - 학습/테스트/설문(실제 진행) 페이지: `#F3F4FB`
     - 그 외 모든 페이지(Consent, Instruction, 시작 안내, 종료 등): `#FAF9F5`
+- **학습/테스트 페이지 레이아웃 및 기능 개선 (2024-07-29)**:
+    - 전체 폰트 Pretendard Variable로 변경 (`index.css`).
+    - Learning, Recognition, Generation 페이지에 일관된 카드 레이아웃 적용 (흰색 블록, 내부 섹션 구분 등).
+    - Learning: Key Words 밑줄 복원 및 인덱싱 정보 제거, English Words 밑줄 로직 확인.
+    - Recognition: 레이아웃 조정 (단일 블록), 문구 및 요소 정렬 수정.
+    - Generation: 레이아웃 조정 (단일 블록, Recognition과 유사하게), 문구 수정, Verbal Cue 제거.
+    - 3개 페이지 모두 타이머 30초 경과 시 자동 다음 단계 이동 기능 디버깅 및 안정화.
+    - 3개 페이지 모두 단어 전환 시 텍스트 깜빡임(0.7초 흰색) 전환 효과 추가.
+    - 3개 페이지 모두 Next 버튼 위치 및 정렬 조정.

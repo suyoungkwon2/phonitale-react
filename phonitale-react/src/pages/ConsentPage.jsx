@@ -6,7 +6,7 @@ import MainLayout from '../components/MainLayout'; // MainLayout import
 import { useExperiment } from '../context/ExperimentContext'; // useExperiment 훅 임포트
 import { submitConsent } from '../utils/api'; // API 유틸리티 임포트
 
-const { Title, Paragraph, Link } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 const ConsentPage = () => {
   const [form] = Form.useForm();
@@ -17,18 +17,20 @@ const ConsentPage = () => {
   const { setUserId } = useExperiment(); // setUserId 함수 가져오기
   const notionEmbedUrl = "https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1";
 
-  // Watch form values to enable/disable submit button
   const values = Form.useWatch([], form);
   useEffect(() => {
     form.validateFields({ validateOnly: true }).then(
       () => {
         if (values && values.agree && values.name && values.phone && values.email) {
+           console.log('Setting isSubmittable to TRUE (from 4420b91 logic)');
            setIsSubmittable(true);
         } else {
+           console.log('Setting isSubmittable to FALSE (from 4420b91 logic) - Fields missing or not agreed');
            setIsSubmittable(false);
         }
       },
       () => {
+        console.log('Setting isSubmittable to FALSE (from 4420b91 logic) - Validation failed');
         setIsSubmittable(false);
       },
     );
@@ -109,88 +111,82 @@ const ConsentPage = () => {
   }, []);
 
   return (
-    <MainLayout> {/* MainLayout으로 감싸기 */}
-        <div className="site-layout-content" style={{ background: '#fff', padding: '40px', borderRadius: '8px', width: '100%', maxWidth: '800px', margin: 'auto' }}>
-            <Row justify="center" style={{ marginBottom: '24px' }}>
-               <Col>
-                  <div style={{ backgroundColor: '#394A7F', color: 'white', padding: '16px 24px', borderRadius: '8px', textAlign: 'center', fontSize: '24px', fontWeight: 'bold' }}>
-                     실험 참가 동의서
-                  </div>
-               </Col>
-            </Row>
-
-            <Paragraph style={{ textAlign: 'center', marginBottom: '20px' }}>
-                실험에 참여해 주셔서 감사합니다.<br />
-                아래 내용의 참가 동의서를 주의 깊게 읽어주세요.
-            </Paragraph>
-            <div style={{ border: '1px solid #d9d9d9', borderRadius: '2px', padding: '20px', marginBottom: '24px', backgroundColor: '#fafafa', height: '640px' }}>
-               <iframe 
-                   src={notionEmbedUrl} 
-                   width="100%" 
-                   height="600px"
-                   frameBorder="0" 
-                   allowFullScreen 
-                   style={{display: 'block', margin: 'auto'}}
-                   title="Experiment Consent Form"
-               ></iframe>
+    <MainLayout>
+        <div style={{ width: '100%', maxWidth: '685px', margin: 'auto', display: 'flex', flexDirection: 'column', gap: '16px', paddingTop: '50px' }}>
+            <div style={{ backgroundColor: '#000000', color: 'white', padding: '16px 24px', textAlign: 'left' }}>
+                <Title level={4} style={{ color: 'white', margin: 0, fontWeight: 'bold' }}>실험 참가 동의서</Title>
             </div>
-            <Paragraph style={{ textAlign: 'center', marginBottom: '30px' }}>
-                동의서 내용을 모두 확인하셨다면, 아래에 정보를 입력하고 동의 여부를 체크해주세요.
-            </Paragraph>
 
-            {/* 에러 메시지 표시 영역 */} 
-            {error && <Alert message="오류" description={error} type="error" showIcon style={{ marginBottom: '24px' }}/>}
+            <div style={{ padding: '0 24px' }}>
+                <Paragraph style={{ margin: 0, color: '#000000', fontSize: '14px', lineHeight: '1.6' }}>
+                    실험에 참여해 주셔서 감사합니다. 동의서를 읽고 서명해 주세요.<br />
+                    ※ 동의하지 않으시면 실험에 참여하실 수 없습니다.
+                </Paragraph>
+            </div>
 
-            {/* User Info Form */}
-            <Form
-              form={form}
-              layout="horizontal"
-              onFinish={onFinish}
-              onFinishFailed={onFinishFailed}
-              labelCol={{ span: 4 }}
-              wrapperCol={{ span: 18 }}
-              style={{ maxWidth: 600, margin: 'auto' }}
-              autoComplete="off"
-            >
-              <Form.Item
-                  name="name"
-                  label="이름"
-                  rules={[{ required: true, message: '이름을 입력해주세요!' }]}
+            <div style={{ backgroundColor: '#F0F0F0', padding: '20px', minHeight: '400px', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                 <iframe
+                   src={notionEmbedUrl}
+                   style={{ width: '100%', height: '600px', border: 'none' }}
+                   title="Experiment Consent Form"
+                 ></iframe>
+            </div>
+
+            <div style={{ padding: '0 24px' }}>
+                <Form
+                  form={form}
+                  layout="horizontal"
+                  onFinish={onFinish}
+                  onFinishFailed={onFinishFailed}
+                  labelCol={{ span: 4 }}
+                  wrapperCol={{ span: 18 }}
+                  style={{ maxWidth: 600, margin: 'auto' }}
+                  autoComplete="off"
+                  colon={false}
+                  requiredMark={false}
                 >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  name="phone"
-                  label="핸드폰 번호"
-                  rules={[{ required: true, message: '핸드폰 번호를 입력해주세요!' }]}
-                >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  name="email"
-                  label="이메일 주소"
-                  rules={[
-                      { required: true, message: '이메일 주소를 입력해주세요!' },
-                      { type: 'email', message: '유효한 이메일 주소를 입력해주세요!'}
-                  ]}
-                >
-                  <Input />
-                </Form.Item>
-                <Form.Item
-                  name="agree"
-                  valuePropName="checked"
-                  wrapperCol={{ offset: 4, span: 18 }}
-                  rules={[{
-                      validator: (_, value) =>
-                      value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.'))
-                  }]}
-                >
-                  <Checkbox>동의합니다.</Checkbox>
-                </Form.Item>
-              <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}>
-                <BlueButton text="Submit" htmlType="submit" disabled={!isSubmittable || isLoading} loading={isLoading} /> {/* 로딩 상태 반영 */} 
-              </Form.Item>
-            </Form>
+                  <Form.Item
+                      name="name"
+                      label="이름"
+                      rules={[{ required: true, message: '이름을 입력해주세요!' }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="phone"
+                      label="핸드폰 번호"
+                      rules={[{ required: true, message: '핸드폰 번호를 입력해주세요!' }]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="email"
+                      label="이메일 주소"
+                      rules={[
+                          { required: true, message: '이메일 주소를 입력해주세요!' },
+                          { type: 'email', message: '유효한 이메일 주소를 입력해주세요!'}
+                      ]}
+                    >
+                      <Input />
+                    </Form.Item>
+                    <Form.Item
+                      name="agree"
+                      valuePropName="checked"
+                      wrapperCol={{ offset: 4, span: 18 }}
+                      rules={[{
+                          validator: (_, value) =>
+                          value ? Promise.resolve() : Promise.reject(new Error('동의가 필요합니다.'))
+                      }]}
+                    >
+                      <Checkbox>동의합니다.</Checkbox>
+                    </Form.Item>
+                  <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}>
+                    <BlueButton text="Submit" htmlType="submit" disabled={!isSubmittable || isLoading} loading={isLoading} />
+                  </Form.Item>
+                </Form>
+             </div>
+
+            {error && <Alert message="오류" description={error} type="error" showIcon style={{ marginTop: '0', margin: '0 24px 16px 24px', padding: '8px 15px' }}/>}
         </div>
     </MainLayout>
   );
