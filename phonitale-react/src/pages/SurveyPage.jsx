@@ -27,14 +27,8 @@ function parseIndexingString(indexString) {
     return indices;
 }
 
-// Underline Renderer Constants (색상 변경)
-const UNDERLINE_COLORS = [
-    '#7F97FF', // rgba(127, 151, 255, 0.7)
-    '#97DA9B', // rgba(151, 218, 155, 0.7)
-    '#FFBABA', // rgba(255, 186, 186, 0.7)
-    '#E2D98A', // rgba(226, 217, 138, 0.7)
-    '#FFB991', // rgba(255, 185, 145, 0.7)
-];
+// Underline Renderer Constants
+const UNDERLINE_COLORS = [ '#7F97FF', '#97DA9B', '#FFBABA', '#E2D98A', '#FFB991' ];
 
 // LearningPage와 동일한 함수 -> 수정된 함수
 function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
@@ -133,45 +127,29 @@ function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
     }
 }
 
-// 변경: Key Words 렌더링 전용 함수
-function renderStyledKeywords(wordString, indexingData) {
-    if (!wordString) return null;
+// 변경: Key Words 렌더링 전용 함수 (스타일링 + 쉼표 구분)
+function renderStyledKeywords(indexingData) {
     if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
-        return wordString;
+        return null;
     }
-    let parts = [wordString];
-    const sortedIndices = [...indexingData].sort((a, b) => (a.range && b.range) ? a.range[0] - b.range[0] : 0);
-    sortedIndices.forEach(({ key }, groupIndex) => {
+
+    return indexingData.map(({ key }, groupIndex) => {
         const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
         const style = {
             borderBottom: `4px solid ${color}`,
             paddingBottom: '2px',
+            display: 'inline-block', // inline-block 유지
+            lineHeight: '1.1', // 키워드 줄 간격 조정 필요시
         };
         const spanKey = `kw-${groupIndex}-${key}`;
-        let newParts = [];
-        parts.forEach((part, partIndex) => {
-            if (typeof part === 'string') {
-                const escapedKey = key.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
-                const regex = new RegExp(escapedKey, 'g');
-                let subLastIndex = 0;
-                let match;
-                while ((match = regex.exec(part)) !== null) {
-                    if (match.index > subLastIndex) {
-                        newParts.push(part.substring(subLastIndex, match.index));
-                    }
-                    newParts.push(<span key={`${spanKey}-${match.index}`} style={style}>{match[0]}</span>);
-                    subLastIndex = regex.lastIndex;
-                }
-                if (subLastIndex < part.length) {
-                    newParts.push(part.substring(subLastIndex));
-                }
-            } else {
-                newParts.push(part);
-            }
-        });
-        parts = newParts;
+        const separator = groupIndex < indexingData.length - 1 ? ', ' : null;
+        return (
+            <React.Fragment key={spanKey}>
+                <span style={style}>{key}</span>
+                {separator}
+            </React.Fragment>
+        );
     });
-    return parts;
 }
 
 // --- 신규: 밑줄 스타일 계산 함수 (LearningPage에서 복사) ---
@@ -276,6 +254,82 @@ function calculateUnderlineStyles(word, indexingData, containerElement) {
 
     return calculatedStyles;
 }
+
+// --- LearningPage에서 가져온 카드 스타일 ---
+const cardStyles = {
+    blockContainer: {
+      background: '#FFFFFF',
+      borderRadius: '12px',
+      padding: '24px',
+      boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
+      width: '100%',
+      maxWidth: '685px', // 최대 너비 유지
+      display: 'flex',
+      flexDirection: 'column',
+      marginBottom: '16px', // 블록 간 간격 추가
+    },
+    rowWrapper: {
+      display: 'flex',
+      width: '100%',
+      alignItems: 'center',
+    },
+    leftTitle: {
+      width: '120px',
+      textAlign: 'right',
+      color: '#656565',
+      fontSize: '14px',
+      paddingTop: '2px',
+      paddingRight: '16px',
+      flexShrink: 0,
+      whiteSpace: 'nowrap',
+    },
+    rightContent: {
+      flexGrow: 1,
+      paddingLeft: '16px',
+      position: 'relative',
+    },
+    dashedBorder: {
+      borderTop: '1px dashed #C7C7C7',
+      margin: '16px 0',
+    },
+    englishWordText: {
+      fontSize: '36px', fontWeight: 500, fontFamily: 'Rubik, sans-serif',
+      position: 'relative', display: 'inline-block', color: '#000000', lineHeight: '1.2',
+    },
+    keyWordsText: {
+        fontSize: '14px',
+        color: '#000000',
+        lineHeight: '1.6',
+        display: 'inline-flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        gap: '4px',
+    },
+    koreanMeaningText: {
+        fontSize: '20px',
+        fontWeight: 'bold',
+        color: '#000000',
+        fontFamily: 'BBTreeGo_R, sans-serif',
+    },
+    verbalCueText: {
+        fontSize: '14px',
+        color: '#000000',
+        lineHeight: '1.6',
+        fontFamily: 'BBTreeGo_R, sans-serif',
+     },
+     ratingQuestionText: {
+        fontSize: '14px',
+        color: '#000000',
+        lineHeight: '1.6',
+        marginBottom: '10px',
+        fontFamily: 'BBTreeGo_R, sans-serif',
+        textAlign: 'left',
+     },
+     ratingComponentWrapper: {
+        width: '100%',
+        textAlign: 'left',
+     },
+};
 
 // --- Survey Page Component ---
 const SurveyPage = () => {
@@ -403,7 +457,6 @@ const SurveyPage = () => {
     const verbalCueKey = `kss_verbal_cue`;
     const keywordIndexingString = currentWordData[keywordKey];
     const keywordIndices = parseIndexingString(keywordIndexingString);
-    const displayKeywordString = keywordIndices.length > 0 ? keywordIndices.map(item => item.key).join(', ') : (keywordIndexingString || "N/A");
     const displayVerbalCue = currentWordData[verbalCueKey] || "N/A";
 
     const isNextDisabled = usefulnessRating === 0 || coherenceRating === 0 || isSubmitting;
@@ -419,7 +472,7 @@ const SurveyPage = () => {
                     alignItems: 'center'
                 }}
             >
-                <div className="progress-section" style={{ width: '100%', maxWidth: '550px', marginBottom: '24px' }}>
+                <div className="progress-section" style={{ width: '100%', maxWidth: '685px', margin: '20px auto 24px' }}>
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Survey</span>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {surveyWordList.length}</span>
@@ -427,131 +480,96 @@ const SurveyPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
-                <div className="word-display-section" style={{ 
-                    width: '100%', 
-                    maxWidth: '550px', 
-                    display: 'flex', 
-                    flexDirection: 'column', 
-                    marginBottom: '16px' 
-                }}>
-                    <div className="word-card english-word-card" style={{ 
-                        background: '#fff', 
-                        borderRadius: '20px', 
-                        padding: '20px 32px', 
-                        boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
-                        position: 'relative', 
-                        minHeight: '80px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        marginBottom: '16px' 
-                    }}>
-                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>English Words</span>
-                        <span 
-                            ref={wordContainerRef}
-                            className="english-word-text-container" 
-                            style={{ 
-                                position: 'relative', 
-                                display: 'inline-block', 
-                            }}
-                        >
-                            <span className="english-word-text" style={{ fontFamily: 'Rubik, sans-serif', fontSize: '36px', fontWeight: 500, color: '#000' }}>
-                               {currentWordData.word}
-                            </span>
-                            {underlineStyles.map(({ key, style }) => (
-                                <div key={key} className="english-underline" style={style}></div>
-                            ))}
-                        </span>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '0 20px' }}>
+                    <div style={cardStyles.blockContainer}>
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>English Words</div>
+                            <div style={cardStyles.rightContent}>
+                                <span ref={wordContainerRef} style={cardStyles.englishWordText}>
+                                    {currentWordData.word}
+                                    {underlineStyles.map(({ key, style }) => (
+                                        <div key={key} className="english-underline" style={style}></div>
+                                    ))}
+                                </span>
+                            </div>
+                        </div>
+                        <div style={cardStyles.dashedBorder}></div>
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>Key Words</div>
+                            <div style={cardStyles.rightContent}>
+                                <span style={cardStyles.keyWordsText}>
+                                    {renderStyledKeywords(keywordIndices)}
+                                </span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="word-card key-words-card" style={{ 
-                        background: '#fff', 
-                        borderRadius: '20px 20px 0 0', 
-                        padding: '25px 32px 10px', 
-                        boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
-                        position: 'relative', 
-                        minHeight: '80px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        marginBottom: '-1px', 
-                        borderBottom: 'none' 
-                    }}>
-                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Key Words</span>
-                        <span className="key-words-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
-                            {renderStyledKeywords(displayKeywordString, keywordIndices)}
-                        </span>
-                    </div>
-                    <div className="word-card verbal-cue-card" style={{ 
-                        background: '#fff', 
-                        padding: '15px 32px', 
-                        boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
-                        position: 'relative', 
-                        minHeight: '80px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        borderTop: '1px dashed #C7C7C7', 
-                        borderBottom: '1px dashed #C7C7C7', 
-                        borderRadius: 0, 
-                        lineHeight: 1.6, 
-                        marginBottom: '-1px' 
-                    }}>
-                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Verbal Cue</span>
-                        <span className="verbal-cue-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '20px', color: '#000', lineHeight: 1.6 }}>{displayVerbalCue}</span>
-                    </div>
-                    <div className="word-card korean-meaning-card" style={{ 
-                        background: '#fff', 
-                        borderRadius: '0 0 20px 20px', 
-                        padding: '10px 32px 25px', 
-                        boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
-                        position: 'relative', 
-                        minHeight: '80px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        borderTop: 'none' 
-                    }}>
-                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Korean Meaning</span>
-                        <span className="korean-meaning-text" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '30px', color: '#000' }}>{currentWordData.meaning}</span>
-                    </div>
-                </div>
 
-                <div className="rating-section" style={{ width: '100%', maxWidth: '550px', display: 'flex', flexDirection: 'column', marginBottom: '32px' }}>
-                    <div className="rating-card" style={{ 
-                        background: '#fff', 
-                        borderRadius: '20px', 
-                        padding: '20px 32px', 
-                        boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', 
-                        position: 'relative', 
-                        minHeight: '80px', 
-                        display: 'flex', 
-                        flexDirection: 'column', 
-                        justifyContent: 'center', 
-                        alignItems: 'center',
-                        marginBottom: '16px' 
-                    }}>
-                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Usefulness</span>
-                        <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 학습에 얼마나 도움이 되었나요?</div>
-                        <Rate allowHalf={false} count={5} value={usefulnessRating} onChange={setUsefulnessRating} style={{ fontSize: '28px' }} disabled={isSubmitting} />
+                    <div style={cardStyles.blockContainer}>
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>Verbal Cue</div>
+                            <div style={cardStyles.rightContent}>
+                                <span style={cardStyles.verbalCueText}>{displayVerbalCue}</span>
+                            </div>
+                        </div>
+                        <div style={cardStyles.dashedBorder}></div>
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>Korean Meaning</div>
+                            <div style={cardStyles.rightContent}>
+                                <span style={cardStyles.koreanMeaningText}>{currentWordData.meaning}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div className="rating-card" style={{ background: '#fff', borderRadius: '20px', padding: '20px 32px', boxShadow: '0px 2px 4px 0px rgba(0, 0, 0, 0.25)', position: 'relative', textAlign: 'center', minHeight: '80px', display: 'flex', flexDirection: 'column', justifyContent: 'center', marginBottom: '16px' }}>
-                        <span className="word-card-label" style={{ position: 'absolute', top: '50%', left: '-100px', transform: 'translateY(-50%)', fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#C7C7C7', width: '90px', textAlign: 'right' }}>Coherence</span>
-                        <div className="rating-question" style={{ fontFamily: 'BBTreeGo_R, sans-serif', fontSize: '16px', color: '#555', marginBottom: '10px' }}>Key Words와 Verbal Cue가 얼마나 명확하고 자연스러웠나요?</div>
-                        <Rate allowHalf={false} count={5} value={coherenceRating} onChange={setCoherenceRating} style={{ fontSize: '28px' }} disabled={isSubmitting} />
-                    </div>
-                </div>
 
-                <div className="footer-section" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
-                    <BlueButton
-                        text="Next"
-                        onClick={handleNextClick}
-                        disabled={isNextDisabled}
-                        loading={isSubmitting}
-                    />
+                    <div style={cardStyles.blockContainer}>
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>Usefulness</div>
+                            <div style={cardStyles.rightContent}>
+                                <div style={cardStyles.ratingQuestionText}>
+                                    Key Words와 Verbal Cue가 학습에 얼마나 도움이 되었나요?
+                                </div>
+                                <div style={cardStyles.ratingComponentWrapper}>
+                                    <Rate
+                                        allowHalf={false}
+                                        count={5}
+                                        value={usefulnessRating}
+                                        onChange={setUsefulnessRating}
+                                        style={{ fontSize: '28px' }}
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={cardStyles.dashedBorder}></div>
+
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>Coherence</div>
+                            <div style={cardStyles.rightContent}>
+                                <div style={cardStyles.ratingQuestionText}>
+                                    Key Words와 Verbal Cue가 얼마나 명확하고 자연스러웠나요?
+                                </div>
+                                <div style={cardStyles.ratingComponentWrapper}>
+                                    <Rate
+                                        allowHalf={false}
+                                        count={5}
+                                        value={coherenceRating}
+                                        onChange={setCoherenceRating}
+                                        style={{ fontSize: '28px' }}
+                                        disabled={isSubmitting}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '685px', padding: '16px 0 40px' }}>
+                        <BlueButton
+                            text="Next"
+                            onClick={handleNextClick}
+                            disabled={isNextDisabled}
+                            loading={isSubmitting}
+                        />
+                    </div>
                 </div>
             </div>
         </MainLayout>
