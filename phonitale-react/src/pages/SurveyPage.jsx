@@ -221,7 +221,7 @@ function renderEnglishWordWithUnderlines(word, indexingData) {
     }
 }
 
-// --- LearningPage에서 가져온 카드 스타일 ---
+// --- 카드 스타일 수정 ---
 const cardStyles = {
     blockContainer: {
       background: '#FFFFFF',
@@ -241,13 +241,16 @@ const cardStyles = {
     },
     leftTitle: {
       width: '120px',
-      textAlign: 'right',
+      textAlign: 'center', // 가운데 정렬
       color: '#656565',
       fontSize: '14px',
-      paddingTop: '2px',
+    //   paddingTop: '2px', // 조정될 수 있음
       paddingRight: '16px',
       flexShrink: 0,
-      whiteSpace: 'nowrap',
+      whiteSpace: 'pre-line', // 줄바꿈 허용
+      display: 'flex',       // Flexbox 사용하여
+      flexDirection: 'column', // 세로 정렬
+      justifyContent: 'center' // 수직 가운데 정렬
     },
     rightContent: {
       flexGrow: 1,
@@ -291,10 +294,18 @@ const cardStyles = {
         fontFamily: 'BBTreeGo_R, sans-serif',
         textAlign: 'left',
      },
-     ratingComponentWrapper: {
+     ratingComponentWrapper: { // Rate 컴포넌트와 루브릭 포함
         width: '100%',
         textAlign: 'left',
+        display: 'flex', // Flexbox 사용
+        alignItems: 'center', // 세로 가운데 정렬
+        gap: '10px' // 요소 간 간격
      },
+     rubricText: { // 루브릭 텍스트 스타일
+        fontSize: '12px',
+        color: '#888888',
+        flexShrink: 0, // 크기 줄어들지 않도록
+     }
 };
 
 // --- Survey Page Component ---
@@ -305,10 +316,9 @@ const SurveyPage = () => {
     
     const [surveyWordList, setSurveyWordList] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
-    const [usefulnessRating, setUsefulnessRating] = useState(0);
+    const [usefulnessRating, setUsefulnessRating] = useState(0); // Helpfulness 용으로 사용
+    const [imageabilityRating, setImageabilityRating] = useState(0); // 신규 상태
     const [coherenceRating, setCoherenceRating] = useState(0);
-    const wordContainerRef = useRef(null);
-    const [underlineStyles, setUnderlineStyles] = useState([]);
     const timestampInRef = useRef(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -333,29 +343,16 @@ const SurveyPage = () => {
             return;
         }
         timestampInRef.current = new Date().toISOString();
-        console.log(`SurveyPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
+        // console.log(`SurveyPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
         setUsefulnessRating(0);
+        setImageabilityRating(0); // 이미지화 가능성 초기화 추가
         setCoherenceRating(0);
     }, [currentWordIndex, surveyWordList, isLoadingWords]);
 
-    useEffect(() => {
-        if (!isLoadingWords && surveyWordList.length > 0 && currentWordIndex < surveyWordList.length && wordContainerRef.current) {
-            const currentWordData = surveyWordList[currentWordIndex];
-            const keywordKey = `kss_keyword_refined`;
-            const keywordIndexingString = currentWordData[keywordKey];
-            const keywordIndices = parseIndexingString(keywordIndexingString);
-
-            const styles = calculateUnderlineStyles(currentWordData.word, keywordIndices, wordContainerRef.current);
-            setUnderlineStyles(styles);
-        }
-         else {
-             setUnderlineStyles([]);
-         }
-    }, [currentWordIndex, surveyWordList, isLoadingWords, wordContainerRef.current]);
-
     const handleNextClick = async () => {
-        if (usefulnessRating === 0 || coherenceRating === 0) {
-            message.warning('Please rate both usefulness and coherence.');
+        // 모든 평가 항목 확인
+        if (usefulnessRating === 0 || imageabilityRating === 0 || coherenceRating === 0) {
+            message.warning('모든 항목을 평가해주세요.');
             return;
         }
         if (isSubmitting) return;
@@ -370,7 +367,7 @@ const SurveyPage = () => {
             try { duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000); } catch (e) { /*...*/ }
         }
 
-        console.log(`Survey Word: ${currentWordData?.word}, Usefulness: ${usefulnessRating}, Coherence: ${coherenceRating}, Duration: ${duration}s`);
+        // console.log(`Survey Word: ${currentWordData?.word}, Helpfulness: ${usefulnessRating}, Imageability: ${imageabilityRating}, Coherence: ${coherenceRating}, Duration: ${duration}s`);
 
         if (!userId) {
             console.error("User ID not found!");
@@ -383,16 +380,17 @@ const SurveyPage = () => {
             const responseData = {
                 user: userId,
                 english_word: currentWordData.word,
-                round_number: parseInt(roundNumber || currentRound, 10),
+                round_number: parseInt(currentWordData.round || currentRound, 10), // currentWordData에서 round 가져오기
                 page_type: 'survey',
                 timestamp_in: timestampIn,
                 timestamp_out: timestampOut,
                 duration: duration,
-                usefulness: usefulnessRating,
+                helpfulness: usefulnessRating, // 키 이름 변경
+                imageability: imageabilityRating, // 신규 데이터 추가
                 coherence: coherenceRating,
             };
             await submitResponse(responseData, group);
-            console.log("Survey response submitted for:", currentWordData.word);
+            // console.log("Survey response submitted for:", currentWordData.word);
 
             if (currentWordIndex < surveyWordList.length - 1) {
                 setCurrentWordIndex(prevIndex => prevIndex + 1);
@@ -424,11 +422,9 @@ const SurveyPage = () => {
     const keywordIndices = currentWordData.keyword_refined;
     const displayVerbalCue = currentWordData.verbal_cue || "N/A";
 
-    // --- 데이터 확인 로그 추가 --- 
-    console.log(`SurveyPage Render: Word '${currentWordData?.word}', keyword_refined data passed to render:`, keywordIndices);
-    // --- 데이터 확인 로그 끝 --- 
+    // console.log(`SurveyPage Render: Word '${currentWordData?.word}', keyword_refined data passed to render:`, keywordIndices);
 
-    const isNextDisabled = usefulnessRating === 0 || coherenceRating === 0 || isSubmitting;
+    const isNextDisabled = usefulnessRating === 0 || imageabilityRating === 0 || coherenceRating === 0 || isSubmitting;
 
     return (
         <MainLayout>
@@ -488,20 +484,22 @@ const SurveyPage = () => {
 
                     <div style={cardStyles.blockContainer}>
                         <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Usefulness</div>
+                            <div style={cardStyles.leftTitle}>Helpfulness{'\n'}(유익함)</div>
                             <div style={cardStyles.rightContent}>
                                 <div style={cardStyles.ratingQuestionText}>
-                                    Key Words와 Verbal Cue가 학습에 얼마나 도움이 되었나요?
+                                    이 단서(문장과 키워드)들은 단어를 학습하는 데 효과적이었다.
                                 </div>
                                 <div style={cardStyles.ratingComponentWrapper}>
+                                    <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
                                     <Rate
                                         allowHalf={false}
                                         count={5}
                                         value={usefulnessRating}
                                         onChange={setUsefulnessRating}
-                                        style={{ fontSize: '28px' }}
+                                        style={{ fontSize: '28px', flexGrow: 1, textAlign: 'center' }}
                                         disabled={isSubmitting}
                                     />
+                                    <span style={cardStyles.rubricText}>매우 그렇다</span>
                                 </div>
                             </div>
                         </div>
@@ -509,20 +507,45 @@ const SurveyPage = () => {
                         <div style={cardStyles.dashedBorder}></div>
 
                         <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Coherence</div>
+                            <div style={cardStyles.leftTitle}>Imageability{'\n'}(이미지화 가능성)</div>
                             <div style={cardStyles.rightContent}>
                                 <div style={cardStyles.ratingQuestionText}>
-                                    Key Words와 Verbal Cue가 얼마나 명확하고 자연스러웠나요?
+                                    이 단서들은 생생하고 구체적인 심상을 떠올리게 한다.
                                 </div>
                                 <div style={cardStyles.ratingComponentWrapper}>
+                                    <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
+                                    <Rate
+                                        allowHalf={false}
+                                        count={5}
+                                        value={imageabilityRating}
+                                        onChange={setImageabilityRating}
+                                        style={{ fontSize: '28px', flexGrow: 1, textAlign: 'center' }}
+                                        disabled={isSubmitting}
+                                    />
+                                    <span style={cardStyles.rubricText}>매우 그렇다</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div style={cardStyles.dashedBorder}></div>
+
+                        <div style={cardStyles.rowWrapper}>
+                            <div style={cardStyles.leftTitle}>Coherence{'\n'}(일관성)</div>
+                            <div style={cardStyles.rightContent}>
+                                <div style={cardStyles.ratingQuestionText}>
+                                    이 단서는 의미가 명확하고 문장이 자연스럽게 구성되어 있다.
+                                </div>
+                                <div style={cardStyles.ratingComponentWrapper}>
+                                    <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
                                     <Rate
                                         allowHalf={false}
                                         count={5}
                                         value={coherenceRating}
                                         onChange={setCoherenceRating}
-                                        style={{ fontSize: '28px' }}
+                                        style={{ fontSize: '28px', flexGrow: 1, textAlign: 'center' }}
                                         disabled={isSubmitting}
                                     />
+                                    <span style={cardStyles.rubricText}>매우 그렇다</span>
                                 </div>
                             </div>
                         </div>
