@@ -23,7 +23,7 @@ jobs:
       uses: actions/setup-node@v4 # Node.js 환경 설정
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm' # npm 의존성 캐싱 활성화
+        # cache: 'npm' # npm 의존성 캐싱 임시 비활성화
         cache-dependency-path: phonitale-react/package-lock.json # 캐시 경로 수정
 
     - name: Install dependencies
