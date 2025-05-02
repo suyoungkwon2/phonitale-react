@@ -1,6 +1,6 @@
 import React from 'react';
 // import { Typography } from 'antd'; // 사용하지 않음
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 
@@ -8,9 +8,10 @@ import BlueButton from '../components/BlueButton';
 
 const SurveyStartPage = () => {
   const navigate = useNavigate();
+  const { groupCode } = useParams();
 
   const handleStartClick = () => {
-    navigate('/survey'); // Navigate to the survey page
+    navigate(`/${groupCode}/survey`);
   };
 
   // 안내 문구 배열 (들여쓰기 필요)

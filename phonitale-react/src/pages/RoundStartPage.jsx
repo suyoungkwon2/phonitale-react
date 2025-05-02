@@ -8,11 +8,11 @@ import BlueButton from '../components/BlueButton';
 
 const RoundStartPage = () => {
   const navigate = useNavigate();
-  const { roundNumber } = useParams();
+  const { roundNumber, groupCode } = useParams();
 
   const handleStartClick = () => {
-    // navigate 경로 끝에 '/start' 추가
-    navigate(`/round/${roundNumber}/learning/start`);
+    // navigate 경로 끝에 '/start' 추가 및 groupCode 포함
+    navigate(`/${groupCode}/round/${roundNumber}/learning/start`);
   };
 
   const instructions = [

@@ -5,7 +5,7 @@ import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton'; // BlueButton 사용
 
 const GenerationStartPage = () => {
-  const { roundNumber } = useParams();
+  const { roundNumber, groupCode } = useParams();
   const navigate = useNavigate();
 
   // 타이틀은 헤더에서 직접 설정
@@ -18,7 +18,7 @@ const GenerationStartPage = () => {
 
   // 버튼 클릭 핸들러
   const handleNextClick = () => {
-      navigate(`/round/${roundNumber}/generation`); // 영어 단어 적기 페이지로 이동
+      navigate(`/${groupCode}/round/${roundNumber}/generation`); // groupCode 추가
   };
 
   // 현재 활성 스텝

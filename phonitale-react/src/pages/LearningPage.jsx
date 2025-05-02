@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Progress, Spin } from 'antd';
+import { Progress, Spin, message } from 'antd';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
@@ -252,9 +252,9 @@ const cardStyles = {
 
 // --- Learning Page Component ---
 const LearningPage = () => {
-    const { roundNumber: roundNumberStr } = useParams();
+    const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
-    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
+    const { userId, group, wordList: wordsByRound, isLoadingWords, currentRound, setCurrentRound } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -267,6 +267,8 @@ const LearningPage = () => {
     const timestampInRef = useRef(null);
     const roundNumber = parseInt(roundNumberStr, 10);
     const [isTextFlashing, setIsTextFlashing] = useState(false);
+    const wordDisplayRef = useRef(null);
+    const startTimeRef = useRef(null);
 
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
@@ -288,7 +290,9 @@ const LearningPage = () => {
     }, [wordsByRound, isLoadingWords, roundNumber]);
 
     useEffect(() => {
+        console.log(`[LearningPage useEffect WordChange Start] Index: ${currentWordIndex}, isLoading: ${isLoadingWords}, shuffledWords length: ${shuffledWords.length}`);
         if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
+            console.log("[useEffect WordChange] Conditions not met or cleanup needed.");
             if (timerRef.current) {
                 clearInterval(timerRef.current);
                 timerRef.current = null;
@@ -298,11 +302,12 @@ const LearningPage = () => {
             return;
         }
 
+        console.log(`[LearningPage useEffect WordChange] Setting up for word index: ${currentWordIndex}`);
         setIsTransitioning(false);
         setIsNextButtonEnabled(false);
         setTimeLeft(30);
         timestampInRef.current = new Date().toISOString();
-        console.log(`LearningPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
+        console.log(`[LearningPage useEffect WordChange] State Reset Complete. isTransitioning: false`);
 
         const currentWordData = shuffledWords[currentWordIndex];
 
@@ -322,7 +327,7 @@ const LearningPage = () => {
                 const nextTime = prevTime - 1;
                 const activationDelay = 2;
                 if (!isNextButtonEnabled && (30 - nextTime) >= activationDelay) {
-                    console.log(`Enabling Next button: currentTime=${nextTime}, delay=${activationDelay}`);
+                    console.log(`[Timer Tick] Enabling Next button: currentTime=${nextTime}, delay=${activationDelay}`);
                     setIsNextButtonEnabled(true);
                 }
 
@@ -362,7 +367,8 @@ const LearningPage = () => {
             setUnderlineStyles([]);
         }
 
-        return () => { 
+        return () => {
+            console.log(`[LearningPage useEffect WordChange] Cleanup for index: ${currentWordIndex}`);
             if (timerRef.current) {
                  clearInterval(timerRef.current);
                  timerRef.current = null;
@@ -370,70 +376,75 @@ const LearningPage = () => {
             audioTimeoutRefs.current.forEach(clearTimeout);
             audioTimeoutRefs.current = [];
         };
-    }, [currentWordIndex, shuffledWords, isLoadingWords, navigate, roundNumber]);
+    }, [currentWordIndex, shuffledWords, isLoadingWords]);
 
     const handleNextClick = async (isTimeout = false) => {
-        console.log(`LearningPage handleNextClick triggered. Timeout: ${isTimeout}`);
+        console.log(`[LearningPage handleNextClick Start] Index: ${currentWordIndex}, Timeout: ${isTimeout}, isTransitioning: ${isTransitioning}`);
         if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
+            console.log("[LearningPage handleNextClick] Timer cleared.");
         }
         if (!isTimeout && isTransitioning) {
-            console.log("LearningPage handleNextClick blocked by isTransitioning");
-            return; 
+            console.log("[LearningPage handleNextClick Blocked] Already transitioning.");
+            return;
         }
 
         setIsTextFlashing(true);
         setIsTransitioning(true);
         setIsNextButtonEnabled(false);
-        
+        console.log("[LearningPage handleNextClick State] Set isTransitioning: true, isNextButtonEnabled: false");
+
         setTimeout(() => setIsTextFlashing(false), 700);
 
-        const timestampOut = new Date().toISOString();
+        const timestampOut = new Date();
         const timestampIn = timestampInRef.current;
         const currentWord = shuffledWords[currentWordIndex] || {};
-        const userId = sessionStorage.getItem('userId');
-
         let duration = null;
         if (timestampIn && timestampOut) {
-            try {
-                duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000);
-            } catch (e) { console.error("Error calculating duration:", e); }
+            try { duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000); } catch (e) { console.error("Error calculating duration:", e); }
         }
 
-        console.log(`Learning Word: ${currentWord?.word}, Duration: ${duration}s, Timeout: ${isTimeout}, In: ${timestampIn}, Out: ${timestampOut}`);
+        console.log(`[LearningPage handleNextClick Data] Word: ${currentWord?.word}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
         if (!userId) {
-            console.error("User ID not found in sessionStorage!");
-            setIsTransitioning(false); 
-            return; 
+            console.error("[LearningPage handleNextClick Error] User ID not found!");
+            message.error("User ID not found. Cannot save response.");
+            setIsTransitioning(false);
+            console.log("[LearningPage handleNextClick State] User ID Error - Set isTransitioning: false");
+            return;
         }
 
         try {
+            console.log("[LearningPage handleNextClick API] Calling submitResponse...");
             const responseData = {
                 user: userId,
                 english_word: currentWord.word,
                 round_number: roundNumber,
                 page_type: 'learning',
                 timestamp_in: timestampIn,
-                timestamp_out: timestampOut,
+                timestamp_out: timestampOut.toISOString(),
                 duration: duration,
             };
-            await submitResponse(responseData);
-            console.log("Learning response submitted successfully for:", currentWord.word);
+            await submitResponse(responseData, group);
+            console.log(`Response for ${currentWord.word} submitted successfully with group ${group}.`);
 
             if (currentWordIndex < shuffledWords.length - 1) {
-                console.log("LearningPage: Setting next word index...");
-                setCurrentWordIndex(prevIndex => prevIndex + 1);
+                const nextIndex = currentWordIndex + 1;
+                console.log(`[LearningPage handleNextClick Nav] Setting next index: ${nextIndex}`);
+                setCurrentWordIndex(nextIndex);
             } else {
-                console.log(`LearningPage: Round ${roundNumber} Complete. Navigating...`);
-                navigate(`/round/${roundNumber}/recognition/start`);
+                console.log(`[LearningPage handleNextClick Nav] Round ${roundNumber} Complete. Navigating to /${groupCode}/round/${roundNumber}/recognition/start`);
+                navigate(`/${groupCode}/round/${roundNumber}/recognition/start`);
             }
 
         } catch (error) {
-            console.error("Failed to submit learning response:", error);
-            setIsTransitioning(false); 
+            console.error("[LearningPage handleNextClick Error] Failed to submit learning response:", error);
+            message.error(`Failed to save response: ${error.message || 'Unknown error'}`);
+            setIsTransitioning(false);
+            console.log("[LearningPage handleNextClick State] API Error - Set isTransitioning: false");
         }
+        console.log("[LearningPage handleNextClick End]");
     };
 
     if (isLoadingWords) {

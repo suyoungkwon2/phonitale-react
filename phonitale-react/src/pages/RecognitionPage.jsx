@@ -69,9 +69,9 @@ const cardStyles = {
 
 // --- Recognition Page Component ---
 const RecognitionPage = () => {
-    const { roundNumber: roundNumberStr } = useParams();
+    const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
-    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords, userId, group, currentRound, setCurrentRound } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -82,6 +82,7 @@ const RecognitionPage = () => {
     const audioTimeoutRefs = useRef([]);
     const timestampInRef = useRef(null); // 페이지 진입 시각 기록
     const [isTextFlashing, setIsTextFlashing] = useState(false); // 깜빡임 상태 추가
+    const startTimeRef = useRef(null); // Referencia para el tiempo de inicio
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
@@ -106,6 +107,7 @@ const RecognitionPage = () => {
 
     // --- Timer, Audio, Focus, Transition Logic --- 
     useEffect(() => {
+        console.log(`[RecognitionPage useEffect WordChange Start] Index: ${currentWordIndex}, isLoading: ${isLoadingWords}, shuffledWords length: ${shuffledWords.length}`);
         if (isLoadingWords || shuffledWords.length === 0 || currentWordIndex >= shuffledWords.length) {
             if (timerRef.current) {
                 clearInterval(timerRef.current);
@@ -116,12 +118,13 @@ const RecognitionPage = () => {
             return;
         }
 
-        // Reset state for the new word
-        setIsTransitioning(false); // Make content visible
-        setTimeLeft(30); // Reset timer
-        setUserAnswer(""); // Clear previous answer
-        if (inputRef.current) inputRef.current.focus(); // Focus input
-        timestampInRef.current = new Date().toISOString(); // Record entry time
+        console.log(`[RecognitionPage useEffect WordChange] Setting up for index: ${currentWordIndex}`);
+        setIsTransitioning(false); // 화면 표시
+        console.log(`[RecognitionPage useEffect WordChange] Set isTransitioning: false`);
+        setTimeLeft(30);
+        setUserAnswer("");
+        if (inputRef.current) inputRef.current.focus();
+        timestampInRef.current = new Date().toISOString();
         console.log(`RecognitionPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
 
         const currentWordData = shuffledWords[currentWordIndex];
@@ -174,42 +177,43 @@ const RecognitionPage = () => {
 
     // --- Next Button Handler (수정) --- 
     const handleNextClick = async (isTimeout = false) => {
-        console.log(`RecognitionPage handleNextClick triggered. Timeout: ${isTimeout}`);
+        console.log(`[RecognitionPage handleNextClick Start] Index: ${currentWordIndex}, Timeout: ${isTimeout}, isTransitioning: ${isTransitioning}`);
         if (timerRef.current) {
             clearInterval(timerRef.current);
             timerRef.current = null;
+            console.log("[RecognitionPage handleNextClick] Timer cleared.");
         }
-        if (isTransitioning) return; // 중복 클릭 방지
+        if (isTransitioning) {
+             console.log("[RecognitionPage handleNextClick Blocked] Already transitioning.");
+             return;
+         }
 
-        setIsTextFlashing(true); // 텍스트 깜빡임 시작
+        setIsTextFlashing(true);
         setIsTransitioning(true);
-        
-        // 0.7초 후 깜빡임 상태 해제
+        console.log("[RecognitionPage handleNextClick State] Set isTransitioning: true");
+
         setTimeout(() => setIsTextFlashing(false), 700);
 
         const timestampOut = new Date().toISOString();
         const timestampIn = timestampInRef.current;
         const currentWordData = shuffledWords[currentWordIndex] || {};
-        const userId = sessionStorage.getItem('userId'); // userId 가져오기
-
         let duration = null;
         if (timestampIn && timestampOut) {
-            try {
-                duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000);
-            } catch (e) { console.error("Error calculating duration:", e); }
+            try { duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000); } catch (e) { console.error("Error calculating duration:", e); }
         }
         
-        console.log(`Recognition Word: ${currentWordData?.word}, Answer: ${userAnswer}, Duration: ${duration}s, Timeout: ${isTimeout}`);
+        console.log(`[RecognitionPage handleNextClick Data] Word: ${currentWordData?.word}, Answer: ${userAnswer}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
         if (!userId) {
-            console.error("User ID not found!");
+            console.error("[RecognitionPage handleNextClick Error] User ID not found!");
             message.error("User ID not found. Cannot save response.");
-            setIsTransitioning(false);
+            setIsTransitioning(false); // 에러 시 상태 복구
+            console.log("[RecognitionPage handleNextClick State] User ID Error - Set isTransitioning: false");
             return;
         }
         
-        // --- API 호출 --- 
         try {
+            console.log("[RecognitionPage handleNextClick API] Calling submitResponse...");
             const responseData = {
                 user: userId,
                 english_word: currentWordData.word,
@@ -218,26 +222,27 @@ const RecognitionPage = () => {
                 timestamp_in: timestampIn,
                 timestamp_out: timestampOut,
                 duration: duration,
-                response: userAnswer || null, // 사용자 입력 (없으면 null)
+                response: userAnswer || null,
             };
-            await submitResponse(responseData);
+            await submitResponse(responseData, group);
             console.log("Recognition response submitted for:", currentWordData.word);
 
-            // --- 다음 단어 또는 페이지 이동 --- 
             if (currentWordIndex < shuffledWords.length - 1) {
-                setCurrentWordIndex(prevIndex => prevIndex + 1);
-                // isTransitioning은 다음 단어 useEffect에서 false로 설정됨
+                const nextIndex = currentWordIndex + 1;
+                console.log(`[RecognitionPage handleNextClick Nav] Setting next index: ${nextIndex}`);
+                setCurrentWordIndex(nextIndex);
             } else {
-                console.log(`Recognition Round ${roundNumber} Complete.`);
-                navigate(`/round/${roundNumber}/generation/start`); // Generation 단계 시작으로 이동
+                console.log(`[RecognitionPage handleNextClick Nav] Round ${roundNumber} Complete. Navigating to /${groupCode}/round/${roundNumber}/generation/start`);
+                navigate(`/${groupCode}/round/${roundNumber}/generation/start`);
             }
 
         } catch (error) {
-            console.error("Failed to submit recognition response:", error);
-            message.error(`Failed to save response: ${error.message}`); // 사용자에게 피드백
-            setIsTransitioning(false); // 에러 시 트랜지션 해제
+            console.error("[RecognitionPage handleNextClick Error] Failed to submit recognition response:", error);
+            message.error(`Failed to save response: ${error.message}`);
+            setIsTransitioning(false); // 에러 시 상태 복구
+            console.log("[RecognitionPage handleNextClick State] API Error - Set isTransitioning: false");
         }
-        // finally 블록 불필요
+        console.log("[RecognitionPage handleNextClick End]");
     };
 
     // --- 로딩 및 에러 상태 처리 --- 

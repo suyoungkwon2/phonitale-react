@@ -53,15 +53,21 @@ async function callApi(endpoint, method = 'POST', body = null) {
     }
 }
 
-export const submitConsent = async (consentData) => {
+export const submitConsent = async (consentData, group) => {
     // consentData: { name, phone, email, consent_agreed }
-    return callApi('/consent', 'POST', consentData);
+    // group: 'kss', 'naive', 'phonitale', 'og'
+    const payload = { ...consentData, user_group: group }; // user_group 필드 추가
+    console.log('Submitting consent with payload:', payload); // 페이로드 내용 로그 추가
+    return callApi('/consent', 'POST', payload);
 };
 
-export const submitResponse = async (responseData) => {
+export const submitResponse = async (responseData, group) => {
     // responseData: { user, english_word, round_number, page_type, timestamp_in, timestamp_out, duration?, response?, usefulness?, coherence? }
+    // group: 'kss', 'naive', 'phonitale', 'og'
     // duration은 선택적, Lambda에서 계산 가능
-    return callApi('/responses', 'POST', responseData);
+    const payload = { ...responseData, user_group: group };
+    console.log('Submitting response with payload:', payload); // 로그 추가됨
+    return callApi('/responses', 'POST', payload);
 };
 
 export const submitTotalDuration = async (summaryData) => {

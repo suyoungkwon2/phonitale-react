@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Layout, Form, Input, Button, Checkbox, Row, Col, Typography, Alert, message } from 'antd';
-import { useNavigate } from 'react-router-dom'; // 페이지 이동을 위해 사용
+import { useNavigate, useParams } from 'react-router-dom'; // useParams 추가
 import BlueButton from '../components/BlueButton';
 import MainLayout from '../components/MainLayout'; // MainLayout import
 import { useExperiment } from '../context/ExperimentContext'; // useExperiment 훅 임포트
@@ -13,8 +13,9 @@ const ConsentPage = () => {
   const [isSubmittable, setIsSubmittable] = useState(false);
   const [isLoading, setIsLoading] = useState(false); // 로딩 상태 추가
   const [error, setError] = useState(null); // 에러 상태 추가
-  const navigate = useNavigate(); // Hook for navigation
-  const { setUserId } = useExperiment(); // setUserId 함수 가져오기
+  const navigate = useNavigate();
+  const { setUserId, group } = useExperiment(); // group 상태 가져오기
+  const { groupCode } = useParams(); // groupCode 가져오기
   const notionEmbedUrl = "https://rattle-concrete-594.notion.site/ebd/1d859a3ef1888016aa73f7ea7fc944a1";
 
   const values = Form.useWatch([], form);
@@ -48,9 +49,9 @@ const ConsentPage = () => {
         email: formData.email,
         consent_agreed: formData.agree
       };
-      console.log('Sending consent data:', consentData);
+      console.log('Sending consent data:', consentData, 'for group:', group);
 
-      const response = await submitConsent(consentData);
+      const response = await submitConsent(consentData, group);
 
       console.log('Consent submitted successfully:', response);
 
@@ -68,7 +69,7 @@ const ConsentPage = () => {
       sessionStorage.setItem('userName', formData.name);
       sessionStorage.setItem('userEmail', formData.email); // email 저장
       sessionStorage.setItem('consentTimestamp', response.consentTimestamp); // 시작 timestamp 저장
-      navigate('/instruction'); // 다음 페이지로 이동
+      navigate(`/${groupCode}/instruction`); // groupCode 추가
 
     } catch (err) {
       console.error('Error submitting consent:', err);

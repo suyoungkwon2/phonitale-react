@@ -68,9 +68,9 @@ const cardStyles = {
 
 // --- Generation Page Component ---
 const GenerationPage = () => {
-    const { roundNumber: roundNumberStr } = useParams();
+    const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
-    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords, userId, group, currentRound, setCurrentRound } = useExperiment();
     const [wordsForRound, setWordsForRound] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [userInput, setUserInput] = useState('');
@@ -80,6 +80,7 @@ const GenerationPage = () => {
     const timerRef = useRef(null);
     const timestampInRef = useRef(null);
     const inputRef = useRef(null); // Input 참조 추가
+    const startTimeRef = useRef(null);
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
@@ -99,16 +100,18 @@ const GenerationPage = () => {
 
     // --- Timer, Focus, Transition Logic --- 
     useEffect(() => {
+        console.log(`[GenerationPage useEffect WordChange Start] Index: ${currentWordIndex}, isLoading: ${isLoadingWords}, wordsForRound length: ${wordsForRound.length}`); // 로그 추가
         if (isLoadingWords || wordsForRound.length === 0 || currentWordIndex >= wordsForRound.length) {
             if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
             return;
         }
 
-        // Reset state for the new word
-        setIsTransitioning(false); // Show content
-        setUserInput(''); // Clear input
-        setTimeLeft(30); // Reset timer
-        if (inputRef.current) inputRef.current.focus(); // Focus input
+        console.log(`[GenerationPage useEffect WordChange] Setting up for index: ${currentWordIndex}`);
+        setIsTransitioning(false); // 화면 표시
+        console.log(`[GenerationPage useEffect WordChange] Set isTransitioning: false`); // 로그 추가
+        setUserInput('');
+        setTimeLeft(30);
+        if (inputRef.current) inputRef.current.focus();
         timestampInRef.current = new Date().toISOString();
         console.log(`GenerationPage - Word ${currentWordIndex + 1} entered at:`, timestampInRef.current);
 
@@ -133,74 +136,80 @@ const GenerationPage = () => {
         return () => {
             if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
         };
-    }, [currentWordIndex, wordsForRound, isLoadingWords, navigate, roundNumber]);
+    }, [currentWordIndex, wordsForRound, isLoadingWords]);
 
     // --- Next Button Handler --- 
     const handleNextClick = async (isTimeout = false) => {
-        console.log(`GenerationPage handleNextClick triggered. Timeout: ${isTimeout}`);
-        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
+        console.log(`[GenerationPage handleNextClick Start] Index: ${currentWordIndex}, Timeout: ${isTimeout}, isTransitioning: ${isTransitioning}`); // 로그 추가
+        if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; console.log("[GenerationPage handleNextClick] Timer cleared."); }
         if (!isTimeout && isTransitioning) {
-             console.log("GenerationPage handleNextClick blocked by isTransitioning");
+             console.log("[GenerationPage handleNextClick Blocked] Already transitioning.");
              return; 
         }
 
         setIsTextFlashing(true); 
         setIsTransitioning(true);
+        console.log("[GenerationPage handleNextClick State] Set isTransitioning: true");
         
-        // 0.7초 후 깜빡임 상태 해제
         setTimeout(() => setIsTextFlashing(false), 700);
 
         const timestampOut = new Date().toISOString();
         const timestampIn = timestampInRef.current;
         const currentWord = wordsForRound[currentWordIndex] || {};
-        const userId = sessionStorage.getItem('userId');
         let duration = null;
         if (timestampIn && timestampOut) {
             try { duration = Math.round((new Date(timestampOut) - new Date(timestampIn)) / 1000); } catch (e) { /*...*/ }
         }
 
-        console.log(`Generation Word: ${currentWord?.meaning}, User Input: ${userInput}, Duration: ${duration}s, Timeout: ${isTimeout}`);
+        console.log(`[GenerationPage handleNextClick Data] Word: ${currentWord?.meaning}, User Input: ${userInput}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
         if (!userId) {
-            console.error("User ID not found!");
+            console.error("[GenerationPage handleNextClick Error] User ID not found!");
             message.error("User ID not found. Cannot save response.");
-            setIsTransitioning(false);
+            setIsTransitioning(false); // 에러 시 상태 복구
+            console.log("[GenerationPage handleNextClick State] User ID Error - Set isTransitioning: false");
             return;
         }
 
-        // --- API 호출 --- 
         try {
+            console.log("[GenerationPage handleNextClick API] Calling submitResponse...");
             const responseData = {
                 user: userId,
-                english_word: currentWord.word, // 백엔드는 여전히 english_word를 키로 사용
+                english_word: currentWord.word,
                 round_number: roundNumber,
                 page_type: 'generation',
                 timestamp_in: timestampIn,
                 timestamp_out: timestampOut,
                 duration: duration,
-                response: userInput.trim().toLowerCase() || null, // 공백 제거 및 소문자 변환
+                response: userInput.trim().toLowerCase() || null,
             };
-            await submitResponse(responseData);
-            console.log("Generation response submitted for:", currentWord.meaning);
-
-            // --- 다음 단어 또는 페이지 이동 --- 
-            if (currentWordIndex < wordsForRound.length - 1) {
-                console.log("GenerationPage: Setting next word index...");
-                setCurrentWordIndex(prevIndex => prevIndex + 1);
+            if (userId && group) {
+                await submitResponse(responseData, group);
+                console.log("Generation response submitted for:", currentWord.meaning);
             } else {
-                console.log(`GenerationPage: Round ${roundNumber} Complete. Navigating...`);
+                console.warn("UserId or Group not available, response not submitted.");
+            }
+
+            if (currentWordIndex < wordsForRound.length - 1) {
+                const nextIndex = currentWordIndex + 1;
+                console.log(`[GenerationPage handleNextClick Nav] Setting next index: ${nextIndex}`); // 로그 추가
+                setCurrentWordIndex(nextIndex);
+            } else {
+                console.log(`[GenerationPage handleNextClick Nav] Round ${roundNumber} Complete. Navigating...`);
                 if (roundNumber < 3) { 
-                    navigate(`/round/${roundNumber + 1}/start`);
+                    navigate(`/${groupCode}/round/${roundNumber + 1}/start`);
                 } else { 
-                    navigate('/survey/start');
+                    navigate(`/${groupCode}/survey/start`);
                 }
             }
 
         } catch (error) {
-            console.error("Failed to submit generation response:", error);
+            console.error("[GenerationPage handleNextClick Error] Failed to submit generation response:", error);
             message.error(`Failed to save response: ${error.message}`);
-            setIsTransitioning(false); // 에러 시 트랜지션 해제
+            setIsTransitioning(false); // 에러 시 상태 복구
+            console.log("[GenerationPage handleNextClick State] API Error - Set isTransitioning: false");
         }
+        console.log("[GenerationPage handleNextClick End]"); // 로그 추가
     };
 
     // --- 로딩 및 에러 상태 처리 --- 

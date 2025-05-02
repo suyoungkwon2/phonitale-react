@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 // import { Carousel } from 'antd'; // Ant Design Carousel 제거
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 // SVG 아이콘을 일반 URL로 임포트
@@ -12,6 +12,7 @@ import icnRightUrl from '/images/icn_right.svg';
 const InstructionPage = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
+  const { groupCode } = useParams();
   const totalSlides = 5; // 이미지 개수 확인 필요
 
   const instructionImages = [
@@ -25,7 +26,7 @@ const InstructionPage = () => {
   // 다음 페이지 이동 함수 (이름 변경 없음)
   const handleNext = () => {
     console.log('Navigating to Round 1 Start...');
-    navigate('/round/1/start');
+    navigate(`/${groupCode}/round/1/start`);
   };
 
   // 커스텀 슬라이드 이동 함수

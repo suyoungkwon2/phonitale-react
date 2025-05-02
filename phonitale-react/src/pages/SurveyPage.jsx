@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Progress, Rate, Spin, message } from 'antd';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
@@ -333,8 +333,9 @@ const cardStyles = {
 
 // --- Survey Page Component ---
 const SurveyPage = () => {
+    const { roundNumber, groupCode } = useParams();
+    const { userId, group, wordList, isLoadingWords, currentRound } = useExperiment();
     const navigate = useNavigate();
-    const { wordList: wordsByRound, isLoadingWords } = useExperiment();
     const [surveyWordList, setSurveyWordList] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [usefulnessRating, setUsefulnessRating] = useState(0);
@@ -345,20 +346,20 @@ const SurveyPage = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
 
     useEffect(() => {
-        if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
+        if (!isLoadingWords && Object.keys(wordList).length > 0) {
             const combinedList = [
-                ...(wordsByRound[1] || []),
-                ...(wordsByRound[2] || []),
-                ...(wordsByRound[3] || [])
+                ...(wordList[1] || []),
+                ...(wordList[2] || []),
+                ...(wordList[3] || [])
             ];
             console.log(`SurveyPage: Combined ${combinedList.length} words for survey.`);
             setSurveyWordList(combinedList);
             setCurrentWordIndex(0);
-        } else if (!isLoadingWords && Object.keys(wordsByRound).length === 0) {
+        } else if (!isLoadingWords && Object.keys(wordList).length === 0) {
             console.error("SurveyPage: Word list object is empty after loading.");
             setSurveyWordList([]);
         }
-    }, [wordsByRound, isLoadingWords]);
+    }, [wordList, isLoadingWords]);
 
     useEffect(() => {
         if (isLoadingWords || surveyWordList.length === 0 || currentWordIndex >= surveyWordList.length) {
@@ -415,7 +416,7 @@ const SurveyPage = () => {
             const responseData = {
                 user: userId,
                 english_word: currentWordData.word,
-                round_number: 0,
+                round_number: parseInt(roundNumber || currentRound, 10),
                 page_type: 'survey',
                 timestamp_in: timestampIn,
                 timestamp_out: timestampOut,
@@ -423,14 +424,14 @@ const SurveyPage = () => {
                 usefulness: usefulnessRating,
                 coherence: coherenceRating,
             };
-            await submitResponse(responseData);
+            await submitResponse(responseData, group);
             console.log("Survey response submitted for:", currentWordData.word);
 
             if (currentWordIndex < surveyWordList.length - 1) {
                 setCurrentWordIndex(prevIndex => prevIndex + 1);
             } else {
                 console.log('Survey Complete.');
-                navigate('/end');
+                navigate(`/${groupCode}/end`);
             }
 
         } catch (error) {

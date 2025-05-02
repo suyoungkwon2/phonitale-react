@@ -5,7 +5,7 @@ import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 
 const LearningStartPage = () => {
-  const { roundNumber } = useParams();
+  const { roundNumber, groupCode } = useParams();
   const navigate = useNavigate();
 
   const phaseTitle = "학습"; // 현재 단계 이름
@@ -20,7 +20,7 @@ const LearningStartPage = () => {
 
   // Start 버튼 클릭 핸들러
   const handleStartClick = () => {
-      navigate(`/round/${roundNumber}/learning`); // 학습 페이지로 이동
+      navigate(`/${groupCode}/round/${roundNumber}/learning`); // groupCode 추가
   };
 
   // 현재 활성 스텝

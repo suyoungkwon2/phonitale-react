@@ -1,5 +1,5 @@
-import React from 'react';
-import { Routes, Route } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
 import { Spin, Layout } from 'antd';
 import { useExperiment } from './context/ExperimentContext';
 
@@ -19,25 +19,81 @@ import EndPage from './pages/EndPage';
 // Import MainLayout if you want routes without the layout, otherwise pages handle it
 // import MainLayout from './components/MainLayout'; 
 
-function App() {
-  const { isLoadingWords } = useExperiment();
+const GROUP_CODE_MAP = {
+  tksdk: 'kss',
+  wodnr: 'naive',
+  audtjr: 'phonitale',
+  tndud: 'og',
+};
 
-  if (isLoadingWords) {
+// Wrapper component to handle group code logic
+function GroupWrapper({ children }) {
+  const { groupCode } = useParams();
+  const { setGroup } = useExperiment();
+  const navigate = useNavigate(); // Import useNavigate
+
+  useEffect(() => {
+    const groupName = GROUP_CODE_MAP[groupCode];
+    if (groupName) {
+      console.log(`App.jsx: Setting group from code '${groupCode}' to '${groupName}'`);
+      setGroup(groupName);
+    } else {
+      console.error("Invalid group code:", groupCode);
+      // Handle invalid group code - redirect to an error page or root
+      navigate('/invalid-group'); // Redirect to a dedicated invalid group page
+    }
+  }, [groupCode, setGroup, navigate]);
+
+  // Render children once the group is set (or determined to be invalid)
+  return <>{children}</>;
+}
+
+function App() {
+  // isLoadingWords is now mainly used in ExperimentContext for initial load
+  // App component doesn't need direct access unless for a global loading state
+  // const { isLoadingWords } = useExperiment(); 
+  // if (isLoadingWords) { ... } // This logic is better placed inside GroupSpecificRoutes if needed
+
+  return (
+    <Routes>
+      {/* Route for handling invalid group codes */}
+      <Route path="/invalid-group" element={<div>Invalid Group Code. Please check your link.</div>} />
+
+      {/* Route to handle potential root access without group code */}
+      <Route path="/" element={<div>Please access the experiment using your assigned group link.</div>} />
+
+      {/* Group specific routes are now handled by GroupWrapper */}
+      <Route path="/:groupCode/*" element={<GroupWrapper><GroupSpecificRoutes /></GroupWrapper>} />
+
+      {/* Optional: Add a global 404 Not Found route */}
+      <Route path="*" element={<div>Page Not Found</div>} />
+    </Routes>
+  );
+}
+
+// Component containing routes accessible only after a valid group code is processed
+function GroupSpecificRoutes() {
+  const { isLoadingWords, group } = useExperiment(); // Check loading state and group
+
+  // Show loading spinner while CSV is loading or group is not yet set
+  if (isLoadingWords || !group) {
     return (
       <Layout style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        <Spin size="large" />
+        <Spin size="large" tip="Loading experiment data..." />
       </Layout>
     );
   }
 
+  // Once loading is complete and group is set, render the group-specific routes
   return (
     <Routes>
-      {/* Main experiment flow routes - assuming MainLayout is applied within each page */}
-      <Route path="/" element={<ConsentPage />} />
-      <Route path="/consent" element={<ConsentPage />} /> { /* Explicit consent route */}
+      {/* Default route for the group (e.g., /tksdk/) goes to consent */}
+      <Route path="/" element={<ConsentPage />} /> 
+      <Route path="/consent" element={<ConsentPage />} />
       <Route path="/instruction" element={<InstructionPage />} />
 
       {/* Round specific routes */}
+      {/* Note: The leading slash is important here as these are nested routes */} 
       <Route path="/round/:roundNumber/start" element={<RoundStartPage />} />
       <Route path="/round/:roundNumber/learning/start" element={<LearningStartPage />} />
       <Route path="/round/:roundNumber/learning" element={<LearningPage />} />
@@ -53,8 +109,8 @@ function App() {
       {/* End route */}
       <Route path="/end" element={<EndPage />} />
 
-      {/* Optional: Add a 404 Not Found route */}
-      {/* <Route path="*" element={<div>Page Not Found</div>} /> */}
+       {/* Catch-all for invalid paths within a valid group code */} 
+      <Route path="*" element={<div>Sub-page Not Found within group.</div>} />
     </Routes>
   );
 }
