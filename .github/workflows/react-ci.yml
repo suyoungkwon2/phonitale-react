@@ -26,9 +26,17 @@ jobs:
         # cache: 'npm' # npm 의존성 캐싱 임시 비활성화
         cache-dependency-path: phonitale-react/package-lock.json # 캐시 경로 수정
 
+    - name: Clean npm cache
+      working-directory: ./phonitale-react # 작업 디렉토리 지정
+      run: npm cache clean --force
+
     - name: Install dependencies
       working-directory: ./phonitale-react # 작업 디렉토리 지정
       run: npm install # package-lock.json을 기반으로 의존성 설치
+
+    - name: Verify papaparse installation
+      working-directory: ./phonitale-react # 작업 디렉토리 지정
+      run: ls -l node_modules/papaparse
 
     - name: Build project
       working-directory: ./phonitale-react # 작업 디렉토리 지정
