@@ -35,11 +35,9 @@ function GroupWrapper({ children }) {
   useEffect(() => {
     const groupName = GROUP_CODE_MAP[groupCode];
     if (groupName) {
-      console.log(`App.jsx: Setting group from code '${groupCode}' to '${groupName}'`);
       setGroup(groupName);
     } else {
-      console.error("Invalid group code:", groupCode);
-      // Handle invalid group code - redirect to an error page or root
+      console.error("[GroupWrapper] Invalid group code:", groupCode);
       navigate('/invalid-group'); // Redirect to a dedicated invalid group page
     }
   }, [groupCode, setGroup, navigate]);

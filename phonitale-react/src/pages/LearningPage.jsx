@@ -71,19 +71,22 @@ function renderStyledKeywords(indexingData) {
         return null;
     }
 
-    return indexingData.map(({ key }, groupIndex) => {
+    return indexingData.map((item, groupIndex) => {
+        const key = Object.keys(item)[0];
+        if (!key) return null;
+
         const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
         const style = {
             borderBottom: `4px solid ${color}`,
             paddingBottom: '2px',
             display: 'inline-block',
         };
-        const spanKey = `kw-${groupIndex}-${key}`;
+        const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`;
 
         const separator = groupIndex < indexingData.length - 1 ? ', ' : null;
 
         return (
-            <React.Fragment key={spanKey}> 
+            <React.Fragment key={spanKey}>
                 <span style={style}>{key}</span>
                 {separator}
             </React.Fragment>
@@ -91,97 +94,64 @@ function renderStyledKeywords(indexingData) {
     });
 }
 
-// --- 신규: 밑줄 스타일 계산 함수 ---
-function calculateUnderlineStyles(word, indexingData, containerElement) {
-    if (!word || !indexingData || !Array.isArray(indexingData) || indexingData.length === 0 || !containerElement) {
-        return [];
+// --- 신규: 영어 단어 밑줄 처리 함수 ---
+function renderEnglishWordWithUnderlines(word, indexingData) {
+    if (!word) return null;
+    if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
+        return word; // 밑줄 데이터 없으면 단어만 반환
     }
 
-    const calculatedStyles = [];
-    let overlapLevels = {};
-    const underlineHeight = 4;
-    const verticalGap = 1;
-    const baseTopOffset = '100%';
-
-    const containerRect = containerElement.getBoundingClientRect();
-    
-    const tempSpanStyle = {
-        position: 'absolute',
-        visibility: 'hidden',
-        whiteSpace: 'pre',
-        fontFamily: 'Rubik, sans-serif',
-        fontSize: '36px', 
-        fontWeight: 500,
-    };
-
-    const sortedIndices = [...indexingData].sort((a, b) => (a.range && b.range) ? a.range[0] - b.range[0] : 0);
-
-    sortedIndices.forEach(({ key, range }, groupIndex) => {
-        if (!range) return;
-        let [start, end] = range;
-
-        if (start === null || end === null || start >= end || start < 0 || start >= word.length) {
-            console.warn(`Invalid start/end range detected and skipped: [${start}, ${end}] for word "${word}"`);
-            return;
+    let parts = [];
+    let lastIndex = 0;
+    // 인덱스 기준으로 정렬
+    const sortedIndices = indexingData.flatMap(item => {
+        const key = Object.keys(item)[0];
+        const rangeString = item[key];
+        if (!key || !rangeString) return [];
+        const [startStr, endStr] = rangeString.split(':');
+        const start = parseInt(startStr, 10);
+        const end = parseInt(endStr, 10);
+        // 유효성 검사 추가
+        if (isNaN(start) || isNaN(end) || start < 0 || start >= end || start >= word.length) {
+            console.warn(`Invalid range [${start}, ${end}] for word '${word}' in key '${key}'. Skipping.`);
+            return [];
         }
-        const renderEnd = Math.min(end, word.length);
-        if (end > word.length) {
-            console.warn(`End index ${end} exceeds word length ${word.length}. Rendering underline up to ${renderEnd} for word "${word}"`);
+        // end 인덱스는 포함되지 않으므로, word.length 초과해도 substring에서 처리됨
+        return { key, range: [start, end] }; 
+    }).sort((a, b) => a.range[0] - b.range[0]);
+
+    sortedIndices.forEach(({ key, range }, index) => {
+        const [start, end] = range;
+        const renderEnd = Math.min(end, word.length); // 실제 렌더링 끝점 조정
+
+        // Add text before the current underline
+        if (start > lastIndex) {
+            parts.push(word.substring(lastIndex, start));
         }
 
-        let calculatedLeftPx = 0;
-        let calculatedWidthPx = 0;
-
-        try {
-            const prefixSpan = document.createElement('span');
-            Object.assign(prefixSpan.style, tempSpanStyle);
-            prefixSpan.textContent = word.substring(0, start);
-            containerElement.appendChild(prefixSpan);
-            calculatedLeftPx = prefixSpan.offsetWidth;
-            containerElement.removeChild(prefixSpan);
-
-            const targetSpan = document.createElement('span');
-            Object.assign(targetSpan.style, tempSpanStyle);
-            targetSpan.textContent = word.substring(start, renderEnd);
-            containerElement.appendChild(targetSpan);
-            calculatedWidthPx = targetSpan.offsetWidth;
-            containerElement.removeChild(targetSpan);
-
-        } catch (error) {
-            console.error("Error calculating underline dimensions:", error);
-            calculatedLeftPx = (start / word.length) * containerRect.width;
-            calculatedWidthPx = ((renderEnd - start) / word.length) * containerRect.width;
-        }
-
-        let currentOverlapLevel = 0;
-        const startPx = calculatedLeftPx;
-        const endPx = calculatedLeftPx + calculatedWidthPx;
-        for (let px = Math.floor(startPx); px < Math.ceil(endPx); px++) {
-            if (overlapLevels[px] !== undefined) {
-                currentOverlapLevel = Math.max(currentOverlapLevel, overlapLevels[px] + 1);
-            }
-        }
-        for (let px = Math.floor(startPx); px < Math.ceil(endPx); px++) {
-            overlapLevels[px] = currentOverlapLevel;
-        }
-
-        const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
-        const calculatedTop = `calc(${baseTopOffset} + ${currentOverlapLevel * (underlineHeight + verticalGap)}px)`;
-
+        // Add the underlined part
+        const color = UNDERLINE_COLORS[index % UNDERLINE_COLORS.length];
         const style = {
-            position: 'absolute',
-            left: `${calculatedLeftPx}px`,
-            width: `${calculatedWidthPx}px`,
-            top: calculatedTop,
-            height: `${underlineHeight}px`,
-            backgroundColor: color,
+            borderBottom: `4px solid ${color}`,
+            paddingBottom: '2px',
+            // backgroundColor: color, // borderBottom 사용 시 제거 가능
         };
+        const spanKey = `ew-${index}-${start}-${renderEnd}`;
+        parts.push(
+            <span key={spanKey} style={style}>
+                {word.substring(start, renderEnd)}
+            </span>
+        );
 
-        const underlineKey = `ul-${groupIndex}-${start}-${end}`;
-        calculatedStyles.push({ key: underlineKey, style: style });
+        lastIndex = Math.max(lastIndex, renderEnd);
     });
 
-    return calculatedStyles;
+    // Add remaining text after the last underline
+    if (lastIndex < word.length) {
+        parts.push(word.substring(lastIndex));
+    }
+
+    return parts;
 }
 
 // Fisher-Yates Shuffle
@@ -255,6 +225,7 @@ const LearningPage = () => {
     const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
     const { userId, group, wordList: wordsByRound, isLoadingWords, currentRound, setCurrentRound } = useExperiment();
+    
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -263,7 +234,6 @@ const LearningPage = () => {
     const timerRef = useRef(null);
     const audioTimeoutRefs = useRef([]);
     const wordContainerRef = useRef(null);
-    const [underlineStyles, setUnderlineStyles] = useState([]);
     const timestampInRef = useRef(null);
     const roundNumber = parseInt(roundNumberStr, 10);
     const [isTextFlashing, setIsTextFlashing] = useState(false);
@@ -358,15 +328,6 @@ const LearningPage = () => {
             console.warn(`Audio path not found for word: ${currentWordData?.word}`);
         }
 
-        if (wordContainerRef.current) {
-            const keywordIndicesStringForUnderline = currentWordData?.kss_keyword_refined;
-            const keywordIndicesForUnderline = parseIndexingString(keywordIndicesStringForUnderline);
-            const styles = calculateUnderlineStyles(currentWordData.word, keywordIndicesForUnderline, wordContainerRef.current);
-            setUnderlineStyles(styles);
-        } else {
-            setUnderlineStyles([]);
-        }
-
         return () => {
             console.log(`[LearningPage useEffect WordChange] Cleanup for index: ${currentWordIndex}`);
             if (timerRef.current) {
@@ -457,9 +418,12 @@ const LearningPage = () => {
 
     const currentWordData = shuffledWords[currentWordIndex];
     const progressPercent = Math.round(((currentWordIndex + 1) / shuffledWords.length) * 100);
-    const keywordIndicesStringForStyling = currentWordData?.kss_keyword_refined;
-    const keywordIndicesForStyling = parseIndexingString(keywordIndicesStringForStyling);
-    const displayVerbalCue = currentWordData?.kss_verbal_cue;
+    const keywordIndicesForStyling = currentWordData?.keyword_refined;
+    const displayVerbalCue = currentWordData?.verbal_cue;
+
+    // --- 데이터 확인 로그 추가 --- 
+    console.log(`LearningPage Render: Word '${currentWordData?.word}', keyword_refined data passed to render:`, keywordIndicesForStyling);
+    // --- 데이터 확인 로그 끝 --- 
 
     return (
         <MainLayout>
@@ -492,11 +456,8 @@ const LearningPage = () => {
                      <div style={cardStyles.rowWrapper}> 
                          <div style={cardStyles.leftTitle}>English Words</div> 
                          <div style={cardStyles.rightContent}> 
-                             <span ref={wordContainerRef} style={{...cardStyles.englishWordText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}> 
-                                 {currentWordData.word}
-                                  {underlineStyles.map(({ key, style }) => ( 
-                                     <div key={key} className="english-underline" style={{...style, backgroundColor: isTextFlashing ? 'transparent' : style.backgroundColor }}></div> 
-                                 ))} 
+                             <span /* ref={wordContainerRef} */ style={{...cardStyles.englishWordText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}> 
+                                 {renderEnglishWordWithUnderlines(currentWordData.word, currentWordData.keyword_refined)}
                              </span> 
                          </div> 
                      </div>

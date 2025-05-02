@@ -1,47 +1,12 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
+import Papa from 'papaparse'; // papaparse import
 
-// --- CSV 파싱 함수 ---
+// --- 기존 CSV 파싱 함수 제거 또는 주석 처리 ---
+/*
 function parseCSV(csvText) {
-    // ... (parseCSV implementation remains the same) ...
-    const lines = csvText.trim().split('\n');
-    if (lines.length < 2) return [];
-    const headers = lines[0].split(',').map(h => h.trim());
-    const data = lines.slice(1).map(line => {
-        // Improved CSV parsing logic to handle quoted commas
-        const values = [];
-        let currentMatch = '';
-        let inQuotes = false;
-        for (let i = 0; i < line.length; i++) {
-            const char = line[i];
-            const nextChar = line[i + 1];
-
-            if (char === '"' && !inQuotes && (i === 0 || line[i-1] === ',')) {
-                 // Start of quoted field
-                 inQuotes = true;
-                 continue; // Skip the opening quote
-            } else if (char === '"' && inQuotes && (nextChar === ',' || nextChar === undefined)) {
-                 // End of quoted field
-                 inQuotes = false;
-                 continue; // Skip the closing quote
-            } else if (char === ',' && !inQuotes) {
-                // End of unquoted field
-                values.push(currentMatch.trim());
-                currentMatch = '';
-            } else {
-                currentMatch += char;
-            }
-        }
-        values.push(currentMatch.trim()); // Add the last value
-
-        const entry = {};
-        headers.forEach((header, index) => {
-            // Handle potential mismatch between headers and values
-            entry[header] = values[index] !== undefined ? values[index].replace(/^\"|\"$/g, '').trim() : '';
-        });
-        return entry;
-    });
-    return data;
+    // ... 기존 코드 ...
 }
+*/
 // ------------------------------
 
 // 1. Context 생성
@@ -71,7 +36,7 @@ export const ExperimentProvider = ({ children }) => {
   // 초기 CSV 데이터 로딩
   useEffect(() => {
     const CSV_PATH = '/words/words_data_test_full.csv';
-    console.log("Context: Attempting to load CSV from:", CSV_PATH);
+    // console.log("Context: Attempting to load CSV from:", CSV_PATH);
     fetch(CSV_PATH)
       .then(response => {
           if (!response.ok) {
@@ -80,23 +45,46 @@ export const ExperimentProvider = ({ children }) => {
           return response.text();
       })
       .then(csvText => {
-          console.log("Context: CSV text loaded, length:", csvText.length);
-          const parsedData = parseCSV(csvText);
-          console.log("Context: Total parsed words:", parsedData.length);
-          setAllParsedWords(parsedData);
-          setIsLoadingWords(false);
+          // console.log("Context: CSV text loaded, length:", csvText.length);
+          Papa.parse(csvText, {
+              header: true, 
+              skipEmptyLines: true,
+              transformHeader: header => header.trim(), 
+              complete: (results) => {
+                  // console.log("Context: PapaParse completed. Parsed rows:", results.data.length);
+                  if (results.errors.length > 0) {
+                      console.error("Context: PapaParse errors:", results.errors);
+                  }
+                  /* // 샘플 확인 로그 제거
+                  const sampleWord = results.data.find(w => w.word === 'meddlesome');
+                  if (sampleWord) {
+                       console.log('[Context PapaParse] Sample word (meddlesome):', JSON.stringify(sampleWord));
+                       console.log('[Context PapaParse] Sample word og_keyword_refined:', sampleWord['og_keywords_refined']);
+                  }
+                  */
+                  setAllParsedWords(results.data);
+                  setIsLoadingWords(false);
+              },
+              error: (error) => {
+                  console.error('Context: PapaParse critical error:', error);
+                  setIsLoadingWords(false); 
+                  setAllParsedWords([]);
+              }
+          });
       })
       .catch(error => {
-          console.error('Context: Error fetching/parsing CSV:', error);
+          console.error('Context: Error fetching CSV:', error);
           setIsLoadingWords(false); 
-          setAllParsedWords([]); // 에러 발생 시 초기화
+          setAllParsedWords([]); 
       });
   }, []);
 
   // 그룹 설정 및 로딩 완료 후 최종 wordList 생성
   useEffect(() => {
+    // console.log(`[Context Effect Run] Current group state: ${group}, isLoadingWords: ${isLoadingWords}, allParsedWords length: ${allParsedWords.length}`);
+
     if (!isLoadingWords && group && allParsedWords.length > 0) {
-      console.log(`Context: Group '${group}' set. Processing ${allParsedWords.length} parsed words.`);
+      // console.log(`Context: Group '${group}' set. Processing ${allParsedWords.length} parsed words.`);
       const wordsByRound = { 1: [], 2: [], 3: [] };
       let processedCount = 0;
       allParsedWords.forEach((word, index) => {
@@ -105,17 +93,32 @@ export const ExperimentProvider = ({ children }) => {
               const keywordRefinedKey = `${group}_keyword_refined`;
               const verbalCueKey = `${group}_verbal_cue`;
 
-              // 그룹별 데이터 추출 시 JSON 파싱 추가 (데이터 형식이 JSON 문자열일 경우)
+              let actualKeywordRefinedKey = keywordRefinedKey;
+              const foundKey = Object.keys(word).find(key => key.trim() === keywordRefinedKey);
+              if (foundKey) {
+                  actualKeywordRefinedKey = foundKey;
+              } else if (group === 'og') { 
+                  // console.error(`[Context Key NOT Found] Could not find key matching '${keywordRefinedKey}' in word object for '${word.word}'`); // 에러 로그는 남겨둘 수 있음 (선택)
+              }
+              const rawKeywordData = word[actualKeywordRefinedKey]; 
+              // console.log(`Context: Processing word '${word.word}', group '${group}'. Raw ${actualKeywordRefinedKey}:`, rawKeywordData); // 제거
+              
               let keywordRefinedParsed = [];
               let verbalCueParsed = word[verbalCueKey] || '';
-              try {
-                  // 'kss_keyword_refined' 등의 컬럼이 실제 JSON 배열 문자열이라고 가정
-                  if (word[keywordRefinedKey] && typeof word[keywordRefinedKey] === 'string') {
-                    keywordRefinedParsed = JSON.parse(word[keywordRefinedKey].replace(/'/g, '"')); // 작은따옴표를 큰따옴표로 변경
+              
+              if (rawKeywordData && typeof rawKeywordData === 'string') {
+                  try {
+                      const jsonString = rawKeywordData.replace(/'/g, '"');
+                      keywordRefinedParsed = JSON.parse(jsonString); 
+                  } catch (e) {
+                      console.error(`Context: Failed to parse JSON for ${actualKeywordRefinedKey} in word ${word.word}. Input:`, rawKeywordData, 'Error:', e);
+                      keywordRefinedParsed = [];
                   }
-              } catch (e) {
-                  console.error(`Failed to parse JSON for ${keywordRefinedKey} in word ${word.word}:`, word[keywordRefinedKey], e);
-                  keywordRefinedParsed = []; // 파싱 실패 시 빈 배열
+              } else if (rawKeywordData) { 
+                  console.warn(`Context: ${actualKeywordRefinedKey} for word '${word.word}' is not a string:`, rawKeywordData);
+                  keywordRefinedParsed = [];
+              } else { 
+                  keywordRefinedParsed = [];
               }
 
               const groupSpecificWordData = {
@@ -131,22 +134,18 @@ export const ExperimentProvider = ({ children }) => {
                   round: word.round,
                   keyword_refined: keywordRefinedParsed,
                   verbal_cue: verbalCueParsed,
-              };
+              }; // word 사용 복구 (객체 전체)
               wordsByRound[roundNum].push(groupSpecificWordData);
               processedCount++;
           } else {
-              // 유효하지 않은 round 값 로그 (선택적)
               // console.warn(`Context: Word at index ${index} has invalid or missing round: ${word.round}`);
           }
         });
-        console.log(`Context: Finished processing words. Total processed: ${processedCount}`); // 처리된 단어 수 로그 추가
-        console.log("Context: Final word list processed for group:", wordsByRound); // 최종 wordList 로그
-        // 각 라운드별 단어 수 로그 추가
-        console.log(`Context: Round 1 count: ${wordsByRound[1].length}, Round 2 count: ${wordsByRound[2].length}, Round 3 count: ${wordsByRound[3].length}`);
+        // console.log(`Context: Finished processing words. Total processed: ${processedCount}`);
+        // console.log(`Context: Final Round counts: R1=${wordsByRound[1].length}, R2=${wordsByRound[2].length}, R3=${wordsByRound[3].length}`);
         setWordList(wordsByRound);
     } else {
-        // 조건 미충족 시 로그 (디버깅용)
-        console.log(`Context: Word list processing skipped. isLoadingWords=${isLoadingWords}, group=${group}, allParsedWords.length=${allParsedWords.length}`);
+       // console.log(`Context: Word list processing skipped.`);
     }
   }, [group, isLoadingWords, allParsedWords]);
 

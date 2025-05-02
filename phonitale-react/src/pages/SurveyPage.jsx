@@ -133,7 +133,12 @@ function renderStyledKeywords(indexingData) {
         return null;
     }
 
-    return indexingData.map(({ key }, groupIndex) => {
+    // LearningPage와 동일한 로직 적용
+    return indexingData.map((item, groupIndex) => {
+        // 각 item 객체에서 첫 번째 키(key)를 추출합니다.
+        const key = Object.keys(item)[0];
+        if (!key) return null; // 키가 없는 경우 렌더링하지 않음
+
         const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
         const style = {
             borderBottom: `4px solid ${color}`,
@@ -141,8 +146,11 @@ function renderStyledKeywords(indexingData) {
             display: 'inline-block', // inline-block 유지
             lineHeight: '1.1', // 키워드 줄 간격 조정 필요시
         };
-        const spanKey = `kw-${groupIndex}-${key}`;
+        // 고유한 span key 생성 시 실제 키 값 사용
+        const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`; // 공백 등 특수문자 처리
+
         const separator = groupIndex < indexingData.length - 1 ? ', ' : null;
+
         return (
             <React.Fragment key={spanKey}>
                 <span style={style}>{key}</span>
@@ -152,107 +160,65 @@ function renderStyledKeywords(indexingData) {
     });
 }
 
-// --- 신규: 밑줄 스타일 계산 함수 (LearningPage에서 복사) ---
-function calculateUnderlineStyles(word, indexingData, containerElement) {
-    if (!word || !indexingData || !Array.isArray(indexingData) || indexingData.length === 0 || !containerElement) {
-        return [];
+// --- 신규: 영어 단어 밑줄 처리 함수 (LearningPage에서 복사) ---
+function renderEnglishWordWithUnderlines(word, indexingData) {
+    if (!word) return null;
+    if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
+        return word; // 밑줄 데이터 없으면 단어만 반환
     }
 
-    const calculatedStyles = [];
-    let overlapLevels = {}; // 각 시작점(start)에서의 겹침 레벨을 기록
-    const underlineHeight = 4; // 높이 조정 (Key Words와 동일하게 4px로 변경)
-    const verticalGap = 1; // 간격 유지
-    const baseTopOffset = '100%'; // 기준 위치 유지
-
-    // 컨테이너의 시작 위치 (기준점)
-    const containerRect = containerElement.getBoundingClientRect();
-    
-    // 임시 span 스타일 (측정용)
-    const tempSpanStyle = {
-        position: 'absolute',
-        visibility: 'hidden',
-        whiteSpace: 'pre', // 공백 유지
-        fontFamily: 'Rubik, sans-serif',
-        fontSize: '36px', 
-        fontWeight: 500,
-        // 필요한 다른 스타일 속성 추가 (예: letterSpacing)
-    };
-
-    const sortedIndices = [...indexingData].sort((a, b) => (a.range && b.range) ? a.range[0] - b.range[0] : 0);
-
-    sortedIndices.forEach(({ key, range }, groupIndex) => {
-        if (!range) return;
-        let [start, end] = range;
-
-        // 범위 유효성 검사
-        if (start === null || end === null || start >= end || start < 0 || start >= word.length) {
-            console.warn(`Invalid start/end range detected and skipped: [${start}, ${end}] for word "${word}"`);
-            return;
-        }
-        const renderEnd = Math.min(end, word.length);
-        if (end > word.length) {
-            console.warn(`End index ${end} exceeds word length ${word.length}. Rendering underline up to ${renderEnd} for word "${word}"`);
-        }
-
-        // --- 픽셀 기반 위치 및 너비 계산 --- 
-        let calculatedLeftPx = 0;
-        let calculatedWidthPx = 0;
-
-        try {
-            // 시작 위치 계산용 임시 span
-            const prefixSpan = document.createElement('span');
-            Object.assign(prefixSpan.style, tempSpanStyle);
-            prefixSpan.textContent = word.substring(0, start);
-            containerElement.appendChild(prefixSpan);
-            calculatedLeftPx = prefixSpan.offsetWidth; // 시작 offset
-            containerElement.removeChild(prefixSpan);
-
-            // 너비 계산용 임시 span
-            const targetSpan = document.createElement('span');
-            Object.assign(targetSpan.style, tempSpanStyle);
-            targetSpan.textContent = word.substring(start, renderEnd);
-            containerElement.appendChild(targetSpan);
-            calculatedWidthPx = targetSpan.offsetWidth; // 실제 너비
-            containerElement.removeChild(targetSpan);
-
-        } catch (error) {
-            console.error("Error calculating underline dimensions:", error);
-            // 오류 발생 시 백분율 기반으로 대체 (선택 사항)
-            calculatedLeftPx = (start / word.length) * containerRect.width;
-            calculatedWidthPx = ((renderEnd - start) / word.length) * containerRect.width;
-        }
-        // --- 계산 끝 --- 
-
-        // 겹침 레벨 계산
-        let currentOverlapLevel = 0;
-        const startPx = calculatedLeftPx;
-        const endPx = calculatedLeftPx + calculatedWidthPx;
-        for (let px = Math.floor(startPx); px < Math.ceil(endPx); px++) {
-            if (overlapLevels[px] !== undefined) {
-                currentOverlapLevel = Math.max(currentOverlapLevel, overlapLevels[px] + 1);
+    let parts = [];
+    let lastIndex = 0;
+    try {
+        // 인덱스 기준으로 정렬 및 데이터 구조 변환
+        const sortedIndices = indexingData.flatMap(item => {
+            const key = Object.keys(item)[0];
+            const rangeString = item[key];
+            if (!key || !rangeString) {
+                return [];
             }
+            const [startStr, endStr] = rangeString.split(':');
+            const start = parseInt(startStr, 10);
+            const end = parseInt(endStr, 10);
+            // 유효성 검사 추가
+            if (isNaN(start) || isNaN(end) || start < 0 || start >= end || start >= word.length) {
+                return [];
+            }
+            return { key, range: [start, end] };
+        }).sort((a, b) => a.range[0] - b.range[0]);
+
+        sortedIndices.forEach(({ key, range }, index) => {
+            const [start, end] = range;
+            const renderEnd = Math.min(end, word.length);
+
+            if (start > lastIndex) {
+                parts.push(word.substring(lastIndex, start));
+            }
+
+            const color = UNDERLINE_COLORS[index % UNDERLINE_COLORS.length];
+            const style = {
+                borderBottom: `4px solid ${color}`,
+                paddingBottom: '2px',
+            };
+            const spanKey = `ew-${index}-${start}-${renderEnd}`;
+            parts.push(
+                <span key={spanKey} style={style}>
+                    {word.substring(start, renderEnd)}
+                </span>
+            );
+
+            lastIndex = Math.max(lastIndex, renderEnd);
+        });
+
+        if (lastIndex < word.length) {
+            parts.push(word.substring(lastIndex));
         }
-        for (let px = Math.floor(startPx); px < Math.ceil(endPx); px++) {
-            overlapLevels[px] = currentOverlapLevel;
-        }
 
-        const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
-        const calculatedTop = `calc(${baseTopOffset} + ${currentOverlapLevel * (underlineHeight + verticalGap)}px)`;
-
-        const style = {
-            position: 'absolute',
-            left: `${calculatedLeftPx}px`, // 픽셀 값 사용
-            width: `${calculatedWidthPx}px`, // 픽셀 값 사용
-            top: calculatedTop,
-            height: `${underlineHeight}px`,
-            backgroundColor: color,
-        };
-
-        const underlineKey = `ul-${groupIndex}-${start}-${end}`;
-        calculatedStyles.push({ key: underlineKey, style: style });
-    });
-
-    return calculatedStyles;
+        return parts;
+    } catch (error) {
+        console.error("[Survey Render] Error in renderEnglishWordWithUnderlines:", error);
+        return word; // 오류 발생 시 원본 단어 반환
+    }
 }
 
 // --- LearningPage에서 가져온 카드 스타일 ---
@@ -336,6 +302,7 @@ const SurveyPage = () => {
     const { roundNumber, groupCode } = useParams();
     const { userId, group, wordList, isLoadingWords, currentRound } = useExperiment();
     const navigate = useNavigate();
+    
     const [surveyWordList, setSurveyWordList] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [usefulnessRating, setUsefulnessRating] = useState(0);
@@ -454,11 +421,12 @@ const SurveyPage = () => {
     const currentWordData = surveyWordList[currentWordIndex];
     const progressPercent = Math.round(((currentWordIndex + 1) / surveyWordList.length) * 100);
 
-    const keywordKey = `kss_keyword_refined`;
-    const verbalCueKey = `kss_verbal_cue`;
-    const keywordIndexingString = currentWordData[keywordKey];
-    const keywordIndices = parseIndexingString(keywordIndexingString);
-    const displayVerbalCue = currentWordData[verbalCueKey] || "N/A";
+    const keywordIndices = currentWordData.keyword_refined;
+    const displayVerbalCue = currentWordData.verbal_cue || "N/A";
+
+    // --- 데이터 확인 로그 추가 --- 
+    console.log(`SurveyPage Render: Word '${currentWordData?.word}', keyword_refined data passed to render:`, keywordIndices);
+    // --- 데이터 확인 로그 끝 --- 
 
     const isNextDisabled = usefulnessRating === 0 || coherenceRating === 0 || isSubmitting;
 
@@ -486,11 +454,8 @@ const SurveyPage = () => {
                         <div style={cardStyles.rowWrapper}>
                             <div style={cardStyles.leftTitle}>English Words</div>
                             <div style={cardStyles.rightContent}>
-                                <span ref={wordContainerRef} style={cardStyles.englishWordText}>
-                                    {currentWordData.word}
-                                    {underlineStyles.map(({ key, style }) => (
-                                        <div key={key} className="english-underline" style={style}></div>
-                                    ))}
+                                <span style={cardStyles.englishWordText}>
+                                    {renderEnglishWordWithUnderlines(currentWordData.word, keywordIndices)}
                                 </span>
                             </div>
                         </div>
