@@ -16,6 +16,7 @@ import GenerationPage from './pages/GenerationPage';
 import SurveyStartPage from './pages/SurveyStartPage';
 import SurveyPage from './pages/SurveyPage';
 import EndPage from './pages/EndPage';
+import InvalidAccessPage from './pages/InvalidAccessPage';
 // Import MainLayout if you want routes without the layout, otherwise pages handle it
 // import MainLayout from './components/MainLayout'; 
 
@@ -58,7 +59,7 @@ function App() {
       <Route path="/invalid-group" element={<div>Invalid Group Code. Please check your link.</div>} />
 
       {/* Route to handle potential root access without group code */}
-      <Route path="/" element={<div>Please access the experiment using your assigned group link.</div>} />
+      <Route path="/" element={<InvalidAccessPage />} />
 
       {/* Group specific routes are now handled by GroupWrapper */}
       <Route path="/:groupCode/*" element={<GroupWrapper><GroupSpecificRoutes /></GroupWrapper>} />
