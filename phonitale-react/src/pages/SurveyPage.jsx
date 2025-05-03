@@ -221,51 +221,48 @@ function renderEnglishWordWithUnderlines(word, indexingData) {
     }
 }
 
-// --- 카드 스타일 수정 ---
+// --- 카드 스타일 수정 (LearningPage 기준으로 통합) ---
 const cardStyles = {
+    // 각 블록(그룹) 컨테이너 스타일 (LearningPage 스타일)
     blockContainer: {
       background: '#FFFFFF',
       borderRadius: '12px',
       padding: '24px',
       boxShadow: '0 4px 12px rgba(0, 0, 0, 0.05)',
       width: '100%',
-      maxWidth: '685px', // 최대 너비 유지
+      maxWidth: '685px',
       display: 'flex',
       flexDirection: 'column',
-      marginBottom: '16px', // 블록 간 간격 추가
     },
-    rowWrapper: {
+    rowWrapper: { // LearningPage 스타일
       display: 'flex',
       width: '100%',
       alignItems: 'center',
     },
-    leftTitle: {
+    leftTitle: { // 기본 제목 스타일 (오른쪽 정렬)
       width: '120px',
-      textAlign: 'center', // 가운데 정렬
+      textAlign: 'right',
       color: '#656565',
       fontSize: '14px',
-    //   paddingTop: '2px', // 조정될 수 있음
+      paddingTop: '2px',
       paddingRight: '16px',
       flexShrink: 0,
-      whiteSpace: 'pre-line', // 줄바꿈 허용
-      display: 'flex',       // Flexbox 사용하여
-      flexDirection: 'column', // 세로 정렬
-      justifyContent: 'center' // 수직 가운데 정렬
+      whiteSpace: 'nowrap',
     },
-    rightContent: {
+    rightContent: { // LearningPage 스타일
       flexGrow: 1,
       paddingLeft: '16px',
       position: 'relative',
     },
-    dashedBorder: {
+    dashedBorder: { // LearningPage 스타일
       borderTop: '1px dashed #C7C7C7',
       margin: '16px 0',
     },
-    englishWordText: {
-      fontSize: '36px', fontWeight: 500, fontFamily: 'Rubik, sans-serif',
+    englishWordText: { // LearningPage 스타일
+      fontSize: '36px', fontWeight: 500, fontFamily: 'Rubik, sans-serif', // LearningPage 폰트
       position: 'relative', display: 'inline-block', color: '#000000', lineHeight: '1.2',
     },
-    keyWordsText: {
+    keyWordsText: { // LearningPage 스타일
         fontSize: '14px',
         color: '#000000',
         lineHeight: '1.6',
@@ -274,19 +271,30 @@ const cardStyles = {
         alignItems: 'center',
         gap: '4px',
     },
-    koreanMeaningText: {
+    koreanMeaningText: { // LearningPage 스타일
         fontSize: '20px',
         fontWeight: 'bold',
         color: '#000000',
-        fontFamily: 'BBTreeGo_R, sans-serif',
+        // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
     },
-    verbalCueText: {
+    verbalCueText: { // LearningPage 스타일
         fontSize: '14px',
         color: '#000000',
         lineHeight: '1.6',
-        fontFamily: 'BBTreeGo_R, sans-serif',
+        // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
      },
-     ratingQuestionText: {
+     // --- 설문 관련 스타일 --- 
+     surveyLeftTitle: { // 설문 전용 제목 스타일 -> 기본 leftTitle 스타일과 동일하게 변경
+        width: '120px',
+        textAlign: 'right', // 오른쪽 정렬로 변경
+        color: '#656565',
+        fontSize: '14px',
+        paddingTop: '2px', // 패딩 추가 (다른 제목과 통일)
+        paddingRight: '16px',
+        flexShrink: 0,
+        whiteSpace: 'pre-line', // 줄바꿈은 유지
+     },
+     ratingQuestionText: { // 유지
         fontSize: '14px',
         color: '#000000',
         lineHeight: '1.6',
@@ -294,17 +302,16 @@ const cardStyles = {
         fontFamily: 'BBTreeGo_R, sans-serif',
         textAlign: 'left',
      },
-     ratingComponentWrapper: { // Rate 컴포넌트와 루브릭 포함
+     ratingComponentWrapper: { 
         width: '100%',
-        textAlign: 'left',
-        display: 'flex', // Flexbox 사용
-        alignItems: 'center', // 세로 가운데 정렬
-        gap: '10px' // 요소 간 간격
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: '8px' // 간격 약간 줄임 (조정 가능)
      },
-     rubricText: { // 루브릭 텍스트 스타일
+     rubricText: { // 유지
         fontSize: '12px',
         color: '#888888',
-        flexShrink: 0, // 크기 줄어들지 않도록
+        flexShrink: 0, 
      }
 };
 
@@ -380,14 +387,14 @@ const SurveyPage = () => {
             const responseData = {
                 user: userId,
                 english_word: currentWordData.word,
-                round_number: parseInt(currentWordData.round || currentRound, 10), // currentWordData에서 round 가져오기
+                round_number: parseInt(currentWordData.round || currentRound, 10),
                 page_type: 'survey',
                 timestamp_in: timestampIn,
                 timestamp_out: timestampOut,
                 duration: duration,
-                helpfulness: usefulnessRating, // 키 이름 변경
-                imageability: imageabilityRating, // 신규 데이터 추가
-                coherence: coherenceRating,
+                survey_helpfulness: usefulnessRating,
+                survey_imageability: imageabilityRating,
+                survey_coherence: coherenceRating,
             };
             await submitResponse(responseData, group);
             // console.log("Survey response submitted for:", currentWordData.word);
@@ -434,10 +441,12 @@ const SurveyPage = () => {
                     padding: '20px',
                     display: 'flex',
                     flexDirection: 'column',
-                    alignItems: 'center'
+                    alignItems: 'center',
+                    gap: '24px' // 이 gap으로 요소 간 간격 제어
                 }}
             >
-                <div className="progress-section" style={{ width: '100%', maxWidth: '685px', margin: '20px auto 24px' }}>
+                {/* Progress Bar Section */} 
+                <div className="progress-section" style={{ width: '100%', maxWidth: '685px' }}> 
                     <div className="progress-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', padding: '0 5px' }}>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>Survey</span>
                         <span style={{ fontFamily: 'Rubik, sans-serif', fontSize: '16px', color: '#868686' }}>{currentWordIndex + 1} / {surveyWordList.length}</span>
@@ -445,120 +454,128 @@ const SurveyPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px', padding: '0 20px' }}>
-                    <div style={cardStyles.blockContainer}>
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>English Words</div>
-                            <div style={cardStyles.rightContent}>
-                                <span style={cardStyles.englishWordText}>
-                                    {renderEnglishWordWithUnderlines(currentWordData.word, keywordIndices)}
-                                </span>
-                            </div>
+                {/* === 단어 정보 카드 그룹 === */} 
+                {/* 카드 1: English / Key Words */}
+                <div style={cardStyles.blockContainer}> 
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.leftTitle}>English Words</div>
+                        <div style={cardStyles.rightContent}>
+                            <span style={cardStyles.englishWordText}>
+                                {renderEnglishWordWithUnderlines(currentWordData.word, keywordIndices)}
+                            </span>
                         </div>
-                        <div style={cardStyles.dashedBorder}></div>
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Key Words</div>
-                            <div style={cardStyles.rightContent}>
-                                <span style={cardStyles.keyWordsText}>
-                                    {renderStyledKeywords(keywordIndices)}
-                                </span>
+                    </div>
+                    <div style={cardStyles.dashedBorder}></div>
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.leftTitle}>Key Words</div>
+                        <div style={cardStyles.rightContent}>
+                            <span style={cardStyles.keyWordsText}>
+                                {renderStyledKeywords(keywordIndices)}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* 카드 2: Meaning / Verbal Cue */} 
+                <div style={cardStyles.blockContainer}> 
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.leftTitle}>Korean Meaning</div>
+                        <div style={cardStyles.rightContent}>
+                            <span style={cardStyles.koreanMeaningText}>{currentWordData.meaning}</span>
+                        </div>
+                    </div>
+                    <div style={cardStyles.dashedBorder}></div>
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.leftTitle}>Verbal Cue</div>
+                        <div style={cardStyles.rightContent}>
+                            <span style={cardStyles.verbalCueText}>{displayVerbalCue}</span>
+                        </div>
+                    </div>
+                </div>
+                {/* === 단어 정보 카드 그룹 끝 === */} 
+
+                {/* === 설문 항목 카드 === */} 
+                <div style={cardStyles.blockContainer}> 
+                    {/* 1. Helpfulness */} 
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.surveyLeftTitle}>Helpfulness{'\n'}(유익함)</div> 
+                        <div style={cardStyles.rightContent}>
+                            <div style={cardStyles.ratingQuestionText}>
+                                이 단서(문장과 키워드)들은 단어를 학습하는 데 효과적이었다.
+                            </div>
+                            <div style={cardStyles.ratingComponentWrapper}>
+                                <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
+                                <Rate
+                                    allowHalf={false}
+                                    count={5}
+                                    value={usefulnessRating}
+                                    onChange={setUsefulnessRating}
+                                    style={{ fontSize: '28px' }} // flexGrow, textAlign 제거
+                                    disabled={isSubmitting}
+                                />
+                                <span style={cardStyles.rubricText}>매우 그렇다</span>
                             </div>
                         </div>
                     </div>
 
-                    <div style={cardStyles.blockContainer}>
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Verbal Cue</div>
-                            <div style={cardStyles.rightContent}>
-                                <span style={cardStyles.verbalCueText}>{displayVerbalCue}</span>
+                    <div style={cardStyles.dashedBorder}></div> 
+
+                    {/* 2. Imageability */} 
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.surveyLeftTitle}>Imageability{'\n'}(이미지화 가능성)</div> 
+                        <div style={cardStyles.rightContent}>
+                            <div style={cardStyles.ratingQuestionText}>
+                                이 단서들은 생생하고 구체적인 심상을 떠올리게 한다.
                             </div>
-                        </div>
-                        <div style={cardStyles.dashedBorder}></div>
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Korean Meaning</div>
-                            <div style={cardStyles.rightContent}>
-                                <span style={cardStyles.koreanMeaningText}>{currentWordData.meaning}</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div style={cardStyles.blockContainer}>
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Helpfulness{'\n'}(유익함)</div>
-                            <div style={cardStyles.rightContent}>
-                                <div style={cardStyles.ratingQuestionText}>
-                                    이 단서(문장과 키워드)들은 단어를 학습하는 데 효과적이었다.
-                                </div>
-                                <div style={cardStyles.ratingComponentWrapper}>
-                                    <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
-                                    <Rate
-                                        allowHalf={false}
-                                        count={5}
-                                        value={usefulnessRating}
-                                        onChange={setUsefulnessRating}
-                                        style={{ fontSize: '28px', flexGrow: 1, textAlign: 'center' }}
-                                        disabled={isSubmitting}
-                                    />
-                                    <span style={cardStyles.rubricText}>매우 그렇다</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style={cardStyles.dashedBorder}></div>
-
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Imageability{'\n'}(이미지화 가능성)</div>
-                            <div style={cardStyles.rightContent}>
-                                <div style={cardStyles.ratingQuestionText}>
-                                    이 단서들은 생생하고 구체적인 심상을 떠올리게 한다.
-                                </div>
-                                <div style={cardStyles.ratingComponentWrapper}>
-                                    <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
-                                    <Rate
-                                        allowHalf={false}
-                                        count={5}
-                                        value={imageabilityRating}
-                                        onChange={setImageabilityRating}
-                                        style={{ fontSize: '28px', flexGrow: 1, textAlign: 'center' }}
-                                        disabled={isSubmitting}
-                                    />
-                                    <span style={cardStyles.rubricText}>매우 그렇다</span>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div style={cardStyles.dashedBorder}></div>
-
-                        <div style={cardStyles.rowWrapper}>
-                            <div style={cardStyles.leftTitle}>Coherence{'\n'}(일관성)</div>
-                            <div style={cardStyles.rightContent}>
-                                <div style={cardStyles.ratingQuestionText}>
-                                    이 단서는 의미가 명확하고 문장이 자연스럽게 구성되어 있다.
-                                </div>
-                                <div style={cardStyles.ratingComponentWrapper}>
-                                    <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
-                                    <Rate
-                                        allowHalf={false}
-                                        count={5}
-                                        value={coherenceRating}
-                                        onChange={setCoherenceRating}
-                                        style={{ fontSize: '28px', flexGrow: 1, textAlign: 'center' }}
-                                        disabled={isSubmitting}
-                                    />
-                                    <span style={cardStyles.rubricText}>매우 그렇다</span>
-                                </div>
+                            <div style={cardStyles.ratingComponentWrapper}>
+                                <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
+                                <Rate
+                                    allowHalf={false}
+                                    count={5}
+                                    value={imageabilityRating} 
+                                    onChange={setImageabilityRating} 
+                                    style={{ fontSize: '28px' }} // flexGrow, textAlign 제거
+                                    disabled={isSubmitting}
+                                />
+                                <span style={cardStyles.rubricText}>매우 그렇다</span>
                             </div>
                         </div>
                     </div>
 
-                    <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '685px', padding: '16px 0 40px' }}>
-                        <BlueButton
-                            text="Next"
-                            onClick={handleNextClick}
-                            disabled={isNextDisabled}
-                            loading={isSubmitting}
-                        />
+                    <div style={cardStyles.dashedBorder}></div> 
+
+                    {/* 3. Coherence */} 
+                    <div style={cardStyles.rowWrapper}>
+                        <div style={cardStyles.surveyLeftTitle}>Coherence{'\n'}(일관성)</div> 
+                        <div style={cardStyles.rightContent}>
+                            <div style={cardStyles.ratingQuestionText}>
+                                이 단서는 의미가 명확하고 문장이 자연스럽게 구성되어 있다.
+                            </div>
+                            <div style={cardStyles.ratingComponentWrapper}>
+                                <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
+                                <Rate
+                                    allowHalf={false}
+                                    count={5}
+                                    value={coherenceRating}
+                                    onChange={setCoherenceRating}
+                                    style={{ fontSize: '28px' }} // flexGrow, textAlign 제거
+                                    disabled={isSubmitting}
+                                />
+                                <span style={cardStyles.rubricText}>매우 그렇다</span>
+                            </div>
+                        </div>
                     </div>
+                </div>
+                {/* === 설문 항목 카드 끝 === */} 
+
+                {/* Next Button Section */} 
+                <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '685px', paddingBottom: '40px' }}> 
+                    <BlueButton
+                        text="Next"
+                        onClick={handleNextClick}
+                        disabled={isNextDisabled}
+                        loading={isSubmitting}
+                    />
                 </div>
             </div>
         </MainLayout>
