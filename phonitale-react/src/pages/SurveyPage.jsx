@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Progress, Rate, Spin, message } from 'antd';
+import { Progress, Rate, Spin, message, Table, Typography, Divider } from 'antd';
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
 import { submitResponse } from '../utils/api';
+
+const { Text } = Typography;
 
 // --- Helper Functions (LearningPage에서 재복사) ---
 // Indexing String Parser
@@ -221,6 +223,19 @@ function renderEnglishWordWithUnderlines(word, indexingData) {
     }
 }
 
+// --- 신규: 텍스트 내 {단어} 스타일링 함수 ---
+function formatRubricText(text) {
+    if (!text) return text;
+    const parts = text.split(/({.*?})/g); // {} 로 감싸진 부분을 기준으로 분리
+    return parts.map((part, index) => {
+        if (part.startsWith('{') && part.endsWith('}')) {
+            const content = part.slice(1, -1); // {} 제거
+            return <strong key={index}><em>{content}</em></strong>; // Bold + Italic 적용
+        }
+        return part; // 일반 텍스트는 그대로 반환
+    });
+}
+
 // --- 카드 스타일 수정 (LearningPage 기준으로 통합) ---
 const cardStyles = {
     // 각 블록(그룹) 컨테이너 스타일 (LearningPage 스타일)
@@ -314,6 +329,90 @@ const cardStyles = {
         flexShrink: 0, 
      }
 };
+
+// --- Rubric 데이터 및 컬럼 정의 ---
+const rubricColumns = [
+    {
+        title: <span style={{ color: '#888888' }}>점수</span>,
+        dataIndex: 'score',
+        key: 'score',
+        width: '60px',
+        align: 'center',
+        render: (text) => <Text style={{ color: '#888888', fontWeight: 'bold' }}>{text}</Text>,
+        onHeaderCell: () => ({
+            style: { backgroundColor: '#f5f5f5' }
+        })
+    },
+    {
+        title: <span style={{ color: '#888888' }}>설명(예시)</span>,
+        dataIndex: 'description',
+        key: 'description',
+        render: (text) => (
+            <Text style={{ color: '#888888', whiteSpace: 'pre-line' }}>
+                {formatRubricText(text)}
+            </Text>
+        ),
+        onHeaderCell: () => ({
+            style: { backgroundColor: '#f5f5f5' }
+        })
+    },
+];
+
+const helpfulnessData = [
+    {
+        key: 'h5',
+        score: '5점',
+        description: `구조적으로 잘 연관되어 있고, 반복 학습 없이도 단어의 의미를 쉽게 떠올릴 수 있음\n- dodge: (재빨리) 홱 몸을 피하다, 회피하다\n- 술래잡기에서 술래의 손에 {닿지} 않으려고 {홱 몸을 피하다.}`,
+    },
+    {
+        key: 'h3',
+        score: '3점',
+        description: `단서와 의미 사이에 약한 연결 고리가 있으나, 기억에 오래 남기엔 부족함\n- rebel: 반역자, 반역하다\n- 자신의 두목을 {re 뒤에서} 칼로 {벨}, 즉 {반역자, 반역하다.}`,
+    },
+    {
+        key: 'h1',
+        score: '1점',
+        description: `단어의 뜻과 단서 사이에 직접적 연결이 거의 없어 기억하거나 학습하는 데 실질적인 도움이 되지 않음\n- glimpse: 흘끗 보다, 흘끗 봄\n- 호기심을 못 참고 {올림푸스} 신전의 메두사를 {흘끗 보다.}`,
+    },
+];
+
+// --- 신규: Imageability 데이터 ---
+const imageabilityData = [
+    {
+        key: 'i5',
+        score: '5점',
+        description: `익숙한 이미지로 쉽게 시각화되며 장면이 구체적으로 떠오름\n- sneak : 몰래 움직이다. 몰래하다\n- {스네이크(뱀)}이 먹이를 잡아먹으려고 {몰래 움직이다.}`
+    },
+    {
+        key: 'i3',
+        score: '3점',
+        description: `단어와 관련된 이미지가 조금 있으나 모호하거나 약함\n- plump: 통통한, 토실토실한\n- {토실토실}한 볼살이 걷거나 뛸 때마다 {풀렁풀렁} 움직이는`
+    },
+    {
+        key: 'i1',
+        score: '1점',
+        description: `장면이나 상황이 전혀 그려지지 않음\n- tangible: 실재하는, 유형의, 분명한\n- {ten(10)}개 {저 불}은 {실재하는} 유형의`
+    }
+];
+
+// --- 신규: Coherence 데이터 ---
+const coherenceData = [
+    {
+        key: 'c5',
+        score: '5점',
+        description: `논리, 어휘, 의미 흐름이 매끄럽고 자연스럽게 구성됨\n- topple: 쓰러트리다, 넘어지다\n- 친구가 정섯껏 레고로 쌓은 {탑을} {쓰러뜨리다.}`
+    },
+    {
+        key: 'c3',
+        score: '3점',
+        description: `비교적 자연스럽지만, 문법이나 논리 흐름에서 약간 부자연스러움\n- clutter: 난장판, 혼란\n- {클랐다!} 부모님이 돌아오실 시간인데 집을 {난장판}을 만들어놨다!`
+    },
+    {
+        key: 'c1',
+        score: '1점',
+        description: `문장이 어색하고 단어 해석과 연결성이 부족함\n- anguish: 심한 고통, 괴로움\n- {엥! 기시}네! (기어가시네!)`
+    }
+];
 
 // --- Survey Page Component ---
 const SurveyPage = () => {
@@ -569,7 +668,7 @@ const SurveyPage = () => {
                 {/* === 설문 항목 카드 끝 === */} 
 
                 {/* Next Button Section */} 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '685px', paddingBottom: '40px' }}> 
+                <div style={{ display: 'flex', justifyContent: 'flex-end', width: '100%', maxWidth: '685px' }}> 
                     <BlueButton
                         text="Next"
                         onClick={handleNextClick}
@@ -577,6 +676,93 @@ const SurveyPage = () => {
                         loading={isSubmitting}
                     />
                 </div>
+
+                {/* Divider 수정: 색상, 두께, 점선 간격 느낌 조정 */}
+                <Divider
+                    dashed
+                    style={{
+                        width: '100%',
+                        maxWidth: '685px',
+                        margin: '16px 0',
+                        borderColor: '#b0b0b0', // 더 진한 회색
+                        borderWidth: '1px 0 0 0', // 두께 약간 증가 (상단선만)
+                        // 점선 간격 직접 조절은 어려우나, 색상/두께 변경으로 가시성 향상
+                        borderStyle: 'dashed'
+                    }}
+                />
+
+                {/* === 상세 평가 기준 (Rubric) Section === */}
+                <div
+                    className="rubric-section"
+                    style={{
+                        width: '100%',
+                        maxWidth: '685px',
+                        paddingBottom: '40px'
+                    }}
+                >
+                    <Typography.Title level={5} style={{ color: '#888888', marginBottom: '8px' }}>
+                        &lt;평가 기준&gt;
+                    </Typography.Title>
+                    <Typography.Paragraph style={{ color: '#888888', marginBottom: '24px' }}>
+                        아래는 5점 척도에서 일관적인 점수를 부여할 수 있도록 돕기 위한 예시 문장입니다.
+                        <br />
+                        각각의 평가 항목에 대해 1점, 3점, 5점의 사례를 참고하여 점수를 선택하세요.
+                    </Typography.Paragraph>
+
+                    {/* 1. Helpfulness Rubric */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
+                            1. Helpfulness (유익함)
+                        </Typography.Title>
+                        <Table
+                            columns={rubricColumns}
+                            dataSource={helpfulnessData}
+                            pagination={false}
+                            bordered
+                            size="small"
+                            rowKey="key"
+                        />
+                    </div>
+
+                    {/* 2. Imageability Rubric */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
+                            2. Imageability (이미지화 가능성)
+                        </Typography.Title>
+                        {/* 테이블 추가 */}
+                        <Table
+                            columns={rubricColumns}
+                            dataSource={imageabilityData} // 데이터 소스 변경
+                            pagination={false}
+                            bordered
+                            size="small"
+                            rowKey="key"
+                        />
+                        {/* <Typography.Paragraph style={{ color: '#888888' }}>
+                            (Imageability 평가 기준 예시 추가 예정)
+                        </Typography.Paragraph> */}
+                    </div>
+
+                    {/* 3. Coherence Rubric */}
+                    <div style={{ marginBottom: '32px' }}>
+                        <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
+                            3. Coherence (일관성)
+                        </Typography.Title>
+                        {/* 테이블 추가 */}
+                        <Table
+                            columns={rubricColumns}
+                            dataSource={coherenceData} // 데이터 소스 변경
+                            pagination={false}
+                            bordered
+                            size="small"
+                            rowKey="key"
+                        />
+                         {/* <Typography.Paragraph style={{ color: '#888888' }}>
+                            (Coherence 평가 기준 예시 추가 예정)
+                        </Typography.Paragraph> */}
+                    </div>
+                </div>
+                {/* === 상세 평가 기준 (Rubric) Section 끝 === */}
             </div>
         </MainLayout>
     );

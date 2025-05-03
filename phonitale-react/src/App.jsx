@@ -56,7 +56,7 @@ function App() {
   return (
     <Routes>
       {/* Route for handling invalid group codes */}
-      <Route path="/invalid-group" element={<div>Invalid Group Code. Please check your link.</div>} />
+      <Route path="/invalid-group" element={<InvalidAccessPage />} />
 
       {/* Route to handle potential root access without group code */}
       <Route path="/" element={<InvalidAccessPage />} />
