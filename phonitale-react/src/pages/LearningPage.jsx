@@ -204,20 +204,21 @@ const cardStyles = {
       margin: '16px 0', // 행과 행 사이 간격 
     },
     englishWordText: {
-      fontSize: '36px', fontWeight: 500, fontFamily: 'Rubik, sans-serif', 
+      fontSize: '26px', fontWeight: 500, fontFamily: 'Rubik, sans-serif', 
       position: 'relative', display: 'inline-block', color: '#000000', lineHeight: '1.2',
     },
     keyWordsText: { 
-        fontSize: '14px', 
+        fontSize: '18px', 
         color: '#000000', 
         lineHeight: '1.6', 
         display: 'inline-flex',
         flexWrap: 'wrap',
         alignItems: 'center',
-        gap: '4px'
+        gap: '4px',
+        fontStyle: 'italic' 
     },
-    koreanMeaningText: { fontSize: '20px', fontWeight: 'bold', color: '#000000' },
-    verbalCueText: { fontSize: '14px', color: '#000000', lineHeight: '1.6' },
+    koreanMeaningText: { fontSize: '18px', fontWeight: 'semi-bold', color: '#000000' },
+    verbalCueText: { fontSize: '18px', color: '#000000', lineHeight: '1.6' },
   };
 
 // --- Learning Page Component ---

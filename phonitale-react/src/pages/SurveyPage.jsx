@@ -274,26 +274,27 @@ const cardStyles = {
       margin: '16px 0',
     },
     englishWordText: { // LearningPage 스타일
-      fontSize: '36px', fontWeight: 500, fontFamily: 'Rubik, sans-serif', // LearningPage 폰트
+      fontSize: '26px', fontWeight: 500, fontFamily: 'Rubik, sans-serif', // LearningPage 폰트
       position: 'relative', display: 'inline-block', color: '#000000', lineHeight: '1.2',
     },
     keyWordsText: { // LearningPage 스타일
-        fontSize: '14px',
+        fontSize: '18px',
         color: '#000000',
         lineHeight: '1.6',
         display: 'inline-flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '4px',
+        fontStyle: 'italic' 
     },
     koreanMeaningText: { // LearningPage 스타일
-        fontSize: '20px',
+        fontSize: '18px',
         fontWeight: 'bold',
         color: '#000000',
         // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
     },
     verbalCueText: { // LearningPage 스타일
-        fontSize: '14px',
+        fontSize: '18px',
         color: '#000000',
         lineHeight: '1.6',
         // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
