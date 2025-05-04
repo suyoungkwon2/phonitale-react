@@ -130,7 +130,8 @@ function renderWordWithUnderlines(word, indexingData, isKeyWord = false) {
 }
 
 // 변경: Key Words 렌더링 전용 함수 (스타일링 + 쉼표 구분)
-function renderStyledKeywords(indexingData) {
+// 변경: isTextFlashing 인자 추가 (Survey에서는 항상 false)
+function renderStyledKeywords(indexingData, isTextFlashing = false) {
     if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
         return null;
     }
@@ -141,12 +142,17 @@ function renderStyledKeywords(indexingData) {
         const key = Object.keys(item)[0];
         if (!key) return null; // 키가 없는 경우 렌더링하지 않음
 
-        const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
+        const underlineColor = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
+        // 변경: isTextFlashing 상태에 따라 color 조건부 설정 (Survey는 항상 false)
+        const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
         const style = {
-            borderBottom: `4px solid ${color}`,
+            borderBottom: `4px solid ${underlineColor}`,
             paddingBottom: '2px',
             display: 'inline-block', // inline-block 유지
             lineHeight: '1.1', // 키워드 줄 간격 조정 필요시
+            // 변경: textColor 변수 사용 및 fontWeight 추가
+            color: textColor,
+            fontWeight: 'bold'
         };
         // 고유한 span key 생성 시 실제 키 값 사용
         const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`; // 공백 등 특수문자 처리
@@ -160,6 +166,52 @@ function renderStyledKeywords(indexingData) {
             </React.Fragment>
         );
     });
+}
+
+// --- 신규: Verbal Cue 포맷팅 함수 (LearningPage에서 복사) ---
+function formatVerbalCue(text, isTextFlashing = false) {
+    if (!text) return text;
+
+    const parts = [];
+    let lastIndex = 0;
+    const regex = /(\/([^\/]+?)\/)|(\{([^\}]+?)\})/g;
+    let match;
+
+    try {
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                parts.push(text.substring(lastIndex, match.index));
+            }
+
+            const isItalic = match[2] !== undefined;
+            const isBold = match[4] !== undefined;
+            const content = isItalic ? match[2] : match[4];
+
+            if (content && content.trim()) {
+                if (isItalic) {
+                    const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
+                    const style = { color: textColor, fontWeight: 'bold' };
+                    parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
+                } else if (isBold) {
+                    const textColor = isTextFlashing ? '#FFFFFF' : '#000000'; // {}는 검정색 유지
+                    const style = { color: textColor, fontWeight: 'bold' }; // fontWeight 추가
+                    parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
+                }
+            }
+            lastIndex = regex.lastIndex;
+        }
+
+        if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+        }
+
+        return React.createElement(React.Fragment, null, ...parts.map((part, index) =>
+            React.isValidElement(part) ? part : <React.Fragment key={`text-${index}`}>{part}</React.Fragment>
+        ));
+    } catch (error) {
+        console.error("Error formatting verbal cue:", error, "Text:", text);
+        return text;
+    }
 }
 
 // --- 신규: 영어 단어 밑줄 처리 함수 (LearningPage에서 복사) ---
@@ -285,7 +337,7 @@ const cardStyles = {
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '4px',
-        fontStyle: 'italic' 
+        fontWeight: 'bold'
     },
     koreanMeaningText: { // LearningPage 스타일
         fontSize: '18px',
@@ -576,7 +628,7 @@ const SurveyPage = () => {
                         <div style={cardStyles.leftTitle}>키워드</div>
                         <div style={cardStyles.rightContent}>
                             <span style={cardStyles.keyWordsText}>
-                                {renderStyledKeywords(keywordIndices)}
+                                {renderStyledKeywords(keywordIndices, false)}
                             </span>
                         </div>
                     </div>
@@ -594,7 +646,9 @@ const SurveyPage = () => {
                     <div style={cardStyles.rowWrapper}>
                         <div style={cardStyles.leftTitle}>연상 문장</div>
                         <div style={cardStyles.rightContent}>
-                            <span style={cardStyles.verbalCueText}>{displayVerbalCue}</span>
+                            <span style={cardStyles.verbalCueText}>
+                                {formatVerbalCue(displayVerbalCue, false)}
+                            </span>
                         </div>
                     </div>
                 </div>
