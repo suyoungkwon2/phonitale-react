@@ -66,7 +66,7 @@ const UNDERLINE_COLORS = [
 ];
 
 // 변경: Key Words 렌더링 전용 함수 (스타일링 + 쉼표 구분)
-function renderStyledKeywords(indexingData) {
+function renderStyledKeywords(indexingData, isTextFlashing) {
     if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
         return null;
     }
@@ -75,12 +75,13 @@ function renderStyledKeywords(indexingData) {
         const key = Object.keys(item)[0];
         if (!key) return null;
 
-        const color = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
+        const underlineColor = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
+        const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
         const style = {
-            borderBottom: `4px solid ${color}`,
+            borderBottom: `4px solid ${underlineColor}`,
             paddingBottom: '2px',
             display: 'inline-block',
-            color: 'rgba(77, 35, 155, 0.65)'
+            color: textColor
         };
         const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`;
 
@@ -156,7 +157,7 @@ function renderEnglishWordWithUnderlines(word, indexingData) {
 }
 
 // --- 신규: Verbal Cue 포맷팅 함수 ---
-function formatVerbalCue(text) {
+function formatVerbalCue(text, isTextFlashing) {
     if (!text) return text;
 
     const parts = [];
@@ -179,11 +180,14 @@ function formatVerbalCue(text) {
             // 내용이 비어있지 않은 경우에만 태그 추가
             if (content && content.trim()) {
                 if (isItalic) {
-                    // 변경: em 대신 strong 사용 및 스타일 추가
-                    const style = { color: 'rgba(77, 35, 155, 0.65)' , fontWeight: 'bold'};
+                    // 변경: isTextFlashing 상태에 따라 color 조건부 설정
+                    const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
+                    const style = { color: textColor , fontWeight: 'bold'};
                     parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
                 } else if (isBold) {
-                    parts.push(<strong key={`part-${match.index}`}>{content}</strong>);
+                    // 변경: isTextFlashing 상태일 때 흰색으로 만들기 위해 스타일 추가
+                    const style = isTextFlashing ? { color: '#FFFFFF' } : {};
+                    parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
                 }
             }
 
@@ -517,8 +521,8 @@ const LearningPage = () => {
                      <div style={cardStyles.rowWrapper}> 
                          <div style={cardStyles.leftTitle}>키워드</div> 
                          <div style={cardStyles.rightContent}> 
-                             <span style={{...cardStyles.keyWordsText, color: isTextFlashing ? '#FFFFFF' : undefined }}> 
-                                 {renderStyledKeywords(keywordIndicesForStyling)} 
+                             <span style={cardStyles.keyWordsText}>
+                                 {renderStyledKeywords(keywordIndicesForStyling, isTextFlashing)}
                              </span>
                          </div> 
                      </div>
@@ -536,7 +540,7 @@ const LearningPage = () => {
                           <div style={cardStyles.leftTitle}>연상 문장</div> 
                           <div style={cardStyles.rightContent}> 
                               <span style={{...cardStyles.verbalCueText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}>
-                                  {formatVerbalCue(displayVerbalCue)}
+                                  {formatVerbalCue(displayVerbalCue, isTextFlashing)}
                               </span> 
                           </div> 
                       </div> 
