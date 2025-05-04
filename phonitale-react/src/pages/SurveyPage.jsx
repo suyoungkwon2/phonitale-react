@@ -718,7 +718,7 @@ const SurveyPage = () => {
 
                     {/* 3. Coherence */} 
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.surveyLeftTitle}>일관성</div> 
+                        <div style={cardStyles.surveyLeftTitle}>논리적 연결성</div> 
                         <div style={cardStyles.rightContent}>
                             <div style={cardStyles.ratingQuestionText}>
                                 이 키워드와 연상 문장은 의미가 명확하고 문장이 자연스럽게 구성되어 있다.
@@ -819,7 +819,7 @@ const SurveyPage = () => {
                     {/* 3. Coherence Rubric */}
                     <div style={{ marginBottom: '32px' }}>
                         <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
-                            3. 일관성 (Coherence)
+                            3. 논리적 연결성 (Coherence)
                         </Typography.Title>
                         {/* 테이블 추가 */}
                         <Table
