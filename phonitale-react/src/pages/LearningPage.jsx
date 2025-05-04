@@ -187,7 +187,7 @@ const cardStyles = {
     leftTitle: {
       width: '120px', 
       textAlign: 'right',
-      color: '#656565',
+      color: 'rgba(0, 0, 0, 0.25)',
       fontSize: '14px', 
       paddingTop: '2px', 
       paddingRight: '16px', 
@@ -448,13 +448,13 @@ const LearningPage = () => {
                 </div>
 
                 <div style={{ color: '#656565', textAlign: 'center', whiteSpace: 'pre-line' }}>
-                    영어 단어의 발음과 주어진 문장을 연상하여, 
-                    영어 단어와 한국어 의미를 암기하세요.
+                    영어 단어의 발음과 키워드, 연상 문장을 함께 연상하여, <br />
+                    영어 단어와 의미를 암기하세요.
                 </div>
 
                  <div style={cardStyles.blockContainer}> 
                      <div style={cardStyles.rowWrapper}> 
-                         <div style={cardStyles.leftTitle}>English Words</div> 
+                         <div style={cardStyles.leftTitle}>영어 단어</div> 
                          <div style={cardStyles.rightContent}> 
                              <span /* ref={wordContainerRef} */ style={{...cardStyles.englishWordText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}> 
                                  {renderEnglishWordWithUnderlines(currentWordData.word, currentWordData.keyword_refined)}
@@ -463,7 +463,7 @@ const LearningPage = () => {
                      </div>
                      <div style={cardStyles.dashedBorder}></div> 
                      <div style={cardStyles.rowWrapper}> 
-                         <div style={cardStyles.leftTitle}>Key Words</div> 
+                         <div style={cardStyles.leftTitle}>키워드</div> 
                          <div style={cardStyles.rightContent}> 
                              <span style={{...cardStyles.keyWordsText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}> 
                                  {renderStyledKeywords(keywordIndicesForStyling)} 
@@ -474,14 +474,14 @@ const LearningPage = () => {
  
                  <div style={cardStyles.blockContainer}> 
                      <div style={cardStyles.rowWrapper}> 
-                         <div style={cardStyles.leftTitle}>Korean Meaning</div> 
+                         <div style={cardStyles.leftTitle}>의미</div> 
                          <div style={cardStyles.rightContent}> 
                              <span style={{...cardStyles.koreanMeaningText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}>{currentWordData.meaning}</span> 
                          </div> 
                      </div>
                       <div style={cardStyles.dashedBorder}></div> 
                       <div style={cardStyles.rowWrapper}> 
-                          <div style={cardStyles.leftTitle}>Verbal Cue</div> 
+                          <div style={cardStyles.leftTitle}>연상 문장</div> 
                           <div style={cardStyles.rightContent}> 
                               <span style={{...cardStyles.verbalCueText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}>{displayVerbalCue}</span> 
                           </div> 

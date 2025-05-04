@@ -40,7 +40,7 @@ const cardStyles = {
     leftTitle: {
       width: '120px', 
       textAlign: 'right',
-      color: '#656565',
+      color: 'rgba(0, 0, 0, 0.25)',
       fontSize: '14px', 
       paddingTop: '2px', 
       paddingRight: '16px', 
@@ -288,13 +288,13 @@ const RecognitionPage = () => {
 
                 {/* --- Instruction Text (Optional) --- */} 
                 <div style={{ color: '#656565', textAlign: 'center' }}>
-                    영어 단어를 보고, 한국어 뜻을 입력해주세요.
+                    영어 단어를 보고, 한국어 의미를 입력해주세요.
                 </div>
 
                  {/* === Block 1: English Word / Input === */} 
                  <div style={cardStyles.blockContainer}> 
                      <div style={cardStyles.rowWrapper}> 
-                         <div style={cardStyles.leftTitle}>English Word</div> 
+                         <div style={cardStyles.leftTitle}>영어 단어</div> 
                          <div style={cardStyles.rightContent}> 
                              <span style={{...cardStyles.englishWordText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}> {/* 조건부 색상 */} 
                                  {currentWordData.word} 
@@ -305,7 +305,7 @@ const RecognitionPage = () => {
                      <div style={cardStyles.dashedBorder}></div> 
                      {/* Input Row */} 
                      <div style={{...cardStyles.rowWrapper, alignItems: 'center'}}>
-                         <div style={cardStyles.leftTitle}>Korean Meaning</div>
+                         <div style={cardStyles.leftTitle}>의미</div>
                          <div style={cardStyles.rightContent}> 
                              <Input 
                                  ref={inputRef}

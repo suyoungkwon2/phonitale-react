@@ -257,7 +257,7 @@ const cardStyles = {
     leftTitle: { // 기본 제목 스타일 (오른쪽 정렬)
       width: '120px',
       textAlign: 'right',
-      color: '#656565',
+      color: 'rgba(0, 0, 0, 0.25)',
       fontSize: '14px',
       paddingTop: '2px',
       paddingRight: '16px',
@@ -302,7 +302,7 @@ const cardStyles = {
      surveyLeftTitle: { // 설문 전용 제목 스타일 -> 기본 leftTitle 스타일과 동일하게 변경
         width: '120px',
         textAlign: 'right', // 오른쪽 정렬로 변경
-        color: '#656565',
+        color: 'rgba(0, 0, 0, 0.25)',
         fontSize: '14px',
         paddingTop: '2px', // 패딩 추가 (다른 제목과 통일)
         paddingRight: '16px',
@@ -314,7 +314,6 @@ const cardStyles = {
         color: '#000000',
         lineHeight: '1.6',
         marginBottom: '10px',
-        fontFamily: 'BBTreeGo_R, sans-serif',
         textAlign: 'left',
      },
      ratingComponentWrapper: { 
@@ -553,11 +552,18 @@ const SurveyPage = () => {
                     <Progress percent={progressPercent} showInfo={false} strokeColor="#2049FF" />
                 </div>
 
+
+                {/* --- Instruction Text (Optional) --- */} 
+                <div style={{ color: '#656565', textAlign: 'center' }}>
+                    각각의 평가 항목에 대해 아래 평가 기준을 참고하여 점수를 선택하세요.
+                </div>
+
+
                 {/* === 단어 정보 카드 그룹 === */} 
                 {/* 카드 1: English / Key Words */}
                 <div style={cardStyles.blockContainer}> 
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.leftTitle}>English Words</div>
+                        <div style={cardStyles.leftTitle}>영어 단어</div>
                         <div style={cardStyles.rightContent}>
                             <span style={cardStyles.englishWordText}>
                                 {renderEnglishWordWithUnderlines(currentWordData.word, keywordIndices)}
@@ -566,7 +572,7 @@ const SurveyPage = () => {
                     </div>
                     <div style={cardStyles.dashedBorder}></div>
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.leftTitle}>Key Words</div>
+                        <div style={cardStyles.leftTitle}>키워드</div>
                         <div style={cardStyles.rightContent}>
                             <span style={cardStyles.keyWordsText}>
                                 {renderStyledKeywords(keywordIndices)}
@@ -578,14 +584,14 @@ const SurveyPage = () => {
                 {/* 카드 2: Meaning / Verbal Cue */} 
                 <div style={cardStyles.blockContainer}> 
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.leftTitle}>Korean Meaning</div>
+                        <div style={cardStyles.leftTitle}>의미</div>
                         <div style={cardStyles.rightContent}>
                             <span style={cardStyles.koreanMeaningText}>{currentWordData.meaning}</span>
                         </div>
                     </div>
                     <div style={cardStyles.dashedBorder}></div>
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.leftTitle}>Verbal Cue</div>
+                        <div style={cardStyles.leftTitle}>연상 문장</div>
                         <div style={cardStyles.rightContent}>
                             <span style={cardStyles.verbalCueText}>{displayVerbalCue}</span>
                         </div>
@@ -597,10 +603,10 @@ const SurveyPage = () => {
                 <div style={cardStyles.blockContainer}> 
                     {/* 1. Helpfulness */} 
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.surveyLeftTitle}>Helpfulness{'\n'}(유익함)</div> 
+                        <div style={cardStyles.surveyLeftTitle}>유익함</div> 
                         <div style={cardStyles.rightContent}>
                             <div style={cardStyles.ratingQuestionText}>
-                                이 단서(문장과 키워드)들은 단어를 학습하는 데 효과적이었다.
+                                이 키워드와 연상 문장은 단어를 학습하는 데 효과적이었다.
                             </div>
                             <div style={cardStyles.ratingComponentWrapper}>
                                 <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
@@ -621,10 +627,10 @@ const SurveyPage = () => {
 
                     {/* 2. Imageability */} 
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.surveyLeftTitle}>Imageability{'\n'}(이미지화 가능성)</div> 
+                        <div style={cardStyles.surveyLeftTitle}>이미지화 가능성</div> 
                         <div style={cardStyles.rightContent}>
                             <div style={cardStyles.ratingQuestionText}>
-                                이 단서들은 생생하고 구체적인 심상을 떠올리게 한다.
+                                이 키워드와 연상 문장은 생생하고 구체적인 심상을 떠올리게 한다.
                             </div>
                             <div style={cardStyles.ratingComponentWrapper}>
                                 <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
@@ -645,10 +651,10 @@ const SurveyPage = () => {
 
                     {/* 3. Coherence */} 
                     <div style={cardStyles.rowWrapper}>
-                        <div style={cardStyles.surveyLeftTitle}>Coherence{'\n'}(일관성)</div> 
+                        <div style={cardStyles.surveyLeftTitle}>일관성</div> 
                         <div style={cardStyles.rightContent}>
                             <div style={cardStyles.ratingQuestionText}>
-                                이 단서는 의미가 명확하고 문장이 자연스럽게 구성되어 있다.
+                                이 키워드와 연상 문장은 의미가 명확하고 문장이 자연스럽게 구성되어 있다.
                             </div>
                             <div style={cardStyles.ratingComponentWrapper}>
                                 <span style={cardStyles.rubricText}>전혀 그렇지 않다</span>
