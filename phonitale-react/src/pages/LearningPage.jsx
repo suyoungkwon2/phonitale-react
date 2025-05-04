@@ -80,6 +80,7 @@ function renderStyledKeywords(indexingData) {
             borderBottom: `4px solid ${color}`,
             paddingBottom: '2px',
             display: 'inline-block',
+            color: 'rgba(77, 35, 155, 0.65)'
         };
         const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`;
 
@@ -154,6 +155,56 @@ function renderEnglishWordWithUnderlines(word, indexingData) {
     return parts;
 }
 
+// --- 신규: Verbal Cue 포맷팅 함수 ---
+function formatVerbalCue(text) {
+    if (!text) return text;
+
+    const parts = [];
+    let lastIndex = 0;
+    // 정규식: /.../ 또는 {...} 찾기
+    const regex = /(\/([^\/]+?)\/)|(\{([^\}]+?)\})/g;
+    let match;
+
+    try {
+        while ((match = regex.exec(text)) !== null) {
+            // Add text before the current match
+            if (match.index > lastIndex) {
+                parts.push(text.substring(lastIndex, match.index));
+            }
+
+            const isItalic = match[2] !== undefined; // Captured content from /.../
+            const isBold = match[4] !== undefined;   // Captured content from {...}
+            const content = isItalic ? match[2] : match[4];
+
+            // 내용이 비어있지 않은 경우에만 태그 추가
+            if (content && content.trim()) {
+                if (isItalic) {
+                    // 변경: em 대신 strong 사용 및 스타일 추가
+                    const style = { color: 'rgba(77, 35, 155, 0.65)' , fontWeight: 'bold'};
+                    parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
+                } else if (isBold) {
+                    parts.push(<strong key={`part-${match.index}`}>{content}</strong>);
+                }
+            }
+
+            lastIndex = regex.lastIndex;
+        }
+
+        // Add any remaining text after the last match
+        if (lastIndex < text.length) {
+            parts.push(text.substring(lastIndex));
+        }
+
+        // Wrap parts in fragments for stable keys if they are just strings
+        return React.createElement(React.Fragment, null, ...parts.map((part, index) =>
+            React.isValidElement(part) ? part : <React.Fragment key={`text-${index}`}>{part}</React.Fragment>
+        ));
+    } catch (error) {
+        console.error("Error formatting verbal cue:", error, "Text:", text);
+        return text; // 오류 발생 시 원본 텍스트 반환
+    }
+}
+
 // Fisher-Yates Shuffle
 function shuffleArray(array) {
     let currentIndex = array.length, randomIndex;
@@ -209,13 +260,13 @@ const cardStyles = {
     },
     keyWordsText: { 
         fontSize: '18px', 
-        color: '#000000', 
+        color: 'rgba(77, 35, 155, 0.65)',
         lineHeight: '1.6', 
         display: 'inline-flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '4px',
-        fontStyle: 'italic' 
+        fontWeight: 'bold'
     },
     koreanMeaningText: { fontSize: '18px', fontWeight: 'bold', color: '#000000' },
     verbalCueText: { fontSize: '18px', color: '#000000', lineHeight: '1.6' },
@@ -466,7 +517,7 @@ const LearningPage = () => {
                      <div style={cardStyles.rowWrapper}> 
                          <div style={cardStyles.leftTitle}>키워드</div> 
                          <div style={cardStyles.rightContent}> 
-                             <span style={{...cardStyles.keyWordsText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}> 
+                             <span style={{...cardStyles.keyWordsText, color: isTextFlashing ? '#FFFFFF' : undefined }}> 
                                  {renderStyledKeywords(keywordIndicesForStyling)} 
                              </span>
                          </div> 
@@ -484,7 +535,9 @@ const LearningPage = () => {
                       <div style={cardStyles.rowWrapper}> 
                           <div style={cardStyles.leftTitle}>연상 문장</div> 
                           <div style={cardStyles.rightContent}> 
-                              <span style={{...cardStyles.verbalCueText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}>{displayVerbalCue}</span> 
+                              <span style={{...cardStyles.verbalCueText, color: isTextFlashing ? '#FFFFFF' : '#000000'}}>
+                                  {formatVerbalCue(displayVerbalCue)}
+                              </span> 
                           </div> 
                       </div> 
                  </div> 
