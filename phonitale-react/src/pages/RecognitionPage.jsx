@@ -86,6 +86,18 @@ const RecognitionPage = () => {
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
+    // --- 새로고침 방지 --- 
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            event.preventDefault();
+            event.returnValue = ''; 
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     // --- 단어 로딩 및 셔플 --- 
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {

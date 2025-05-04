@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // import { Typography } from 'antd'; // 사용하지 않음
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -13,6 +13,18 @@ const SurveyStartPage = () => {
   const handleStartClick = () => {
     navigate(`/${groupCode}/survey`);
   };
+
+  // --- 새로고침 방지 --- 
+  useEffect(() => {
+      const handleBeforeUnload = (event) => {
+          event.preventDefault();
+          event.returnValue = ''; 
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+  }, []);
 
   // 안내 문구 배열 (들여쓰기 필요)
   const instructions = [

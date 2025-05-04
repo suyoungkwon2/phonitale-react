@@ -84,6 +84,22 @@ const GenerationPage = () => {
 
     const roundNumber = parseInt(roundNumberStr, 10);
 
+    // --- 새로고침 방지 --- 
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            event.preventDefault();
+            // 표준에 따라 returnValue를 설정해야 함 (브라우저마다 표시되는 메시지는 다를 수 있음)
+            event.returnValue = ''; 
+        };
+
+        window.addEventListener('beforeunload', handleBeforeUnload);
+
+        // 컴포넌트 언마운트 시 이벤트 리스너 제거
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []); // 빈 배열을 전달하여 마운트 시 한 번만 실행되도록 함
+
     // --- 단어 로딩 --- 
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {

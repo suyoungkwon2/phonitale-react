@@ -480,6 +480,18 @@ const SurveyPage = () => {
     const timestampInRef = useRef(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // --- 새로고침 방지 --- 
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            event.preventDefault();
+            event.returnValue = ''; 
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordList).length > 0) {
             const combinedList = [

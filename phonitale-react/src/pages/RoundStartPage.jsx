@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 // import { Typography, Space } from 'antd'; // 사용하지 않음
 import { useNavigate, useParams } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
@@ -14,6 +14,18 @@ const RoundStartPage = () => {
     // navigate 경로 끝에 '/start' 추가 및 groupCode 포함
     navigate(`/${groupCode}/round/${roundNumber}/learning/start`);
   };
+
+  // --- 새로고침 방지 --- 
+  useEffect(() => {
+      const handleBeforeUnload = (event) => {
+          event.preventDefault();
+          event.returnValue = ''; 
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+  }, []);
 
   const instructions = [
     '각 라운드는 다음 순서로 진행됩니다.',

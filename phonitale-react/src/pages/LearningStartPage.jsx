@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import MainLayout from '../components/MainLayout';
 // import PhaseStartContent from '../components/PhaseStartContent'; // 제거
@@ -22,6 +22,18 @@ const LearningStartPage = () => {
   const handleStartClick = () => {
       navigate(`/${groupCode}/round/${roundNumber}/learning`); // groupCode 추가
   };
+
+  // --- 새로고침 방지 --- 
+  useEffect(() => {
+      const handleBeforeUnload = (event) => {
+          event.preventDefault();
+          event.returnValue = ''; 
+      };
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      return () => {
+          window.removeEventListener('beforeunload', handleBeforeUnload);
+      };
+  }, []);
 
   // 현재 활성 스텝
   const activeStep = phaseTitle; // '학습'

@@ -296,6 +296,18 @@ const LearningPage = () => {
     const wordDisplayRef = useRef(null);
     const startTimeRef = useRef(null);
 
+    // --- 새로고침 방지 --- 
+    useEffect(() => {
+        const handleBeforeUnload = (event) => {
+            event.preventDefault();
+            event.returnValue = ''; 
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, []);
+
     useEffect(() => {
         if (!isLoadingWords && Object.keys(wordsByRound).length > 0) {
             const wordsForCurrentRound = wordsByRound[roundNumber] || [];
