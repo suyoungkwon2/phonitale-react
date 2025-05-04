@@ -414,17 +414,17 @@ const helpfulnessData = [
     {
         key: 'h5',
         score: '5점',
-        description: `구조적으로 잘 연관되어 있고, 반복 학습 없이도 단어의 의미를 쉽게 떠올릴 수 있음\n- dodge: (재빨리) 홱 몸을 피하다, 회피하다\n- 술래잡기에서 술래의 손에 {닿지} 않으려고 {홱 몸을 피하다.}`,
+        description: `구조적으로 잘 연관되어 있고, 반복 학습 없이도 단어의 의미를 쉽게 떠올릴 수 있음`,
     },
     {
         key: 'h3',
         score: '3점',
-        description: `단서와 의미 사이에 약한 연결 고리가 있으나, 기억에 오래 남기엔 부족함\n- rebel: 반역자, 반역하다\n- 자신의 두목을 {re 뒤에서} 칼로 {벨}, 즉 {반역자, 반역하다.}`,
+        description: `단서와 의미 사이에 약한 연결 고리가 있으나, 기억에 오래 남기엔 부족함`,
     },
     {
         key: 'h1',
         score: '1점',
-        description: `단어의 뜻과 단서 사이에 직접적 연결이 거의 없어 기억하거나 학습하는 데 실질적인 도움이 되지 않음\n- glimpse: 흘끗 보다, 흘끗 봄\n- 호기심을 못 참고 {올림푸스} 신전의 메두사를 {흘끗 보다.}`,
+        description: `단어의 뜻과 단서 사이에 직접적 연결이 거의 없어 기억하거나 학습하는 데 실질적인 도움이 되지 않음`,
     },
 ];
 
@@ -785,7 +785,7 @@ const SurveyPage = () => {
                     {/* 1. Helpfulness Rubric */}
                     <div style={{ marginBottom: '32px' }}>
                         <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
-                            1. Helpfulness (유익함)
+                            1. 유익함 (Helpfulness)
                         </Typography.Title>
                         <Table
                             columns={rubricColumns}
@@ -800,7 +800,7 @@ const SurveyPage = () => {
                     {/* 2. Imageability Rubric */}
                     <div style={{ marginBottom: '32px' }}>
                         <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
-                            2. Imageability (이미지화 가능성)
+                            2. 이미지화 가능성 (Imageability)
                         </Typography.Title>
                         {/* 테이블 추가 */}
                         <Table
@@ -819,7 +819,7 @@ const SurveyPage = () => {
                     {/* 3. Coherence Rubric */}
                     <div style={{ marginBottom: '32px' }}>
                         <Typography.Title level={5} style={{ color: '#888888', marginBottom: '16px' }}>
-                            3. Coherence (일관성)
+                            3. 일관성 (Coherence)
                         </Typography.Title>
                         {/* 테이블 추가 */}
                         <Table
