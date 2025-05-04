@@ -217,7 +217,7 @@ const cardStyles = {
         gap: '4px',
         fontStyle: 'italic' 
     },
-    koreanMeaningText: { fontSize: '18px', fontWeight: 'semi-bold', color: '#000000' },
+    koreanMeaningText: { fontSize: '18px', fontWeight: 'bold', color: '#000000' },
     verbalCueText: { fontSize: '18px', color: '#000000', lineHeight: '1.6' },
   };
 
