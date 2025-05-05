@@ -363,7 +363,7 @@ const LearningPage = () => {
                 }
 
                 const nextTime = prevTime - 1;
-                const activationDelay = 2;
+                const activationDelay = 15;
                 if (!isNextButtonEnabled && (30 - nextTime) >= activationDelay) {
                     console.log(`[Timer Tick] Enabling Next button: currentTime=${nextTime}, delay=${activationDelay}`);
                     setIsNextButtonEnabled(true);
