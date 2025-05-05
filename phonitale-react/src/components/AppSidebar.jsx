@@ -24,7 +24,7 @@ const sidebarStyles = {
     display: 'flex',
     alignItems: 'center',
     marginBottom: '8px',
-    cursor: 'pointer',
+    cursor: 'default',
   },
   stepIconContainerBase: {
     width: '24px',
@@ -127,13 +127,14 @@ const AppSidebar = () => {
   };
   // --- 로직 끝 ---
 
-  // 클릭 핸들러 (이전 로직 복원)
+  // 클릭 핸들러 제거 또는 주석 처리
+  /*
   const handleStepClick = (path) => {
-    // 실험 진행 중 클릭 방지 로직 제거됨
     const targetPath = groupCode ? `/${groupCode}${path}` : path;
     console.log("Sidebar navigating to:", targetPath);
     navigate(targetPath);
   };
+  */
 
   return (
     <Sider width={200} theme="light" style={sidebarStyles.sider}>
@@ -162,8 +163,8 @@ const AppSidebar = () => {
 
           return (
             <React.Fragment key={step.key}>
-              {/* 상태와 관계없이 클릭 가능하도록 복원 */}
-              <div style={sidebarStyles.stepItem} onClick={() => handleStepClick(step.path)}>
+              {/* onClick 핸들러 제거 */}
+              <div style={sidebarStyles.stepItem} /* onClick 제거됨 */ >
                 <div style={iconContainerStyle}>
                   {iconContent}
                 </div>
