@@ -181,7 +181,7 @@ function formatVerbalCue(text, isTextFlashing) {
             if (content && content.trim()) {
                 if (isItalic) {
                     // 변경: isTextFlashing 상태에 따라 color 조건부 설정
-                    const textColor = isTextFlashing ? '#FFFFFF' : '#828282';
+                    const textColor = isTextFlashing ? '#FFFFFF' : '#A47A5C';
                     const style = { color: textColor , fontWeight: 'bold'};
                     parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
                 } else if (isBold) {
