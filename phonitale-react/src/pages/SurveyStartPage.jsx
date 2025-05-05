@@ -29,7 +29,7 @@ const SurveyStartPage = () => {
   // 안내 문구 배열 (들여쓰기 필요)
   const instructions = [
     '모든 학습과 테스트가 완료되었습니다.',
-    '학습 중 제공된 키워드와 힌트 문장이 얼마나 도움이 되었는지 평가해 주세요.',
+    '학습 중 제공된 키워드와 연상 문장이 얼마나 도움이 되었는지 평가해 주세요.',
     '1~5점 척도로 선택해 주세요.',
     '  • 1점: 매우 불만족', // 들여쓰기 표현
     '  • 5점: 매우 만족'  // 들여쓰기 표현
@@ -74,7 +74,7 @@ const SurveyStartPage = () => {
       <div className="survey-start-container">
         {/* 헤더 */}
         <div className="survey-start-header">
-          ✨ 학습 종료 {/* 변경된 타이틀 */}
+          ✨ 학습 종료 / 설문 시작 {/* 변경된 타이틀 */}
         </div>
 
         {/* 안내 문구 (Bullet 추가 및 내용 변경) */}
