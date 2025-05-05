@@ -1,12 +1,12 @@
 import React from 'react';
 import { Layout } from 'antd';
-import { CheckCircleOutlined } from '@ant-design/icons'; // CheckCircleOutlined 사용
-import { useLocation, useNavigate, useParams } from 'react-router-dom'; // useParams 추가
-import { useExperiment } from '../context/ExperimentContext'; // group 상태 확인용 (선택적)
+import { CheckCircleOutlined } from '@ant-design/icons';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useExperiment } from '../context/ExperimentContext';
 
 const { Sider } = Layout;
 
-// 피그마 디자인 기반 사이드바 스타일
+// 피그마 디자인 기반 사이드바 스타일 (이전 스타일 복원 시도)
 const sidebarStyles = {
   sider: {
     background: '#FFFFFF',
@@ -26,7 +26,6 @@ const sidebarStyles = {
     marginBottom: '8px',
     cursor: 'pointer',
   },
-  // 아이콘 컨테이너 기본 스타일 (테두리, 크기 등)
   stepIconContainerBase: {
     width: '24px',
     height: '24px',
@@ -38,24 +37,20 @@ const sidebarStyles = {
     marginRight: '12px', 
     fontSize: '14px',
   },
-  // 완료 상태 아이콘 컨테이너
   stepIconContainerFinish: {
     borderColor: '#000000',
     backgroundColor: '#FFFFFF',
   },
-  // 완료 상태 아이콘 (체크)
   stepIconFinish: {
     fontSize: '16px',
     color: '#000000', 
   },
-  // 진행 상태 아이콘 컨테이너
   stepIconContainerProcess: {
     borderColor: '#000000',
     backgroundColor: '#000000',
     color: '#FFFFFF', 
     fontWeight: 'bold',
   },
-  // 대기 상태 아이콘 컨테이너
   stepIconContainerWait: {
     borderColor: '#8D8D8D',
     backgroundColor: '#FFFFFF',
@@ -88,86 +83,61 @@ const AppSidebar = () => {
   const navigate = useNavigate();
   const { groupCode } = useParams(); // URL에서 groupCode 가져오기
   const currentPath = location.pathname;
-  const { group } = useExperiment(); // Context에서 group 정보 확인 (선택적)
+  // const { group } = useExperiment(); // group 상태 확인은 현재 불필요
 
-  // --- 단계 데이터 및 상태 결정 로직 수정 ---
+  // --- 단계 데이터 및 상태 결정 로직 (이전 로직 복원 시도) ---
   const stepsData = [
     // 경로에서 시작하는 groupCode 부분을 제거하고 비교하기 위한 기본 경로 정의
     { key: 'consent', title: 'Consent', path: '/consent' }, // 기본 경로를 /consent로 명시
     { key: 'instruction', title: 'Instruction', path: '/instruction' },
-    { key: 'round1', title: 'Round 1', path: '/round/1/start' },
+    { key: 'round1', title: 'Round 1', path: '/round/1/start' }, // 라운드 시작 페이지 기준
     { key: 'round2', title: 'Round 2', path: '/round/2/start' },
     { key: 'round3', title: 'Round 3', path: '/round/3/start' },
-    { key: 'survey', title: 'Survey', path: '/survey/start' },
+    { key: 'survey', title: 'Survey', path: '/survey/start' }, // 설문 시작 페이지 기준
+    { key: 'end', title: 'End', path: '/end' }, // 종료 단계 추가
   ];
 
   // 현재 경로에서 groupCode 부분을 제거하여 비교할 기본 경로 추출
-  // groupCode가 없거나 루트 경로('/')인 경우도 처리
   const basePath = groupCode ? currentPath.replace(`/${groupCode}`, '') || '/' : currentPath;
-  // basePath가 빈 문자열이 되면 '/'로 처리 (예: /tksdk 만 입력 시)
   const finalBasePath = basePath === '' ? '/' : basePath;
-  console.log(`Sidebar Base Path Calculation: currentPath='${currentPath}', groupCode='${groupCode}', finalBasePath='${finalBasePath}'`); // 디버깅 로그 강화
+  console.log(`Sidebar Base Path Calculation: currentPath='${currentPath}', groupCode='${groupCode}', finalBasePath='${finalBasePath}'`);
 
   let currentStepIndex = stepsData.findIndex(step => {
-    // /consent 경로는 / 또는 /consent 둘 다 매칭 (finalBasePath 기준)
-    if (step.key === 'consent' && (finalBasePath === '/' || finalBasePath === '/consent')) return true;
-    // instruction 경로는 정확히 /instruction 매칭
-    if (step.key === 'instruction' && finalBasePath === '/instruction') return true;
-    // 라운드 경로는 /round/:num 으로 시작하는 경우 매칭
+    if (step.key === 'consent' && (finalBasePath === '/' || finalBasePath.startsWith('/consent'))) return true;
+    if (step.key === 'instruction' && finalBasePath.startsWith('/instruction')) return true;
     if (step.key.startsWith('round') && finalBasePath.startsWith(`/round/${step.key.slice(-1)}`)) return true;
-    // 서베이 경로는 /survey 로 시작하는 경우 매칭
     if (step.key === 'survey' && finalBasePath.startsWith('/survey')) return true;
-
-    return false; // 그 외는 매칭 안됨
+    if (step.key === 'end' && finalBasePath.startsWith('/end')) return true;
+    return false;
   });
 
-  // 종료 페이지(/end) 또는 잘못된 그룹 페이지(/invalid-group) 처리
-  if (finalBasePath === '/end') {
-    currentStepIndex = stepsData.length; // 모든 단계 완료 처리
-  } else if (finalBasePath === '/invalid-group') {
-      currentStepIndex = -1; // 잘못된 그룹 페이지는 활성 단계 없음
-  } else if (currentStepIndex === -1) {
-    // 유효한 경로 내에서 매칭되는 단계가 없는 경우 (예: /round/1/learning)
-    // 상위 단계 (예: /round/1/start) 를 기준으로 찾아야 함
-    // 라운드 내부 페이지 처리
-    const roundMatch = finalBasePath.match(/^\/round\/(\d+)/);
-    if (roundMatch) {
-        const roundNum = roundMatch[1];
-        currentStepIndex = stepsData.findIndex(step => step.key === `round${roundNum}`);
-    } else if (finalBasePath.startsWith('/survey') && finalBasePath !== '/survey/start') {
-        // 서베이 내부 페이지 처리
-        currentStepIndex = stepsData.findIndex(step => step.key === 'survey');
-    } else if (finalBasePath === '/instruction') {
-        currentStepIndex = stepsData.findIndex(step => step.key === 'instruction');
-    } else {
-        // 그래도 못 찾으면 Consent 활성화 (기본값)
-        currentStepIndex = 0; 
-        console.log("Sidebar: No specific match found for", finalBasePath, "defaulting to index 0");
-    }
-  }
-
+  // 유효한 경로 내에서 매칭되는 단계가 없는 경우 (예: /invalid-group)
+  if (currentStepIndex === -1 && finalBasePath !== '/invalid-group') {
+     // 기본값 Consent 활성화
+     currentStepIndex = 0; 
+     console.log("Sidebar: No specific match found for", finalBasePath, "defaulting to index 0");
+   }
+   // 잘못된 그룹 페이지는 currentStepIndex = -1 유지
 
   const getStatus = (index, currentIndex) => {
-    if (currentIndex === -1) return 'wait'; // 잘못된 그룹 등 활성 단계 없으면 모두 wait
+    if (currentIndex === -1) return 'wait';
     if (index < currentIndex) return 'finish';
     if (index === currentIndex) return 'process';
     return 'wait';
   };
   // --- 로직 끝 ---
 
+  // 클릭 핸들러 (이전 로직 복원)
   const handleStepClick = (path) => {
-    // groupCode가 존재하고 유효한 경우에만 경로 앞에 붙여줌
-    // path가 /consent인 경우 루트(/)로 취급할지 여부 확인 필요 -> 여기서는 path 그대로 사용
+    // 실험 진행 중 클릭 방지 로직 제거됨
     const targetPath = groupCode ? `/${groupCode}${path}` : path;
-    console.log("Sidebar navigating to:", targetPath); // 디버깅용 로그
+    console.log("Sidebar navigating to:", targetPath);
     navigate(targetPath);
   };
 
   return (
     <Sider width={200} theme="light" style={sidebarStyles.sider}>
       <div> 
-        {/* group 상태 표시 (디버깅용, 선택적) */}
-        {/* <div style={{ padding: '10px', fontSize: '12px', color: '#888' }}>Group: {group || 'Not Set'}</div> */}
         {stepsData.map((step, index) => {
           const status = getStatus(index, currentStepIndex);
           const stepNumber = index + 1;
@@ -182,24 +152,24 @@ const AppSidebar = () => {
             titleStyle = { ...titleStyle, ...sidebarStyles.stepTitleFinish };
           } else if (status === 'process') {
             iconContainerStyle = { ...iconContainerStyle, ...sidebarStyles.stepIconContainerProcess };
-            iconContent = stepNumber; // 숫자 표시
+            iconContent = stepNumber;
             titleStyle = { ...titleStyle, ...sidebarStyles.stepTitleProcess };
           } else { // wait
             iconContainerStyle = { ...iconContainerStyle, ...sidebarStyles.stepIconContainerWait };
-            iconContent = stepNumber; // 숫자 표시
+            iconContent = stepNumber;
             titleStyle = { ...titleStyle, ...sidebarStyles.stepTitleWait };
           }
 
           return (
             <React.Fragment key={step.key}>
-              {/* stepItem div에 onClick 핸들러 추가 */}
-              {/* 상태가 wait가 아닐 때만 클릭 가능하도록 하거나, 항상 가능하도록 둘 수 있음 */}
+              {/* 상태와 관계없이 클릭 가능하도록 복원 */}
               <div style={sidebarStyles.stepItem} onClick={() => handleStepClick(step.path)}>
-                <div style={iconContainerStyle}> {/* 상태별 스타일 적용된 컨테이너 */}
-                  {iconContent} {/* 상태별 아이콘 또는 숫자 */} 
+                <div style={iconContainerStyle}>
+                  {iconContent}
                 </div>
                 <span style={titleStyle}>{step.title}</span>
               </div>
+              {/* 마지막 단계 뒤에는 divider 없음 */}
               {index < stepsData.length - 1 && (
                 <div style={sidebarStyles.divider}></div>
               )}
