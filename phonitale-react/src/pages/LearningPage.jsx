@@ -76,7 +76,7 @@ function renderStyledKeywords(indexingData, isTextFlashing) {
         if (!key) return null;
 
         const underlineColor = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
-        const textColor = isTextFlashing ? '#FFFFFF' : '#000000';
+        const textColor = isTextFlashing ? '#FFFFFF' : '#A47A5C';
         const style = {
             borderBottom: `4px solid ${underlineColor}`,
             paddingBottom: '2px',
