@@ -144,7 +144,7 @@ function renderStyledKeywords(indexingData, isTextFlashing = false) {
 
         const underlineColor = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
         // 변경: isTextFlashing 상태에 따라 color 조건부 설정 (Survey는 항상 false)
-        const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
+        const textColor = isTextFlashing ? '#FFFFFF' : '#000000';
         const style = {
             borderBottom: `4px solid ${underlineColor}`,
             paddingBottom: '2px',
