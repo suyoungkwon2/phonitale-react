@@ -339,11 +339,11 @@ const cardStyles = {
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '4px',
-        fontWeight: 'bold'
+        fontWeight: 500,
     },
     koreanMeaningText: { // LearningPage 스타일
         fontSize: '18px',
-        fontWeight: 'bold',
+        fontWeight: 500,
         color: '#000000',
         // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
     },

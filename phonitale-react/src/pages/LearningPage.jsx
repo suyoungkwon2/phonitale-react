@@ -76,7 +76,7 @@ function renderStyledKeywords(indexingData, isTextFlashing) {
         if (!key) return null;
 
         const underlineColor = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
-        const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
+        const textColor = isTextFlashing ? '#FFFFFF' : '#000000';
         const style = {
             borderBottom: `4px solid ${underlineColor}`,
             paddingBottom: '2px',
@@ -181,7 +181,7 @@ function formatVerbalCue(text, isTextFlashing) {
             if (content && content.trim()) {
                 if (isItalic) {
                     // 변경: isTextFlashing 상태에 따라 color 조건부 설정
-                    const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
+                    const textColor = isTextFlashing ? '#FFFFFF' : '#828282';
                     const style = { color: textColor , fontWeight: 'bold'};
                     parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
                 } else if (isBold) {
@@ -264,15 +264,19 @@ const cardStyles = {
     },
     keyWordsText: { 
         fontSize: '18px', 
-        color: 'rgba(77, 35, 155, 0.65)',
+        color: '#000000',
         lineHeight: '1.6', 
         display: 'inline-flex',
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '4px',
-        fontWeight: 'bold'
+        fontWeight: 500,
     },
-    koreanMeaningText: { fontSize: '18px', fontWeight: 'bold', color: '#000000' },
+    koreanMeaningText: { 
+        fontSize: '18px', 
+        fontWeight: 500,
+        color: '#000000' 
+    },
     verbalCueText: { fontSize: '18px', color: '#000000', lineHeight: '1.6' },
   };
 
