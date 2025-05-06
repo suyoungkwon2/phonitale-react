@@ -295,16 +295,24 @@ function renderEnglishWordWithUnderlines(word, indexingData) {
                 bottom: `${calculatedBottom}px`, // Use calculated level
                 height: '4px',
                 backgroundColor: color,
-                zIndex: originalIndex + 1,                 pointerEvents: 'none', // Prevent underlines from interfering with text interaction
+                zIndex: originalIndex + 1, // Underlines at zIndex 1, 2, 3...
+                pointerEvents: 'none', // Prevent underlines from interfering with text interaction
             };
             // Using originalIndex in key ensures stability
             return <span key={`ul-${originalIndex}-${color}`} style={underlineStyle}></span>;
         });
 
+        // New: Style for the text segment itself to ensure it's above underlines
+        const textSpanStyle = {
+            position: 'relative', // Necessary to establish stacking context for zIndex
+            zIndex: 10, // Set higher zIndex than any underline
+        };
+
         parts.push(
             // Each segment is a span containing text and its absolutely positioned underlines
             <span key={spanKey} style={segmentSpanStyle}>
-                {textSegment}
+                {/* Wrap textSegment in its own span with relative positioning and higher zIndex */}
+                <span style={textSpanStyle}>{textSegment}</span>
                 {underlineElements}
             </span>
         );
