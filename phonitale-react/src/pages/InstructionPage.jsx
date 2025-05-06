@@ -208,8 +208,8 @@ const InstructionPage = () => {
 
         {/* 2. 사운드 테스트 섹션 */} 
         <div className="instruction-section">
-            <p>2. 기기의 스피커를 켜주세요. 🔊</p>
-            <p>(필수) 사운드 테스트 버튼을 눌러, 소리가 정상적으로 들리는지 확인해 주세요.</p>
+            <p>2. 기기의 스피커를 켜주세요.</p>
+            <p style={{ color: '#CC0000' }}>(필수) 사운드 테스트 버튼을 눌러, 소리가 정상적으로 들리는지 확인해 주세요.</p>
             <div className="sound-test-button-wrapper">
                  <Button onClick={handleSoundTest} icon={<span role="img" aria-label="play">▶️</span>}>
                      사운드 테스트
