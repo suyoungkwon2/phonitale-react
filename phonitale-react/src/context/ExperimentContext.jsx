@@ -19,7 +19,7 @@ export const ExperimentProvider = ({ children }) => {
       return sessionStorage.getItem('userId');
   });
   const [group, setGroup] = useState(null);
-  const [currentRound, setCurrentRound] = useState(1); 
+  const [currentRound, setCurrentRound] = useState(1);
   const [wordList, setWordList] = useState({}); // 최종 단어 목록
   const [allParsedWords, setAllParsedWords] = useState([]); // 모든 파싱된 단어 저장
   const [isLoadingWords, setIsLoadingWords] = useState(true); // 초기 로딩 상태
@@ -67,7 +67,7 @@ export const ExperimentProvider = ({ children }) => {
               },
               error: (error) => {
                   console.error('Context: PapaParse critical error:', error);
-                  setIsLoadingWords(false); 
+          setIsLoadingWords(false);
                   setAllParsedWords([]);
               }
           });

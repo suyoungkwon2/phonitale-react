@@ -203,7 +203,7 @@ const RecognitionPage = () => {
         setIsTextFlashing(true);
         setIsTransitioning(true);
         console.log("[RecognitionPage handleNextClick State] Set isTransitioning: true");
-
+        
         setTimeout(() => setIsTextFlashing(false), 700);
 
         const timestampOut = new Date().toISOString();

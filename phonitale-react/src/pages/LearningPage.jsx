@@ -96,64 +96,116 @@ function renderStyledKeywords(indexingData, isTextFlashing) {
     });
 }
 
-// --- 신규: 영어 단어 밑줄 처리 함수 ---
+// --- 신규: 영어 단어 밑줄 처리 함수 (겹침 처리 로직 수정: 그룹화 + zIndex, display:inline) ---
 function renderEnglishWordWithUnderlines(word, indexingData) {
     if (!word) return null;
     if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
-        return word; // 밑줄 데이터 없으면 단어만 반환
+        return word;
     }
 
-    let parts = [];
-    let lastIndex = 0;
-    // 인덱스 기준으로 정렬
-    const sortedIndices = indexingData.flatMap(item => {
+    // 1. Map character index to underline info ({ color, originalIndex })
+    const underlineMap = Array(word.length).fill(null).map(() => []);
+    const keywordRanges = indexingData.flatMap((item, index) => {
         const key = Object.keys(item)[0];
         const rangeString = item[key];
         if (!key || !rangeString) return [];
         const [startStr, endStr] = rangeString.split(':');
         const start = parseInt(startStr, 10);
         const end = parseInt(endStr, 10);
-        // 유효성 검사 추가
         if (isNaN(start) || isNaN(end) || start < 0 || start >= end || start >= word.length) {
-            console.warn(`Invalid range [${start}, ${end}] for word '${word}' in key '${key}'. Skipping.`);
+             console.warn(`Invalid range [${start}, ${end}] for word '${word}' in key '${key}'. Skipping.`);
             return [];
         }
-        // end 인덱스는 포함되지 않으므로, word.length 초과해도 substring에서 처리됨
-        return { key, range: [start, end] }; 
-    }).sort((a, b) => a.range[0] - b.range[0]);
+        return { range: [start, Math.min(end, word.length)], originalIndex: index };
+    });
 
-    sortedIndices.forEach(({ key, range }, index) => {
+    keywordRanges.forEach(({ range, originalIndex }) => {
         const [start, end] = range;
-        const renderEnd = Math.min(end, word.length); // 실제 렌더링 끝점 조정
+        const color = UNDERLINE_COLORS[originalIndex % UNDERLINE_COLORS.length];
+        for (let i = start; i < end; i++) {
+            if (underlineMap[i] && !underlineMap[i].some(info => info.originalIndex === originalIndex)) {
+                underlineMap[i].push({ color, originalIndex });
+            }
+        }
+    });
 
-        // Add text before the current underline
-        if (start > lastIndex) {
-            parts.push(word.substring(lastIndex, start));
+    // Sort underlines for each character by originalIndex for consistent stacking order
+    underlineMap.forEach(infoArray => infoArray.sort((a, b) => a.originalIndex - b.originalIndex));
+
+    // Determine the maximum vertical level needed for each keyword based on overlaps
+    const keywordVerticalLevel = {};
+    for (let i = 0; i < word.length; i++) {
+        underlineMap[i].forEach((info, level) => {
+            const currentMaxLevel = keywordVerticalLevel[info.originalIndex] || 0;
+            keywordVerticalLevel[info.originalIndex] = Math.max(currentMaxLevel, level);
+        });
+    }
+
+    // 2. Group characters and render
+    let parts = [];
+    let currentIndex = 0;
+    while (currentIndex < word.length) {
+        const currentUnderlineInfo = underlineMap[currentIndex]; // Already sorted array of {color, originalIndex}
+        let endIndex = currentIndex + 1;
+
+        // Find end of segment with identical underline info
+        while (
+            endIndex < word.length &&
+            underlineMap[endIndex].length === currentUnderlineInfo.length &&
+            underlineMap[endIndex].every((info, i) =>
+                info.color === currentUnderlineInfo[i].color &&
+                info.originalIndex === currentUnderlineInfo[i].originalIndex
+            )
+        ) {
+            endIndex++;
         }
 
-        // Add the underlined part
-        const color = UNDERLINE_COLORS[index % UNDERLINE_COLORS.length];
-        const style = {
-            borderBottom: `4px solid ${color}`,
-            paddingBottom: '2px',
-            // backgroundColor: color, // borderBottom 사용 시 제거 가능
+        const textSegment = word.substring(currentIndex, endIndex);
+        const spanKey = `ew-${currentIndex}-${endIndex}`;
+
+        const segmentSpanStyle = {
+            position: 'relative', // Crucial for absolute positioning of underlines
+            display: 'inline-block', // Revert back to inline-block for stable positioning context
+            // whiteSpace: 'pre' // Likely not needed with display: inline
         };
-        const spanKey = `ew-${index}-${start}-${renderEnd}`;
+
+        const underlineElements = currentUnderlineInfo.map(({ color, originalIndex }) => {
+            // Calculate bottom based on the pre-calculated max level for this keyword
+            const level = keywordVerticalLevel[originalIndex] || 0;
+            const calculatedBottom = -2 - level * 4;
+
+            const underlineStyle = {
+                position: 'absolute',
+                left: 0, // Span the full width of the parent segment span
+                right: 0,
+                // Use originalIndex to determine consistent vertical stacking for the *entire* keyword underline
+                // bottom: `${-2 - originalIndex * 4}px`, // Stack based on keyword order: -2px, -6px, -10px, ...
+                bottom: `${calculatedBottom}px`, // Use calculated level
+                height: '4px',
+                backgroundColor: color,
+                // Use level for zIndex as well, ensuring visually lower lines have lower zIndex if needed,
+                // but originalIndex is likely better for consistent visual stacking order based on keyword def.
+                zIndex: originalIndex + 1,                 pointerEvents: 'none', // Prevent underlines from interfering with text interaction
+            };
+            // Using originalIndex in key ensures stability
+            return <span key={`ul-${originalIndex}-${color}`} style={underlineStyle}></span>;
+        });
+
         parts.push(
-            <span key={spanKey} style={style}>
-                {word.substring(start, renderEnd)}
+            // Each segment is a span containing text and its absolutely positioned underlines
+            <span key={spanKey} style={segmentSpanStyle}>
+                {textSegment}
+                {underlineElements}
             </span>
         );
 
-        lastIndex = Math.max(lastIndex, renderEnd);
-    });
-
-    // Add remaining text after the last underline
-    if (lastIndex < word.length) {
-        parts.push(word.substring(lastIndex));
+        currentIndex = endIndex;
     }
 
-    return parts;
+    // Wrap the whole thing in a container to ensure consistent inline behavior
+    // No longer needed if segments are inline-block
+    // return <span style={{ display: 'inline' }}>{parts}</span>;
+    return <>{parts}</>; // Return fragments directly
 }
 
 // --- 신규: Verbal Cue 포맷팅 함수 ---

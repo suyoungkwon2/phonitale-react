@@ -201,7 +201,7 @@ const GenerationPage = () => {
             };
             if (userId && group) {
                 await submitResponse(responseData, group);
-                console.log("Generation response submitted for:", currentWord.meaning);
+            console.log("Generation response submitted for:", currentWord.meaning);
             } else {
                 console.warn("UserId or Group not available, response not submitted.");
             }

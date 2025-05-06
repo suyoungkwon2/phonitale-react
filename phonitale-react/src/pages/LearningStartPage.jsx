@@ -32,7 +32,7 @@ const LearningStartPage = () => {
       window.addEventListener('beforeunload', handleBeforeUnload);
       return () => {
           window.removeEventListener('beforeunload', handleBeforeUnload);
-      };
+  };
   }, []);
 
   // 현재 활성 스텝

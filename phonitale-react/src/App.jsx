@@ -87,7 +87,7 @@ function GroupSpecificRoutes() {
   return (
     <Routes>
       {/* Default route for the group (e.g., /tksdk/) goes to consent */}
-      <Route path="/" element={<ConsentPage />} /> 
+      <Route path="/" element={<ConsentPage />} />
       <Route path="/consent" element={<ConsentPage />} />
       <Route path="/instruction" element={<InstructionPage />} />
 
