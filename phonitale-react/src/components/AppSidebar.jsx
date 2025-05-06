@@ -102,15 +102,15 @@ const AppSidebar = () => {
   const finalBasePath = basePath === '' ? '/' : basePath;
   console.log(`Sidebar Base Path Calculation: currentPath='${currentPath}', groupCode='${groupCode}', finalBasePath='${finalBasePath}'`);
 
-  let currentStepIndex = stepsData.findIndex(step => {
+   let currentStepIndex = stepsData.findIndex(step => {
     if (step.key === 'consent' && (finalBasePath === '/' || finalBasePath.startsWith('/consent'))) return true;
     if (step.key === 'instruction' && finalBasePath.startsWith('/instruction')) return true;
     if (step.key.startsWith('round') && finalBasePath.startsWith(`/round/${step.key.slice(-1)}`)) return true;
     if (step.key === 'survey' && finalBasePath.startsWith('/survey')) return true;
     if (step.key === 'end' && finalBasePath.startsWith('/end')) return true;
-    return false;
-  });
-
+     return false;
+   });
+ 
   // 유효한 경로 내에서 매칭되는 단계가 없는 경우 (예: /invalid-group)
   if (currentStepIndex === -1 && finalBasePath !== '/invalid-group') {
      // 기본값 Consent 활성화
@@ -118,13 +118,13 @@ const AppSidebar = () => {
      console.log("Sidebar: No specific match found for", finalBasePath, "defaulting to index 0");
    }
    // 잘못된 그룹 페이지는 currentStepIndex = -1 유지
-
-  const getStatus = (index, currentIndex) => {
+ 
+   const getStatus = (index, currentIndex) => {
     if (currentIndex === -1) return 'wait';
-    if (index < currentIndex) return 'finish';
-    if (index === currentIndex) return 'process';
-    return 'wait';
-  };
+     if (index < currentIndex) return 'finish';
+     if (index === currentIndex) return 'process';
+     return 'wait';
+   };
   // --- 로직 끝 ---
 
   // 클릭 핸들러 제거 또는 주석 처리

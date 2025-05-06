@@ -138,24 +138,19 @@ function renderStyledKeywords(indexingData, isTextFlashing = false) {
 
     // LearningPage와 동일한 로직 적용
     return indexingData.map((item, groupIndex) => {
-        // 각 item 객체에서 첫 번째 키(key)를 추출합니다.
         const key = Object.keys(item)[0];
-        if (!key) return null; // 키가 없는 경우 렌더링하지 않음
+        if (!key) return null;
 
         const underlineColor = UNDERLINE_COLORS[groupIndex % UNDERLINE_COLORS.length];
-        // 변경: isTextFlashing 상태에 따라 color 조건부 설정 (Survey는 항상 false)
-        const textColor = isTextFlashing ? '#FFFFFF' : '#000000';
+        const textColor = isTextFlashing ? '#FFFFFF' : '#000000'; // LearningPage 스타일 적용
         const style = {
             borderBottom: `4px solid ${underlineColor}`,
             paddingBottom: '2px',
-            display: 'inline-block', // inline-block 유지
-            lineHeight: '1.1', // 키워드 줄 간격 조정 필요시
-            // 변경: textColor 변수 사용 및 fontWeight 추가
-            color: textColor,
-            fontWeight: 'bold'
+            display: 'inline-block',
+            color: textColor, // LearningPage 스타일 적용
+            // fontWeight 제거됨 (LearningPage에는 없음)
         };
-        // 고유한 span key 생성 시 실제 키 값 사용
-        const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`; // 공백 등 특수문자 처리
+        const spanKey = `kw-${groupIndex}-${key.replace(/\s+/g, '-')}`;
 
         const separator = groupIndex < indexingData.length - 1 ? ', ' : null;
 
@@ -174,7 +169,7 @@ function formatVerbalCue(text, isTextFlashing = false) {
 
     const parts = [];
     let lastIndex = 0;
-    const regex = /(\/([^\/]+?)\/)|(\{([^\}]+?)\})/g;
+    const regex = /(\/([^\/]+?)\/)|(\{([^\}]+?)\})/g; // Regex 수정
     let match;
 
     try {
@@ -189,14 +184,13 @@ function formatVerbalCue(text, isTextFlashing = false) {
 
             if (content && content.trim()) {
                 if (isItalic) {
-                    // /.../ 부분은 기존 스타일 유지 (필요시 수정)
-                    const textColor = isTextFlashing ? '#FFFFFF' : 'rgba(77, 35, 155, 0.65)';
-                    const style = { color: textColor, fontWeight: 'bold' };
+                    // LearningPage 스타일 적용: 이탤릭체 색상 #A47A5C, 볼드체
+                    const textColor = isTextFlashing ? '#FFFFFF' : '#A47A5C';
+                    const style = { color: textColor , fontWeight: 'bold'};
                     parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
                 } else if (isBold) {
-                    // {...} 부분 색상을 rgba(0, 0, 0, 0.6)로 변경
-                    const textColor = 'rgba(0, 0, 0, 0.6)'; // isTextFlashing 상관없이 통일
-                    const style = { color: textColor, fontWeight: 'bold' };
+                    // LearningPage 스타일 적용: 볼드체 색상 기본값 (검정색)
+                    const style = isTextFlashing ? { color: '#FFFFFF' } : {}; // 검정색 기본값
                     parts.push(<strong key={`part-${match.index}`} style={style}>{content}</strong>);
                 }
             }
@@ -220,61 +214,106 @@ function formatVerbalCue(text, isTextFlashing = false) {
 function renderEnglishWordWithUnderlines(word, indexingData) {
     if (!word) return null;
     if (!indexingData || !Array.isArray(indexingData) || indexingData.length === 0) {
-        return word; // 밑줄 데이터 없으면 단어만 반환
+        return word;
     }
 
-    let parts = [];
-    let lastIndex = 0;
-    try {
-        // 인덱스 기준으로 정렬 및 데이터 구조 변환
-        const sortedIndices = indexingData.flatMap(item => {
-            const key = Object.keys(item)[0];
-            const rangeString = item[key];
-            if (!key || !rangeString) {
-                return [];
+    // 1. Map character index to underline info ({ color, originalIndex })
+    const underlineMap = Array(word.length).fill(null).map(() => []);
+    const keywordRanges = indexingData.flatMap((item, index) => {
+        const key = Object.keys(item)[0];
+        const rangeString = item[key];
+        if (!key || !rangeString) return [];
+        const [startStr, endStr] = rangeString.split(':');
+        const start = parseInt(startStr, 10);
+        const end = parseInt(endStr, 10);
+        if (isNaN(start) || isNaN(end) || start < 0 || start >= end || start >= word.length) {
+             console.warn(`Invalid range [${start}, ${end}] for word '${word}' in key '${key}'. Skipping.`);
+            return [];
+        }
+        return { range: [start, Math.min(end, word.length)], originalIndex: index };
+    });
+
+    keywordRanges.forEach(({ range, originalIndex }) => {
+        const [start, end] = range;
+        const color = UNDERLINE_COLORS[originalIndex % UNDERLINE_COLORS.length];
+        for (let i = start; i < end; i++) {
+            if (underlineMap[i] && !underlineMap[i].some(info => info.originalIndex === originalIndex)) {
+                underlineMap[i].push({ color, originalIndex });
             }
-            const [startStr, endStr] = rangeString.split(':');
-            const start = parseInt(startStr, 10);
-            const end = parseInt(endStr, 10);
-            // 유효성 검사 추가
-            if (isNaN(start) || isNaN(end) || start < 0 || start >= end || start >= word.length) {
-                return [];
-            }
-            return { key, range: [start, end] };
-        }).sort((a, b) => a.range[0] - b.range[0]);
+        }
+    });
 
-        sortedIndices.forEach(({ key, range }, index) => {
-            const [start, end] = range;
-            const renderEnd = Math.min(end, word.length);
+    // Sort underlines for each character by originalIndex for consistent stacking order
+    underlineMap.forEach(infoArray => infoArray.sort((a, b) => a.originalIndex - b.originalIndex));
 
-            if (start > lastIndex) {
-                parts.push(word.substring(lastIndex, start));
-            }
-
-            const color = UNDERLINE_COLORS[index % UNDERLINE_COLORS.length];
-            const style = {
-                borderBottom: `4px solid ${color}`,
-                paddingBottom: '2px',
-            };
-            const spanKey = `ew-${index}-${start}-${renderEnd}`;
-            parts.push(
-                <span key={spanKey} style={style}>
-                    {word.substring(start, renderEnd)}
-                </span>
-            );
-
-            lastIndex = Math.max(lastIndex, renderEnd);
+    // Determine the maximum vertical level needed for each keyword based on overlaps
+    const keywordVerticalLevel = {};
+    for (let i = 0; i < word.length; i++) {
+        underlineMap[i].forEach((info, level) => {
+            const currentMaxLevel = keywordVerticalLevel[info.originalIndex] || 0;
+            keywordVerticalLevel[info.originalIndex] = Math.max(currentMaxLevel, level);
         });
+    }
 
-        if (lastIndex < word.length) {
-            parts.push(word.substring(lastIndex));
+    // 2. Group characters and render
+    let parts = [];
+    let currentIndex = 0;
+    while (currentIndex < word.length) {
+        const currentUnderlineInfo = underlineMap[currentIndex]; // Already sorted array of {color, originalIndex}
+        let endIndex = currentIndex + 1;
+
+        // Find end of segment with identical underline info
+        while (
+            endIndex < word.length &&
+            underlineMap[endIndex].length === currentUnderlineInfo.length &&
+            underlineMap[endIndex].every((info, i) =>
+                info.color === currentUnderlineInfo[i].color &&
+                info.originalIndex === currentUnderlineInfo[i].originalIndex
+            )
+        ) {
+            endIndex++;
         }
 
-        return parts;
-    } catch (error) {
-        console.error("[Survey Render] Error in renderEnglishWordWithUnderlines:", error);
-        return word; // 오류 발생 시 원본 단어 반환
+        const textSegment = word.substring(currentIndex, endIndex);
+        const spanKey = `ew-${currentIndex}-${endIndex}`;
+
+        const segmentSpanStyle = {
+            position: 'relative', // Crucial for absolute positioning of underlines
+            display: 'inline-block', // Revert back to inline-block for stable positioning context
+            // whiteSpace: 'pre' // Likely not needed with display: inline
+        };
+
+        const underlineElements = currentUnderlineInfo.map(({ color, originalIndex }) => {
+            // Calculate bottom based on the pre-calculated max level for this keyword
+            const level = keywordVerticalLevel[originalIndex] || 0;
+            const calculatedBottom = -2 - level * 4;
+
+            const underlineStyle = {
+                position: 'absolute',
+                left: 0, // Span the full width of the parent segment span
+                right: 0,
+                bottom: `${calculatedBottom}px`, // Use calculated level
+                height: '4px',
+                backgroundColor: color,
+                zIndex: originalIndex + 1,                 pointerEvents: 'none', // Prevent underlines from interfering with text interaction
+            };
+            // Using originalIndex in key ensures stability
+            return <span key={`ul-${originalIndex}-${color}`} style={underlineStyle}></span>;
+        });
+
+        parts.push(
+            // Each segment is a span containing text and its absolutely positioned underlines
+            <span key={spanKey} style={segmentSpanStyle}>
+                {textSegment}
+                {underlineElements}
+            </span>
+        );
+
+        currentIndex = endIndex;
     }
+
+    // No longer needed if segments are inline-block
+    return <>{parts}</>; // Return fragments directly
 }
 
 // --- 신규: 텍스트 내 {단어} 스타일링 함수 ---
@@ -331,29 +370,27 @@ const cardStyles = {
       fontSize: '26px', fontWeight: 500, fontFamily: 'Rubik, sans-serif', // LearningPage 폰트
       position: 'relative', display: 'inline-block', color: '#000000', lineHeight: '1.2',
     },
-    keyWordsText: { // LearningPage 스타일
+    keyWordsText: { // LearningPage 스타일 적용
         fontSize: '18px',
         color: '#000000',
         lineHeight: '1.6',
-        display: 'inline-flex',
+        display: 'inline-flex', // LearningPage에선 inline-flex, 여기도 통일
         flexWrap: 'wrap',
         alignItems: 'center',
         gap: '4px',
-        fontWeight: 500,
+        fontWeight: 500, // LearningPage 스타일 적용 (굵기 추가)
     },
-    koreanMeaningText: { // LearningPage 스타일
+    koreanMeaningText: { // LearningPage 스타일 적용
         fontSize: '18px',
-        fontWeight: 500,
-        color: '#000000',
-        // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
+        fontWeight: 500, // LearningPage 스타일 적용 (굵기 추가)
+        color: '#000000', // LearningPage 스타일 적용 (색상 명시)
     },
-    verbalCueText: { // LearningPage 스타일
+    verbalCueText: { // LearningPage 스타일 적용
         fontSize: '18px',
-        color: '#000000',
+        color: '#000000', // LearningPage 스타일 적용 (색상 명시)
         lineHeight: '1.6',
-        // fontFamily 유지 (필요시 LearningPage 폰트로 변경)
      },
-     // --- 설문 관련 스타일 --- 
+     // --- 설문 관련 스타일 ---
      surveyLeftTitle: { // 설문 전용 제목 스타일 -> 기본 leftTitle 스타일과 동일하게 변경
         width: '120px',
         textAlign: 'right', // 오른쪽 정렬로 변경
