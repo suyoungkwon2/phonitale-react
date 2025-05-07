@@ -38,7 +38,7 @@ const MainLayout = ({ children }) => {
       <Header 
         style={{
           position: 'fixed', // 고정 위치
-          zIndex: 1,         // 다른 요소 위에 표시
+          zIndex: 1000,         // 다른 요소 위에 표시 (값 수정)
           width: '100%',     // 전체 너비
           top: 0,            // 상단에 고정
           left: 0,           // 좌측에 고정
