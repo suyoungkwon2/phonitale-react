@@ -201,7 +201,7 @@ const SurveyStartPage = () => {
       <div className="survey-start-container">
         {/* 헤더 */}
         <div className="survey-start-header">
-          ✨ 학습 종료 / 설문 시작 {/* 타이틀 유지 */}
+          🗳️ 설문을 진행해주세요. (필수) {/* 타이틀 유지 */}
         </div>
 
         {/* 안내 문구 (수정됨) */}
