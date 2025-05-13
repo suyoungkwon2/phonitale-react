@@ -22,7 +22,7 @@ import InvalidAccessPage from './pages/InvalidAccessPage';
 
 const GROUP_CODE_MAP = {
   tksdk: 'kss',
-  wodnr: 'naive',
+  wodnr: 'phonitale2',
   audtjr: 'phonitale',
   tndud: 'og',
 };
