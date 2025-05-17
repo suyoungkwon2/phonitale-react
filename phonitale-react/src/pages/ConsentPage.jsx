@@ -38,66 +38,11 @@ const ConsentPage = () => {
   }, [values, form]);
 
   const onFinish = async (formData) => {
-    console.log('Received values of form: ', formData);
-    setIsLoading(true); // 로딩 시작
-    setError(null); // 이전 에러 초기화
-
-    try {
-      const consentData = {
-        name: formData.name,
-        phone: formData.phone,
-        email: formData.email,
-        consent_agreed: formData.agree
-      };
-      console.log('Sending consent data:', consentData, 'for group:', group);
-
-      const response = await submitConsent(consentData, group);
-
-      console.log('Consent submitted successfully:', response);
-
-      // 응답 데이터에서 userId 같은 식별자 처리 (백엔드 응답 형식 확인 필요)
-      if (response && response.userId) {
-        setUserId(response.userId); // 전역 상태 업데이트
-        sessionStorage.setItem('userId', response.userId); // 세션 스토리지에도 저장 (백업/새로고침 대비)
-        console.log('Global userId set:', response.userId);
-      } else {
-        // userId가 응답에 없다면 임시 ID 생성 또는 다른 처리 방식 고려
-        console.warn('userId not found in response, proceeding without setting global userId.');
-      }
-
-      // sessionStorage에 사용자 이름 저장 (기존과 동일)
-      sessionStorage.setItem('userName', formData.name);
-      sessionStorage.setItem('userEmail', formData.email); // email 저장
-      sessionStorage.setItem('consentTimestamp', response.consentTimestamp); // 시작 timestamp 저장
-      navigate(`/${groupCode}/instruction`); // groupCode 추가
-
-    } catch (err) {
-      console.error('Error submitting consent:', err);
-      // 상세 에러 메시지 표시
-      let errorMessage = '제출 중 오류가 발생했습니다. 다시 시도해주세요.';
-      if (err.response) {
-        // 서버 응답 에러 (e.g., 4xx, 5xx)
-        console.error('Server responded with status:', err.response.status);
-        console.error('Response data:', err.response.data);
-        errorMessage = `서버 오류 (${err.response.status}): ${err.response.data.message || '내용 없음'}`;
-      } else if (err.request) {
-        // 요청은 보냈으나 응답 없음 (e.g., 네트워크 오류)
-        console.error('No response received:', err.request);
-        errorMessage = '서버 응답을 받을 수 없습니다. 네트워크 연결을 확인해주세요.';
-      } else {
-        // 요청 설정 중 오류
-        console.error('Error setting up request:', err.message);
-        errorMessage = `요청 설정 오류: ${err.message}`;
-      }
-      setError(errorMessage); // 에러 상태 업데이트
-    } finally {
-      setIsLoading(false); // 로딩 종료
-    }
+    return;
   };
 
   const onFinishFailed = (errorInfo) => {
-    console.log('Failed:', errorInfo);
-    message.error('Please fill in all required fields and agree to the consent.');
+    return;
   };
 
   // 브라우저 뒤로가기 방지
@@ -182,7 +127,7 @@ const ConsentPage = () => {
                       <Checkbox>동의합니다.</Checkbox>
                     </Form.Item>
                   <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}>
-                    <BlueButton text="Submit" htmlType="submit" disabled={!isSubmittable || isLoading} loading={isLoading} />
+                    <BlueButton text="Submit" htmlType="submit" disabled={false} loading={isLoading} style={{cursor:'not-allowed', backgroundColor:'#f5f5f5', borderColor:'#d9d9d9', color:'rgba(0,0,0,0.25)'}} />
                   </Form.Item>
                 </Form>
              </div>
