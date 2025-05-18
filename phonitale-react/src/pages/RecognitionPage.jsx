@@ -5,6 +5,7 @@ import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
 import { submitResponse } from '../utils/api';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- Helper Function (shuffleArray - 필요시 useExperiment에서 가져오거나 공통 유틸로 분리) ---
 // 여기서는 임시로 유지, 실제로는 Context나 util에서 관리 권장
@@ -71,7 +72,7 @@ const cardStyles = {
 const RecognitionPage = () => {
     const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
-    const { wordList: wordsByRound, isLoadingWords, userId, group, currentRound, setCurrentRound } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords, userId, group, currentRound, setCurrentRound, setUserId } = useExperiment();
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [timeLeft, setTimeLeft] = useState(30);
@@ -216,18 +217,17 @@ const RecognitionPage = () => {
         
         console.log(`[RecognitionPage handleNextClick Data] Word: ${currentWordData?.word}, Answer: ${userAnswer}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
-        if (!userId) {
-            console.error("[RecognitionPage handleNextClick Error] User ID not found!");
-            message.error("User ID not found. Cannot save response.");
-            setIsTransitioning(false); // 에러 시 상태 복구
-            console.log("[RecognitionPage handleNextClick State] User ID Error - Set isTransitioning: false");
-            return;
+        let effectiveUserId = userId;
+        if (!effectiveUserId) {
+            // 임의의 userId 생성 및 저장
+            effectiveUserId = uuidv4();
+            if (typeof setUserId === 'function') setUserId(effectiveUserId);
         }
         
         try {
             console.log("[RecognitionPage handleNextClick API] Calling submitResponse...");
             const responseData = {
-                user: userId,
+                user: effectiveUserId,
                 english_word: currentWordData.word,
                 round_number: roundNumber,
                 page_type: 'recognition',

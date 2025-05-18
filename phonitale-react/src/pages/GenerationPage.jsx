@@ -5,6 +5,7 @@ import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
 import { submitResponse } from '../utils/api';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- Helper Function (제거 - Context 또는 Util 사용 권장) ---
 // function shuffleArray(array) { /* ... */ }
@@ -70,7 +71,7 @@ const cardStyles = {
 const GenerationPage = () => {
     const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
-    const { wordList: wordsByRound, isLoadingWords, userId, group, currentRound, setCurrentRound } = useExperiment();
+    const { wordList: wordsByRound, isLoadingWords, userId, group, currentRound, setCurrentRound, setUserId } = useExperiment();
     const [wordsForRound, setWordsForRound] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
     const [userInput, setUserInput] = useState('');
@@ -179,18 +180,17 @@ const GenerationPage = () => {
 
         console.log(`[GenerationPage handleNextClick Data] Word: ${currentWord?.meaning}, User Input: ${userInput}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
-        if (!userId) {
-            console.error("[GenerationPage handleNextClick Error] User ID not found!");
-            message.error("User ID not found. Cannot save response.");
-            setIsTransitioning(false); // 에러 시 상태 복구
-            console.log("[GenerationPage handleNextClick State] User ID Error - Set isTransitioning: false");
-            return;
+        let effectiveUserId = userId;
+        if (!effectiveUserId) {
+            // 임의의 userId 생성 및 저장
+            effectiveUserId = uuidv4();
+            if (typeof setUserId === 'function') setUserId(effectiveUserId);
         }
 
         try {
             console.log("[GenerationPage handleNextClick API] Calling submitResponse...");
             const responseData = {
-                user: userId,
+                user: effectiveUserId,
                 english_word: currentWord.word,
                 round_number: roundNumber,
                 page_type: 'generation',
@@ -199,9 +199,9 @@ const GenerationPage = () => {
                 duration: duration,
                 response: userInput.trim().toLowerCase() || null,
             };
-            if (userId && group) {
+            if (effectiveUserId && group) {
                 await submitResponse(responseData, group);
-            console.log("Generation response submitted for:", currentWord.meaning);
+                console.log("Generation response submitted for:", currentWord.meaning);
             } else {
                 console.warn("UserId or Group not available, response not submitted.");
             }

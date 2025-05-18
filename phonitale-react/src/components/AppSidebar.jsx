@@ -127,14 +127,12 @@ const AppSidebar = () => {
    };
   // --- 로직 끝 ---
 
-  // 클릭 핸들러 제거 또는 주석 처리
-  /*
+  // 클릭 핸들러 복원
   const handleStepClick = (path) => {
     const targetPath = groupCode ? `/${groupCode}${path}` : path;
     console.log("Sidebar navigating to:", targetPath);
     navigate(targetPath);
   };
-  */
 
   return (
     <Sider width={200} theme="light" style={sidebarStyles.sider}>
@@ -163,8 +161,7 @@ const AppSidebar = () => {
 
           return (
             <React.Fragment key={step.key}>
-              {/* onClick 핸들러 제거 */}
-              <div style={sidebarStyles.stepItem} /* onClick 제거됨 */ >
+              <div style={sidebarStyles.stepItem} onClick={() => handleStepClick(step.path)} >
                 <div style={iconContainerStyle}>
                   {iconContent}
                 </div>

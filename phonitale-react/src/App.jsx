@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Routes, Route, useParams, useNavigate } from 'react-router-dom';
+import { Routes, Route, useParams, useNavigate, Navigate } from 'react-router-dom';
 import { Spin, Layout } from 'antd';
 import { useExperiment } from './context/ExperimentContext';
 
@@ -59,7 +59,7 @@ function App() {
       <Route path="/invalid-group" element={<InvalidAccessPage />} />
 
       {/* Route to handle potential root access without group code */}
-      <Route path="/" element={<InvalidAccessPage />} />
+      <Route path="/" element={<Navigate to="/wodnr" replace />} />
 
       {/* Group specific routes are now handled by GroupWrapper */}
       <Route path="/:groupCode/*" element={<GroupWrapper><GroupSpecificRoutes /></GroupWrapper>} />

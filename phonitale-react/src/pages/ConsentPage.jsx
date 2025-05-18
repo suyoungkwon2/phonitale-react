@@ -127,7 +127,7 @@ const ConsentPage = () => {
                       <Checkbox>동의합니다.</Checkbox>
                     </Form.Item>
                   <Form.Item wrapperCol={{ offset: 4, span: 18 }} style={{ textAlign: 'right' }}>
-                    <BlueButton text="Submit" htmlType="submit" disabled={false} loading={isLoading} style={{cursor:'not-allowed', backgroundColor:'#f5f5f5', borderColor:'#d9d9d9', color:'rgba(0,0,0,0.25)'}} />
+                    <BlueButton text="Submit" htmlType="submit" disabled={!isSubmittable || isLoading} loading={isLoading} />
                   </Form.Item>
                 </Form>
              </div>

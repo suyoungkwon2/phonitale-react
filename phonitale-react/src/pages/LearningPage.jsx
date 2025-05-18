@@ -5,6 +5,7 @@ import MainLayout from '../components/MainLayout';
 import BlueButton from '../components/BlueButton';
 import { useExperiment } from '../context/ExperimentContext';
 import { submitResponse } from '../utils/api';
+import { v4 as uuidv4 } from 'uuid';
 
 // --- Helper Functions (from original script) ---
 // CSV Parser
@@ -340,7 +341,7 @@ const cardStyles = {
 const LearningPage = () => {
     const { roundNumber: roundNumberStr, groupCode } = useParams();
     const navigate = useNavigate();
-    const { userId, group, wordList: wordsByRound, isLoadingWords, currentRound, setCurrentRound } = useExperiment();
+    const { userId, group, wordList: wordsByRound, isLoadingWords, currentRound, setCurrentRound, setUserId } = useExperiment();
     
     const [shuffledWords, setShuffledWords] = useState([]);
     const [currentWordIndex, setCurrentWordIndex] = useState(0);
@@ -423,7 +424,7 @@ const LearningPage = () => {
                 }
 
                 const nextTime = prevTime - 1;
-                const activationDelay = 15;
+                const activationDelay = 3;
                 if (!isNextButtonEnabled && (30 - nextTime) >= activationDelay) {
                     console.log(`[Timer Tick] Enabling Next button: currentTime=${nextTime}, delay=${activationDelay}`);
                     setIsNextButtonEnabled(true);
@@ -496,18 +497,17 @@ const LearningPage = () => {
 
         console.log(`[LearningPage handleNextClick Data] Word: ${currentWord?.word}, Duration: ${duration}s, Timeout: ${isTimeout}`);
 
-        if (!userId) {
-            console.error("[LearningPage handleNextClick Error] User ID not found!");
-            message.error("User ID not found. Cannot save response.");
-            setIsTransitioning(false);
-            console.log("[LearningPage handleNextClick State] User ID Error - Set isTransitioning: false");
-            return;
+        let effectiveUserId = userId;
+        if (!effectiveUserId) {
+            // 임의의 userId 생성 및 저장
+            effectiveUserId = uuidv4();
+            if (typeof setUserId === 'function') setUserId(effectiveUserId);
         }
 
         try {
             console.log("[LearningPage handleNextClick API] Calling submitResponse...");
             const responseData = {
-                user: userId,
+                user: effectiveUserId,
                 english_word: currentWord.word,
                 round_number: roundNumber,
                 page_type: 'learning',
